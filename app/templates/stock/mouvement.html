@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+{% block title %}Mouvement stock — {{ med.nom }}{% endblock %}
+{% block breadcrumb %}
+  <a href="{{ url_for('dashboard.index') }}">Accueil</a> /
+  <a href="{{ url_for('stock.inventaire') }}">Stock</a> /
+  {{ med.nom }}
+{% endblock %}
+{% block page_title %}Mouvement de stock{% endblock %}
+{% block page_subtitle %}{{ med.nom }} — Stock actuel : <strong>{{ med.quantite_stock }} {{ med.unite }}</strong> (seuil : {{ med.seuil_alerte }}){% endblock %}
+
+{% block content %}
+<div class="row g-4">
+  <div class="col-12 col-lg-5">
+    <div class="card-panel">
+      <div class="panel-header"><i class="fa fa-arrows-up-down me-2"></i>Enregistrer un mouvement</div>
+      <div class="panel-body">
+        <form method="POST" id="mouvementForm">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">{{ form.type_mouvement.label.text }}</label>
+            {{ form.type_mouvement(class='form-select', id='typeMouvement', onchange='majCalcul()') }}
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">{{ form.quantite.label.text }} <span class="text-danger">*</span></label>
+            {{ form.quantite(class='form-control', id='quantite', min=1, oninput='majCalcul()') }}
+            {% for e in form.quantite.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+          </div>
+
+          <!-- Aperçu du nouveau stock en temps réel -->
+          <div class="alert alert-secondary mb-3" id="stockPreview">
+            <div class="d-flex justify-content-between">
+              <span>Stock actuel</span>
+              <strong>{{ med.quantite_stock }} {{ med.unite }}</strong>
+            </div>
+            <div class="d-flex justify-content-between">
+              <span>Après mouvement</span>
+              <strong id="stockApres">{{ med.quantite_stock }} {{ med.unite }}</strong>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">{{ form.reference_bon.label.text }}</label>
+            {{ form.reference_bon(class='form-control', placeholder='Ex: BL-2026-001') }}
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">{{ form.motif.label.text }}</label>
+            {{ form.motif(class='form-control', placeholder='Motif ou commentaire') }}
+          </div>
+
+          <div class="d-grid">
+            {{ form.submit(class='btn btn-primary', id='submitBtn') }}
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Info médicament -->
+    <div class="card-panel mt-4">
+      <div class="panel-header"><i class="fa fa-pills me-2"></i>Informations médicament</div>
+      <div class="panel-body small">
+        <div class="d-flex justify-content-between mb-1">
+          <span class="text-muted">Forme</span><span>{{ med.forme }}</span>
+        </div>
+        <div class="d-flex justify-content-between mb-1">
+          <span class="text-muted">Dosage</span><span>{{ med.dosage_unitaire or '—' }}</span>
+        </div>
+        <div class="d-flex justify-content-between mb-1">
+          <span class="text-muted">Expiration</span>
+          <span class="{% if med.expire_bientot %}text-warning fw-bold{% endif %}">
+            {{ med.date_expiration.strftime('%d/%m/%Y') if med.date_expiration else '—' }}
+          </span>
+        </div>
+        <div class="d-flex justify-content-between">
+          <span class="text-muted">Centre</span><span>{{ med.centre or '—' }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Historique des mouvements récents -->
+  <div class="col-12 col-lg-7">
+    <div class="card-panel">
+      <div class="panel-header">
+        <span><i class="fa fa-clock-rotate-left me-2"></i>Derniers mouvements</span>
+        <a href="{{ url_for('stock.historique', med_id=med.id) }}" class="btn-panel-link">
+          Voir tout <i class="fa fa-arrow-right"></i>
+        </a>
+      </div>
+      <div class="panel-body p-0">
+        {% if mouvements %}
+        <table class="table table-hover mb-0">
+          <thead class="table-head">
+            <tr><th>Date</th><th>Type</th><th>Qté</th><th>Avant</th><th>Après</th><th>Réf.</th></tr>
+          </thead>
+          <tbody>
+            {% for mv in mouvements %}
+            <tr>
+              <td class="small">{{ mv.date_mouvement.strftime('%d/%m/%Y %H:%M') }}</td>
+              <td><span class="badge bg-{{ mv.type_badge }}">{{ mv.type_label }}</span></td>
+              <td class="fw-semibold {% if mv.type_mouvement == 'entree' %}text-success{% elif mv.type_mouvement in ['sortie','perte','expiration'] %}text-danger{% endif %}">
+                {% if mv.type_mouvement == 'entree' %}+{% elif mv.type_mouvement != 'ajustement' %}−{% endif %}{{ mv.quantite }}
+              </td>
+              <td class="small text-muted">{{ mv.quantite_avant }}</td>
+              <td class="small fw-bold">{{ mv.quantite_apres }}</td>
+              <td class="small text-muted">{{ mv.reference_bon or '—' }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% else %}
+        <div class="text-center text-muted py-4">Aucun mouvement enregistré.</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/stock.js') }}"></script>
+<script>
+const stockActuel = {{ med.quantite_stock }};
+const seuilAlerte = {{ med.seuil_alerte }};
+const unite = '{{ med.unite }}';
+</script>
+{% endblock %}

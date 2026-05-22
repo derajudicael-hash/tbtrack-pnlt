@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% block title %}Modifier compte{% endblock %}
+{% block breadcrumb %}
+  <a href="{{ url_for('dashboard.index') }}">Accueil</a> /
+  <a href="{{ url_for('admin.utilisateurs') }}">Administration</a> /
+  Modifier {{ user.full_name }}
+{% endblock %}
+{% block page_title %}Modifier le compte utilisateur{% endblock %}
+{% block page_subtitle %}{{ user.full_name }} — {{ user.email }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-12 col-lg-6">
+    <div class="card-panel">
+      <div class="panel-header"><i class="fa fa-user-pen me-2"></i>Modifier les informations</div>
+      <div class="panel-body">
+        <form method="POST">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+          <div class="row g-3">
+            <div class="col-6">
+              <label class="form-label fw-semibold">{{ form.prenom.label.text }} <span class="text-danger">*</span></label>
+              {{ form.prenom(class='form-control') }}
+            </div>
+            <div class="col-6">
+              <label class="form-label fw-semibold">{{ form.nom.label.text }} <span class="text-danger">*</span></label>
+              {{ form.nom(class='form-control') }}
+            </div>
+            <div class="col-6">
+              <label class="form-label fw-semibold">{{ form.role.label.text }}</label>
+              {{ form.role(class='form-select') }}
+            </div>
+            <div class="col-6">
+              <label class="form-label fw-semibold">{{ form.centre.label.text }}</label>
+              {{ form.centre(class='form-control') }}
+            </div>
+          </div>
+
+          <div class="d-flex gap-2 mt-4">
+            {{ form.submit(class='btn btn-primary') }}
+            <a href="{{ url_for('admin.utilisateurs') }}" class="btn btn-outline-secondary">Annuler</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

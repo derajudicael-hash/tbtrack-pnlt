@@ -1,0 +1,170 @@
+{% extends 'base.html' %}
+{% block title %}{% if modification %}Modifier traitement{% else %}Nouveau traitement{% endif %}{% endblock %}
+{% block breadcrumb %}
+  <a href="{{ url_for('dashboard.index') }}">Accueil</a> /
+  <a href="{{ url_for('patients.fiche', patient_id=patient.id) }}">{{ patient.code_patient }}</a> /
+  {% if modification %}Modifier traitement{% else %}Nouveau traitement{% endif %}
+{% endblock %}
+{% block page_title %}{% if modification %}Modifier le traitement{% else %}Nouveau traitement{% endif %}{% endblock %}
+{% block page_subtitle %}Patient : {{ patient.nom }} {{ patient.prenom }} — {{ patient.code_patient }}{% endblock %}
+
+{% block content %}
+<form method="POST" id="traitementForm">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <input type="hidden" name="medicaments_json" id="medicamentsJson" value="{{ form.medicaments_json.data or '[]' }}">
+
+  <div class="row g-4">
+    <!-- Colonne gauche : informations générales -->
+    <div class="col-12 col-lg-5">
+      <div class="card-panel">
+        <div class="panel-header"><i class="fa fa-clipboard-list me-2"></i>Informations du traitement</div>
+        <div class="panel-body">
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">{{ form.schema_nom.label.text }} <span class="text-danger">*</span></label>
+            {{ form.schema_nom(class='form-control', placeholder='Ex: 6BdqLfxCfzCsZ ou Schéma court PNLT') }}
+            {% for e in form.schema_nom.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+          </div>
+
+          <div class="row g-2 mb-3">
+            <div class="col-6">
+              <label class="form-label fw-semibold">{{ form.phase.label.text }}</label>
+              {{ form.phase(class='form-select') }}
+            </div>
+            <div class="col-6">
+              <label class="form-label fw-semibold">{{ form.statut_traitement.label.text }}</label>
+              {{ form.statut_traitement(class='form-select') }}
+            </div>
+          </div>
+
+          <div class="row g-2 mb-3">
+            <div class="col-6">
+              <label class="form-label fw-semibold">{{ form.date_debut.label.text }} <span class="text-danger">*</span></label>
+              {{ form.date_debut(class='form-control', type='date') }}
+              {% for e in form.date_debut.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+            </div>
+            <div class="col-6">
+              <label class="form-label fw-semibold">{{ form.date_fin_prevue.label.text }}</label>
+              {{ form.date_fin_prevue(class='form-control', type='date') }}
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">{{ form.observateur_nom.label.text }}</label>
+            {{ form.observateur_nom(class='form-control', placeholder='Nom complet de l\'observateur DOT') }}
+          </div>
+
+          <!-- Fin de traitement — visible si statut ≠ actif -->
+          <div id="finSection" style="display:none">
+            <hr>
+            <div class="mb-3">
+              <label class="form-label fw-semibold text-warning">
+                <i class="fa fa-flag-checkered me-1"></i>{{ form.date_fin_reelle.label.text }}
+              </label>
+              {{ form.date_fin_reelle(class='form-control', type='date') }}
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-semibold text-warning">{{ form.motif_arret.label.text }}</label>
+              {{ form.motif_arret(class='form-control', rows=3, placeholder='Raison d\'arrêt, résultats finaux, décision clinique…') }}
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">{{ form.notes.label.text }}</label>
+            {{ form.notes(class='form-control', rows=4, placeholder='Notes cliniques, justification du schéma…') }}
+          </div>
+
+          <!-- Résumé médicaments sélectionnés -->
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Médicaments sélectionnés</label>
+            <div id="medicamentsSelectionnes" class="d-flex flex-wrap gap-1 p-2 border rounded" style="min-height:48px">
+              <span class="text-muted small" id="placeholderAucun">Aucun médicament sélectionné</span>
+            </div>
+          </div>
+
+          <div class="d-grid gap-2">
+            {{ form.submit(class='btn btn-primary') }}
+            <a href="{{ url_for('patients.fiche', patient_id=patient.id) }}" class="btn btn-outline-secondary">Annuler</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Colonne droite : sélection des médicaments -->
+    <div class="col-12 col-lg-7">
+      <div class="card-panel">
+        <div class="panel-header">
+          <span><i class="fa fa-pills me-2"></i>Sélection des médicaments PNLT 2021</span>
+          <button type="button" class="btn btn-sm btn-outline-danger" onclick="clearMedicaments()">
+            <i class="fa fa-xmark me-1"></i>Tout effacer
+          </button>
+        </div>
+        <div class="panel-body">
+          {% for groupe, meds in groupes_medicaments.items() %}
+          <div class="mb-4">
+            <div class="fw-semibold text-primary mb-2 small text-uppercase">
+              <i class="fa fa-layer-group me-1"></i>{{ groupe }}
+            </div>
+            <div class="row g-2">
+              {% for med in meds %}
+              <div class="col-12 col-md-6">
+                <div class="med-checkbox-card" id="card-{{ loop.index }}-{{ loop.revindex }}">
+                  <label class="d-flex align-items-center gap-2 cursor-pointer mb-0 w-100">
+                    <input type="checkbox" class="med-checkbox form-check-input"
+                           value="{{ med }}"
+                           onchange="toggleMedicament(this)"
+                           {% if traitement and med in traitement.medicaments %}checked{% endif %}>
+                    <span class="small">{{ med }}</span>
+                  </label>
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</form>
+
+<style>
+.med-checkbox-card {
+  padding: 8px 12px;
+  border: 1px solid var(--bs-border-color);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.med-checkbox-card:hover { border-color: var(--bs-primary); background: rgba(var(--bs-primary-rgb),.08); }
+.med-checkbox-card.selected { border-color: var(--bs-success); background: rgba(var(--bs-success-rgb),.12); }
+.cursor-pointer { cursor: pointer; }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/traitements.js') }}"></script>
+<script>
+// Initialiser les cases cochées au chargement (mode modification)
+document.addEventListener('DOMContentLoaded', function() {
+  const json = document.getElementById('medicamentsJson').value;
+  let selected = [];
+  try { selected = JSON.parse(json); } catch(e) { selected = []; }
+  document.querySelectorAll('.med-checkbox').forEach(cb => {
+    if (selected.includes(cb.value)) {
+      cb.checked = true;
+      cb.closest('.med-checkbox-card').classList.add('selected');
+    }
+  });
+  updateResume();
+
+  // Afficher section fin si statut ≠ actif
+  const statutSel = document.querySelector('[name="statut_traitement"]');
+  const finSection = document.getElementById('finSection');
+  function updateFin() {
+    finSection.style.display = (statutSel && statutSel.value !== 'actif') ? '' : 'none';
+  }
+  if (statutSel) { statutSel.addEventListener('change', updateFin); updateFin(); }
+});
+</script>
+{% endblock %}

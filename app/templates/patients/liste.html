@@ -1,0 +1,165 @@
+{% extends 'base.html' %}
+{% block title %}Registre patients{% endblock %}
+{% block breadcrumb %}<a href="{{ url_for('dashboard.index') }}">Accueil</a> / Patients{% endblock %}
+{% block page_title %}Registre des patients{% endblock %}
+{% block page_subtitle %}Tous les patients TB-MR / RR-TB / XDR enregistrés{% endblock %}
+{% block page_actions %}
+  <a href="{{ url_for('patients.ajouter') }}" class="btn btn-primary">
+    <i class="fa fa-user-plus me-2"></i>Nouveau patient
+  </a>
+{% endblock %}
+
+{% block content %}
+<!-- Filtres -->
+<div class="card-panel mb-4">
+  <div class="panel-body">
+    <form method="GET" class="row g-3 align-items-end">
+      <div class="col-12 col-md-4">
+        <label class="form-label small fw-semibold">Recherche</label>
+        <input type="text" name="q" value="{{ q }}" class="form-control" placeholder="Nom, prénom, code…">
+      </div>
+      <div class="col-6 col-md-3">
+        <label class="form-label small fw-semibold">Statut</label>
+        <select name="statut" class="form-select">
+          <option value="">Tous les statuts</option>
+          {% for v, l in [('en_cours','En cours'),('gueri','Guéri'),('perdu_de_vue','Perdu de vue'),('echec','Échec'),('decede','Décédé')] %}
+          <option value="{{ v }}" {% if statut == v %}selected{% endif %}>{{ l }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-6 col-md-3">
+        <label class="form-label small fw-semibold">Résistance</label>
+        <select name="resistance" class="form-select">
+          <option value="">Tous types</option>
+          {% for v in ['RR-TB','TB-MR','pre-XDR','XDR'] %}
+          <option value="{{ v }}" {% if resistance == v %}selected{% endif %}>{{ v }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-12 col-md-2">
+        <button type="submit" class="btn btn-outline-primary w-100">
+          <i class="fa fa-magnifying-glass me-1"></i>Filtrer
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Tableau -->
+<div class="card-panel">
+  <div class="panel-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0" style="table-layout:fixed; min-width:820px">
+        <colgroup>
+          <col style="width:110px">  <!-- Code -->
+          <col style="width:190px">  <!-- Patient -->
+          <col style="width:90px">   <!-- Âge/Sexe -->
+          <col style="width:80px">   <!-- Résistance -->
+          <col style="width:65px">   <!-- Poids -->
+          <col style="width:55px">   <!-- VIH -->
+          <col style="width:90px">   <!-- Début trt. -->
+          <col style="width:65px">   <!-- Durée -->
+          <col style="width:90px">   <!-- Statut -->
+          <col style="width:110px">  <!-- Actions -->
+        </colgroup>
+        <thead class="table-head">
+          <tr>
+            <th>Code</th>
+            <th>Patient</th>
+            <th>Âge / Sexe</th>
+            <th>Résistance</th>
+            <th>Poids</th>
+            <th>VIH</th>
+            <th>Début trt.</th>
+            <th>Durée (j)</th>
+            <th>Statut</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in patients %}
+          {% set full_name = (p.nom ~ ' ' ~ p.prenom) | trim %}
+          <tr>
+            <td><code class="code-patient">{{ p.code_patient }}</code></td>
+            <td>
+              {% if full_name | length > 22 %}
+              <div class="fw-semibold text-truncate patient-name-clickable"
+                   tabindex="0"
+                   data-bs-toggle="popover"
+                   data-bs-trigger="click"
+                   data-bs-placement="top"
+                   data-bs-content="{{ full_name }}"
+                   title="Nom complet"
+                   style="cursor:pointer"
+                   aria-label="Cliquer pour voir le nom complet">
+                {{ full_name }}
+              </div>
+              {% else %}
+              <div class="fw-semibold text-truncate">{{ full_name }}</div>
+              {% endif %}
+              <div class="text-muted small text-truncate">{{ (p.categorie or '') | replace('_',' ') }}</div>
+            </td>
+            <td class="text-truncate">{{ p.age or '—' }} ans / {{ p.sexe[0] if p.sexe else '—' }}</td>
+            <td>
+              <span class="badge-resistance badge-{{ p.type_resistance | lower | replace('-','') if p.type_resistance else 'secondary' }}">
+                {{ p.type_resistance or '—' }}
+              </span>
+            </td>
+            <td>{{ p.poids or '—' }} <span class="text-muted small">kg</span></td>
+            <td>
+              {% if p.statut_vih == 'positif' %}<span class="text-danger fw-bold">VIH+</span>
+              {% elif p.statut_vih == 'negatif' %}<span class="text-success">VIH−</span>
+              {% else %}<span class="text-muted">?</span>{% endif %}
+            </td>
+            <td>{{ p.date_debut_traitement.strftime('%d/%m/%Y') if p.date_debut_traitement else '—' }}</td>
+            <td>
+              {% if p.jours_traitement > 0 %}
+                <span class="fw-semibold">{{ p.jours_traitement }} j</span>
+              {% else %}—{% endif %}
+            </td>
+            <td><span class="badge bg-{{ p.statut_badge }}">{{ p.statut_label }}</span></td>
+            <td class="text-end">
+              <a href="{{ url_for('patients.fiche', patient_id=p.id) }}" class="btn btn-sm btn-outline-primary me-1" title="Fiche">
+                <i class="fa fa-eye"></i>
+              </a>
+              <a href="{{ url_for('patients.modifier', patient_id=p.id) }}" class="btn btn-sm btn-outline-warning me-1" title="Modifier">
+                <i class="fa fa-pen"></i>
+              </a>
+              <form method="POST" action="{{ url_for('patients.supprimer', patient_id=p.id) }}" class="d-inline"
+                    onsubmit="return confirm('Supprimer ce patient et toutes ses données ?')">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button class="btn btn-sm btn-outline-danger" title="Supprimer"><i class="fa fa-trash"></i></button>
+              </form>
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="10" class="text-center text-muted py-4">Aucun patient trouvé.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="panel-footer text-muted small">
+    {{ patients | length }} patient(s) affiché(s)
+  </div>
+</div>
+
+{% block scripts %}
+<script>
+// Initialise les popovers "nom complet" au clic
+document.querySelectorAll('[data-bs-toggle="popover"]').forEach(function(el) {
+  new bootstrap.Popover(el, { trigger: 'click', html: false, sanitize: false });
+});
+
+// Fermer le popover ouvert si on clique ailleurs
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('[data-bs-toggle="popover"]')) {
+    document.querySelectorAll('[data-bs-toggle="popover"]').forEach(function(el) {
+      var pop = bootstrap.Popover.getInstance(el);
+      if (pop) pop.hide();
+    });
+  }
+});
+</script>
+{% endblock scripts %}
+{% endblock %}

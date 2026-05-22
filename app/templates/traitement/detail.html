@@ -1,0 +1,262 @@
+{% extends 'base.html' %}
+{% block title %}Traitement — {{ patient.code_patient }}{% endblock %}
+{% block breadcrumb %}
+  <a href="{{ url_for('dashboard.index') }}">Accueil</a> /
+  <a href="{{ url_for('traitement.liste') }}">Traitements</a> /
+  {{ patient.code_patient }}
+{% endblock %}
+{% block page_title %}Traitement de {{ patient.prenom }} {{ patient.nom }}{% endblock %}
+{% block page_subtitle %}{{ traitement.schema_nom }} · Démarré le {{ traitement.date_debut.strftime('%d/%m/%Y') if traitement.date_debut else '—' }}{% endblock %}
+{% block page_actions %}
+  <a href="{{ url_for('traitement.dot_ajouter', traitement_id=traitement.id) }}" class="btn btn-success me-2">
+    <i class="fa fa-check-circle me-1"></i>Saisir prise DOT
+  </a>
+  <a href="{{ url_for('traitement.modifier', traitement_id=traitement.id) }}" class="btn btn-outline-warning me-2">
+    <i class="fa fa-pen me-1"></i>Modifier
+  </a>
+  <form method="POST" action="{{ url_for('traitement.supprimer', traitement_id=traitement.id) }}" class="d-inline"
+        onsubmit="return confirm('Supprimer ce traitement ? Cette action est irréversible.')">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button class="btn btn-outline-danger"><i class="fa fa-trash me-1"></i>Supprimer</button>
+  </form>
+{% endblock %}
+
+{% block content %}
+
+<!-- En-tête : statut + médicaments -->
+<div class="row g-4 mb-4">
+  <div class="col-12 col-lg-4">
+    <div class="card-panel h-100">
+      <div class="panel-header"><i class="fa fa-clipboard me-2"></i>Schéma thérapeutique</div>
+      <div class="panel-body">
+        <div class="mb-2">
+          <div class="text-muted small">Protocole</div>
+          <code class="fw-bold text-primary">{{ traitement.schema_nom }}</code>
+        </div>
+        <div class="row g-2 mb-3">
+          <div class="col-6">
+            <div class="text-muted small">Phase</div>
+            <span class="badge bg-info">{{ traitement.phase | capitalize }}</span>
+          </div>
+          <div class="col-6">
+            <div class="text-muted small">Statut</div>
+            <span class="badge bg-{{ traitement.statut_badge }}">{{ traitement.statut_label }}</span>
+          </div>
+          <div class="col-6">
+            <div class="text-muted small">Début</div>
+            <strong>{{ traitement.date_debut.strftime('%d/%m/%Y') if traitement.date_debut else '—' }}</strong>
+          </div>
+          <div class="col-6">
+            <div class="text-muted small">Fin prévue</div>
+            <strong>{{ traitement.date_fin_prevue.strftime('%d/%m/%Y') if traitement.date_fin_prevue else '—' }}</strong>
+          </div>
+        </div>
+        <div class="mb-1 text-muted small">Progression</div>
+        <div class="progress mb-1" style="height:10px">
+          <div class="progress-bar bg-primary" style="width:{{ traitement.progression }}%"></div>
+        </div>
+        <div class="text-end small text-muted">{{ traitement.progression }}%</div>
+        {% if traitement.observateur_nom %}
+        <div class="mt-3 text-muted small">
+          <i class="fa fa-user-check me-1"></i>Observateur DOT : <strong>{{ traitement.observateur_nom }}</strong>
+        </div>
+        {% endif %}
+        {% if traitement.date_fin_reelle %}
+        <hr>
+        <div class="alert alert-secondary small mb-0">
+          <i class="fa fa-flag-checkered me-1"></i>
+          <strong>Fin réelle : {{ traitement.date_fin_reelle.strftime('%d/%m/%Y') }}</strong>
+          {% if traitement.motif_arret %}<div class="mt-1">{{ traitement.motif_arret }}</div>{% endif %}
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-lg-4">
+    <div class="card-panel h-100">
+      <div class="panel-header"><i class="fa fa-pills me-2"></i>Médicaments du schéma</div>
+      <div class="panel-body">
+        <div class="d-flex flex-wrap gap-2">
+          {% for med in traitement.medicaments %}
+          <span class="badge bg-secondary border px-2 py-1">{{ med }}</span>
+          {% else %}
+          <p class="text-muted small">Aucun médicament renseigné.</p>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-lg-4">
+    <div class="card-panel h-100">
+      <div class="panel-header"><i class="fa fa-chart-line me-2"></i>Adhérence DOT — 30 derniers jours</div>
+      <div class="panel-body text-center">
+        {% if taux_adherence is not none %}
+          <div class="display-4 fw-bold {% if taux_adherence >= 85 %}text-success{% elif taux_adherence >= 70 %}text-warning{% else %}text-danger{% endif %}">
+            {{ taux_adherence }}%
+          </div>
+          <div class="text-muted small">de prises confirmées</div>
+          {% if taux_adherence < 85 %}
+          <div class="alert alert-warning mt-3 small">
+            <i class="fa fa-triangle-exclamation me-1"></i>
+            Adhérence insuffisante — objectif ≥ 85%
+          </div>
+          {% endif %}
+        {% else %}
+          <div class="text-muted py-3">
+            <i class="fa fa-clock-rotate-left fa-2x d-block mb-2 opacity-25"></i>
+            Aucune observation DOT enregistrée.
+          </div>
+          <a href="{{ url_for('traitement.dot_ajouter', traitement_id=traitement.id) }}" class="btn btn-sm btn-success">
+            <i class="fa fa-plus me-1"></i>Première saisie DOT
+          </a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Timeline M0-M18 -->
+<div class="card-panel mb-4">
+  <div class="panel-header">
+    <span><i class="fa fa-timeline me-2"></i>Timeline du traitement — M0 à M{{ nb_mois }}</span>
+    <span class="small text-muted">
+      Phase intensive
+      <span class="badge bg-primary mx-1">M0–M{{ 4 if patient.schema_therapeutique == 'court' else 6 }}</span>
+      Phase continuation
+      <span class="badge bg-info">M{{ 4 if patient.schema_therapeutique == 'court' else 6 }}–M{{ nb_mois }}</span>
+    </span>
+  </div>
+  <div class="panel-body">
+    <div class="timeline-track">
+      {% for j in jalons %}
+      <div class="timeline-jalon {% if j.actuel %}actuel{% elif j.passe %}passe{% endif %}"
+           data-bs-toggle="tooltip"
+           title="M{{ j.mois }}{% if j.date %} — {{ j.date.strftime('%b %Y') }}{% endif %}{% if j.examen %} — {{ j.examen.conversion_label }}{% else %} — Pas d\'examen{% endif %}">
+        <div class="jalon-point {% if j.examen %}has-examen{% endif %}">
+          {% if j.examen %}
+            <i class="fa fa-microscope fa-xs"></i>
+          {% else %}
+            <span>{{ j.mois }}</span>
+          {% endif %}
+        </div>
+        <div class="jalon-label">M{{ j.mois }}</div>
+        {% if j.examen %}
+        <div class="jalon-sub">
+          <span class="badge bg-{{ j.examen.conversion_badge }} small">{{ j.examen.conversion_label }}</span>
+        </div>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<!-- Tableau DOT récent -->
+<div class="card-panel">
+  <div class="panel-header">
+    <span><i class="fa fa-calendar-check me-2"></i>Dernières prises DOT</span>
+    <a href="{{ url_for('traitement.dot_historique', traitement_id=traitement.id) }}" class="btn-panel-link">
+      Voir tout <i class="fa fa-arrow-right"></i>
+    </a>
+  </div>
+  <div class="panel-body p-0">
+    {% if dot_recent %}
+    <table class="table table-hover mb-0">
+      <thead class="table-head">
+        <tr>
+          <th>Date</th>
+          <th>Prise</th>
+          <th>Observateur</th>
+          <th>Raison omission</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for d in dot_recent %}
+        <tr class="{% if not d.prise_confirmee %}table-warning{% endif %}">
+          <td class="small fw-semibold">{{ d.date_observation.strftime('%d/%m/%Y') }}</td>
+          <td>
+            {% if d.prise_confirmee %}
+              <span class="badge bg-success"><i class="fa fa-check me-1"></i>Confirmée</span>
+            {% else %}
+              <span class="badge bg-danger"><i class="fa fa-xmark me-1"></i>Non prise</span>
+            {% endif %}
+          </td>
+          <td class="small">{{ d.observateur_nom or '—' }}</td>
+          <td class="small text-muted">{{ d.raison_omission or '—' }}</td>
+          <td class="small text-muted">{{ d.notes[:40] if d.notes else '—' }}{{ '…' if d.notes and d.notes|length > 40 else '' }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="text-center text-muted py-4">
+      <i class="fa fa-calendar-xmark fa-2x mb-2 d-block opacity-25"></i>
+      Aucune prise DOT enregistrée.
+      <div class="mt-2">
+        <a href="{{ url_for('traitement.dot_ajouter', traitement_id=traitement.id) }}" class="btn btn-sm btn-success">
+          <i class="fa fa-plus me-1"></i>Saisir la première prise
+        </a>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Initialiser les tooltips Bootstrap
+document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => {
+  new bootstrap.Tooltip(el);
+});
+</script>
+<style>
+.timeline-track {
+  display: flex;
+  align-items: flex-start;
+  gap: 0;
+  overflow-x: auto;
+  padding: 16px 0;
+  position: relative;
+}
+.timeline-track::before {
+  content: '';
+  position: absolute;
+  top: 30px;
+  left: 20px;
+  right: 20px;
+  height: 2px;
+  background: var(--bs-border-color);
+}
+.timeline-jalon {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  min-width: 56px;
+  position: relative;
+  cursor: pointer;
+}
+.jalon-point {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: var(--bs-body-bg);
+  border: 2px solid var(--bs-border-color);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 600;
+  z-index: 1;
+  margin-bottom: 4px;
+  transition: all .2s;
+}
+.timeline-jalon.passe .jalon-point { background: var(--bs-primary); border-color: var(--bs-primary); color: #fff; }
+.timeline-jalon.actuel .jalon-point { background: var(--bs-success); border-color: var(--bs-success); color: #fff; box-shadow: 0 0 0 4px rgba(var(--bs-success-rgb),.25); }
+.jalon-point.has-examen { border-color: var(--bs-info); }
+.timeline-jalon.passe .jalon-point.has-examen { background: var(--bs-info); border-color: var(--bs-info); }
+.jalon-label { font-size: 11px; color: var(--bs-secondary-color); font-weight: 600; }
+.jalon-sub { margin-top: 4px; }
+</style>
+{% endblock %}

@@ -1,0 +1,226 @@
+import json
+from datetime import date
+from flask import Blueprint, render_template, redirect, url_for, flash, request, abort
+from flask_login import login_required, current_user
+from ...models import Traitement, Patient, SuiviDOT
+from ...extensions import db
+from .forms import TraitementForm, SuiviDOTForm, BilanInitialForm, GROUPES_MEDICAMENTS
+
+traitement_bp = Blueprint('traitement', __name__, url_prefix='/traitement')
+
+
+@traitement_bp.route('/')
+@login_required
+def liste():
+    traitements = Traitement.query.join(Patient).order_by(Traitement.date_debut.desc()).all()
+    # Nombre de prises DOT saisies aujourd'hui
+    nb_dot_aujourd_hui = SuiviDOT.query.filter(
+        SuiviDOT.date_observation == date.today()
+    ).count()
+    return render_template('traitement/liste.html',
+                           traitements=traitements,
+                           nb_dot_aujourd_hui=nb_dot_aujourd_hui)
+
+
+@traitement_bp.route('/ajouter/<int:patient_id>', methods=['GET', 'POST'])
+@login_required
+def ajouter(patient_id):
+    patient = Patient.query.get_or_404(patient_id)
+    form = TraitementForm()
+    if form.validate_on_submit():
+        # Récupération de la liste médicaments depuis le hidden field JSON
+        medicaments = []
+        raw = form.medicaments_json.data
+        if raw:
+            try:
+                medicaments = json.loads(raw)
+            except (ValueError, TypeError):
+                medicaments = []
+        traitement = Traitement(
+            patient_id=patient_id,
+            schema_nom=form.schema_nom.data,
+            phase=form.phase.data,
+            date_debut=form.date_debut.data,
+            date_fin_prevue=form.date_fin_prevue.data,
+            statut_traitement=form.statut_traitement.data,
+            observateur_nom=form.observateur_nom.data,
+            date_fin_reelle=form.date_fin_reelle.data,
+            motif_arret=form.motif_arret.data,
+            notes=form.notes.data,
+        )
+        traitement.medicaments = medicaments
+        db.session.add(traitement)
+        db.session.commit()
+        flash(f'Traitement enregistré pour {patient.code_patient}.', 'success')
+        return redirect(url_for('traitement.detail', traitement_id=traitement.id))
+    # Pré-remplir la date de début avec la date du jour
+    if not form.date_debut.data:
+        form.date_debut.data = date.today()
+    return render_template('traitement/ajouter.html',
+                           form=form,
+                           patient=patient,
+                           groupes_medicaments=GROUPES_MEDICAMENTS)
+
+
+@traitement_bp.route('/<int:traitement_id>/modifier', methods=['GET', 'POST'])
+@login_required
+def modifier(traitement_id):
+    traitement = Traitement.query.get_or_404(traitement_id)
+    patient = traitement.patient
+    form = TraitementForm(obj=traitement)
+    if request.method == 'GET':
+        # Pré-remplir le hidden field avec les médicaments actuels
+        form.medicaments_json.data = json.dumps(traitement.medicaments)
+    if form.validate_on_submit():
+        medicaments = []
+        raw = form.medicaments_json.data
+        if raw:
+            try:
+                medicaments = json.loads(raw)
+            except (ValueError, TypeError):
+                medicaments = []
+        traitement.schema_nom = form.schema_nom.data
+        traitement.phase = form.phase.data
+        traitement.date_debut = form.date_debut.data
+        traitement.date_fin_prevue = form.date_fin_prevue.data
+        traitement.statut_traitement = form.statut_traitement.data
+        traitement.observateur_nom = form.observateur_nom.data
+        traitement.date_fin_reelle = form.date_fin_reelle.data
+        traitement.motif_arret = form.motif_arret.data
+        traitement.notes = form.notes.data
+        traitement.medicaments = medicaments
+        db.session.commit()
+        flash('Traitement mis à jour.', 'success')
+        return redirect(url_for('traitement.detail', traitement_id=traitement.id))
+    return render_template('traitement/ajouter.html',
+                           form=form,
+                           patient=patient,
+                           traitement=traitement,
+                           groupes_medicaments=GROUPES_MEDICAMENTS,
+                           modification=True)
+
+
+@traitement_bp.route('/<int:traitement_id>/supprimer', methods=['POST'])
+@login_required
+def supprimer(traitement_id):
+    traitement = Traitement.query.get_or_404(traitement_id)
+    patient_id = traitement.patient_id
+    db.session.delete(traitement)
+    db.session.commit()
+    flash('Traitement supprimé.', 'info')
+    return redirect(url_for('patients.fiche', patient_id=patient_id))
+
+
+@traitement_bp.route('/<int:traitement_id>')
+@login_required
+def detail(traitement_id):
+    traitement = Traitement.query.get_or_404(traitement_id)
+    patient = traitement.patient
+
+    # Calcul du taux d'adhérence DOT sur 30 jours
+    taux_adherence = SuiviDOT.taux_adherence(patient.id, traitement_id, nb_jours=30)
+
+    # Dernières 30 prises DOT
+    dot_recent = SuiviDOT.query.filter_by(
+        traitement_id=traitement_id
+    ).order_by(SuiviDOT.date_observation.desc()).limit(30).all()
+
+    # Construction de la timeline M0-M18 (ou M0-M6 pour schéma court)
+    nb_mois = 18 if patient.schema_therapeutique == 'long' else 6
+    jalons = []
+    for m in range(nb_mois + 1):
+        if traitement.date_debut:
+            from datetime import timedelta
+            date_jalon = date(
+                traitement.date_debut.year,
+                traitement.date_debut.month,
+                1,
+            )
+            # Avancer de m mois
+            mois_total = date_jalon.month + m
+            annee = date_jalon.year + (mois_total - 1) // 12
+            mois = ((mois_total - 1) % 12) + 1
+            date_jalon = date(annee, mois, 1)
+        else:
+            date_jalon = None
+
+        # Examen labo du mois m pour ce patient
+        examen = None
+        for e in patient.examens_labo:
+            if e.mois_suivi == m:
+                examen = e
+                break
+
+        jalons.append({
+            'mois': m,
+            'date': date_jalon,
+            'examen': examen,
+            'passe': traitement.mois_ecoules >= m if traitement.date_debut else False,
+            'actuel': traitement.mois_ecoules == m,
+        })
+
+    return render_template('traitement/detail.html',
+                           traitement=traitement,
+                           patient=patient,
+                           jalons=jalons,
+                           nb_mois=nb_mois,
+                           taux_adherence=taux_adherence,
+                           dot_recent=dot_recent)
+
+
+@traitement_bp.route('/<int:traitement_id>/dot/ajouter', methods=['GET', 'POST'])
+@login_required
+def dot_ajouter(traitement_id):
+    traitement = Traitement.query.get_or_404(traitement_id)
+    patient = traitement.patient
+    form = SuiviDOTForm()
+    if not form.date_observation.data:
+        form.date_observation.data = date.today()
+    # Paramètre pour revenir à la fiche patient après saisie
+    depuis_fiche = request.args.get('depuis_fiche', '0')
+    if form.validate_on_submit():
+        medicaments_pris = traitement.medicaments if form.prise_confirmee.data else []
+        medicaments_omis = [] if form.prise_confirmee.data else traitement.medicaments
+
+        dot = SuiviDOT(
+            patient_id=patient.id,
+            traitement_id=traitement_id,
+            date_observation=form.date_observation.data,
+            prise_confirmee=form.prise_confirmee.data,
+            observateur_nom=form.observateur_nom.data,
+            observateur_role=form.observateur_role.data,
+            raison_omission=form.raison_omission.data if not form.prise_confirmee.data else None,
+            notes=form.notes.data,
+        )
+        dot.medicaments_pris = medicaments_pris
+        dot.medicaments_omis = medicaments_omis
+        db.session.add(dot)
+        db.session.commit()
+        statut = 'confirmée' if form.prise_confirmee.data else 'non confirmée'
+        flash(f'Prise DOT du {form.date_observation.data.strftime("%d/%m/%Y")} ({statut}) enregistrée.', 'success')
+        retour = request.form.get('depuis_fiche', '0')
+        if retour == '1':
+            return redirect(url_for('patients.fiche', patient_id=patient.id,
+                                    _anchor='tab-dot'))
+        return redirect(url_for('traitement.detail', traitement_id=traitement_id))
+    return render_template('traitement/dot_ajouter.html',
+                           form=form,
+                           traitement=traitement,
+                           patient=patient,
+                           depuis_fiche=depuis_fiche)
+
+
+@traitement_bp.route('/<int:traitement_id>/dot/historique')
+@login_required
+def dot_historique(traitement_id):
+    traitement = Traitement.query.get_or_404(traitement_id)
+    patient = traitement.patient
+    dots = SuiviDOT.query.filter_by(
+        traitement_id=traitement_id
+    ).order_by(SuiviDOT.date_observation.desc()).all()
+    taux = SuiviDOT.taux_adherence(patient.id, traitement_id, nb_jours=30)
+    return render_template('traitement/dot_historique.html',
+                           traitement=traitement,
+                           patient=patient,
+                           dots=dots,
+                           taux_adherence=taux)

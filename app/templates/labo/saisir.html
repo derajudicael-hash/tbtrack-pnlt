@@ -1,0 +1,229 @@
+{% extends 'base.html' %}
+{% block title %}Saisir résultats{% endblock %}
+{% block breadcrumb %}<a href="{{ url_for('dashboard.index') }}">Accueil</a> / <a href="{{ url_for('labo.index') }}">Laboratoire</a> / Saisir résultats{% endblock %}
+{% block page_title %}Saisie des résultats{% endblock %}
+{% block page_subtitle %}Enregistrement des examens bactériologiques — Guide PNLT Madagascar 2021{% endblock %}
+
+{% block content %}
+<form method="POST" novalidate>
+  {{ form.hidden_tag() }}
+  {% if retour_patient_id %}
+  <input type="hidden" name="retour_patient_id" value="{{ retour_patient_id }}">
+  {% endif %}
+
+  <div class="row g-4">
+
+    <!-- Colonne gauche -->
+    <div class="col-12 col-lg-4">
+
+      <!-- Identification -->
+      <div class="card-panel mb-4">
+        <div class="panel-header"><i class="fa fa-id-card me-2"></i>Identification</div>
+        <div class="panel-body">
+          <div class="mb-3">
+            {{ form.patient_id.label(class='form-label fw-semibold') }}
+            {{ form.patient_id(class='form-select' + (' is-invalid' if form.patient_id.errors else '')) }}
+            {% for e in form.patient_id.errors %}
+              <div class="invalid-feedback">{{ e }}</div>
+            {% endfor %}
+          </div>
+          <div class="mb-3">
+            {{ form.mois_suivi.label(class='form-label fw-semibold') }}
+            <div class="input-group">
+              <span class="input-group-text fw-bold">M</span>
+              {{ form.mois_suivi(class='form-control' + (' is-invalid' if form.mois_suivi.errors else ''),
+                                 placeholder='Ex: 0, 2, 5, 6...') }}
+            </div>
+            <div class="form-text text-muted">M0=diagnostic · M2=pivot intensif · M5,M6=continuation</div>
+            {% for e in form.mois_suivi.errors %}
+              <div class="text-danger small">{{ e }}</div>
+            {% endfor %}
+          </div>
+          <div class="mb-3">
+            {{ form.date_prelevement.label(class='form-label fw-semibold') }}
+            {{ form.date_prelevement(class='form-control' + (' is-invalid' if form.date_prelevement.errors else '')) }}
+          </div>
+          <div class="mb-0">
+            {{ form.date_resultat.label(class='form-label fw-semibold') }}
+            {{ form.date_resultat(class='form-control') }}
+            <div class="form-text text-muted">Laisser vide si résultat non encore disponible</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Notes -->
+      <div class="card-panel">
+        <div class="panel-header"><i class="fa fa-comment-medical me-2"></i>Observations</div>
+        <div class="panel-body">
+          {{ form.notes(class='form-control', rows=4, placeholder='Observations techniques, remarques...') }}
+        </div>
+      </div>
+    </div>
+
+    <!-- Colonne droite -->
+    <div class="col-12 col-lg-8">
+
+      <!-- GeneXpert -->
+      <div class="card-panel mb-4">
+        <div class="panel-header">
+          <i class="fa fa-dna me-2" style="color:#8b5cf6"></i>GeneXpert MTB/RIF
+          <span class="badge bg-purple ms-2" style="background:#8b5cf6">Diagnostic</span>
+        </div>
+        <div class="panel-body">
+          <div class="form-check mb-3">
+            {{ form.genexpert_effectue(class='form-check-input', id='genexpert_effectue') }}
+            <label class="form-check-label fw-semibold" for="genexpert_effectue">
+              GeneXpert effectué pour ce prélèvement
+            </label>
+          </div>
+          <div id="genexpert-fields" class="row g-3">
+            <div class="col-6">
+              <label class="form-label small text-muted">Résultat MTB</label>
+              {{ form.genexpert_resultat(class='form-select') }}
+            </div>
+            <div class="col-6">
+              <label class="form-label small text-muted">Résistance Rifampicine</label>
+              {{ form.genexpert_resistance_rif(class='form-select') }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Frottis -->
+      <div class="card-panel mb-4">
+        <div class="panel-header">
+          <i class="fa fa-microscope me-2" style="color:#3b82f6"></i>Frottis — Microscopie directe
+        </div>
+        <div class="panel-body">
+          <div class="form-check mb-3">
+            {{ form.frottis_effectue(class='form-check-input', id='frottis_effectue') }}
+            <label class="form-check-label fw-semibold" for="frottis_effectue">
+              Frottis effectué (BAAR Ziehl-Neelsen ou fluorescence)
+            </label>
+          </div>
+          <div id="frottis-fields" class="row g-3">
+            <div class="col-6">
+              <label class="form-label small text-muted">Résultat BAAR</label>
+              {{ form.frottis_resultat(class='form-select') }}
+            </div>
+            <div class="col-6">
+              <label class="form-label small text-muted">Charge bacillaire (si positif)</label>
+              {{ form.frottis_quantite(class='form-select') }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Culture -->
+      <div class="card-panel mb-4">
+        <div class="panel-header">
+          <i class="fa fa-vial me-2" style="color:#10b981"></i>Culture mycobactérienne
+        </div>
+        <div class="panel-body">
+          <div class="form-check mb-3">
+            {{ form.culture_effectuee(class='form-check-input', id='culture_effectuee') }}
+            <label class="form-check-label fw-semibold" for="culture_effectuee">
+              Culture effectuée
+            </label>
+          </div>
+          <div id="culture-fields" class="row g-3">
+            <div class="col-6">
+              <label class="form-label small text-muted">Résultat culture</label>
+              {{ form.culture_resultat(class='form-select') }}
+            </div>
+            <div class="col-6">
+              <label class="form-label small text-muted">Milieu utilisé</label>
+              {{ form.culture_milieu(class='form-select') }}
+            </div>
+          </div>
+          <div class="alert alert-info mt-3 mb-0 small">
+            <i class="fa fa-circle-info me-1"></i>
+            La conversion bactériologique est définie par 2 cultures négatives consécutives.
+            M2 est le mois pivot pour les schémas courts.
+          </div>
+        </div>
+      </div>
+
+      <!-- DST -->
+      <div class="card-panel mb-4">
+        <div class="panel-header">
+          <i class="fa fa-shield-halved me-2" style="color:#ef4444"></i>Antibiogramme (DST)
+          <span class="badge bg-danger ms-2">Drug Susceptibility Testing</span>
+        </div>
+        <div class="panel-body">
+          <div class="form-check mb-3">
+            {{ form.dst_effectue(class='form-check-input', id='dst_effectue') }}
+            <label class="form-check-label fw-semibold" for="dst_effectue">
+              DST / Antibiogramme effectué
+            </label>
+          </div>
+          <div id="dst-fields">
+            <div class="row g-2">
+              <div class="col-6 col-md-3">
+                <label class="form-label small text-muted">H · Isoniazide</label>
+                {{ form.dst_isoniazide(class='form-select form-select-sm') }}
+              </div>
+              <div class="col-6 col-md-3">
+                <label class="form-label small text-muted">R · Rifampicine</label>
+                {{ form.dst_rifampicine(class='form-select form-select-sm') }}
+              </div>
+              <div class="col-6 col-md-3">
+                <label class="form-label small text-muted">E · Ethambutol</label>
+                {{ form.dst_ethambutol(class='form-select form-select-sm') }}
+              </div>
+              <div class="col-6 col-md-3">
+                <label class="form-label small text-muted">Z · Pyrazinamide</label>
+                {{ form.dst_pyrazinamide(class='form-select form-select-sm') }}
+              </div>
+              <div class="col-6 col-md-3">
+                <label class="form-label small text-muted">Lfx · Lévofloxacine</label>
+                {{ form.dst_levofloxacine(class='form-select form-select-sm') }}
+              </div>
+              <div class="col-6 col-md-3">
+                <label class="form-label small text-muted">Mfx · Moxifloxacine</label>
+                {{ form.dst_moxifloxacine(class='form-select form-select-sm') }}
+              </div>
+              <div class="col-6 col-md-3">
+                <label class="form-label small text-muted">Bdq · Bedaquiline</label>
+                {{ form.dst_bedaquiline(class='form-select form-select-sm') }}
+              </div>
+              <div class="col-6 col-md-3">
+                <label class="form-label small text-muted">Lzd · Linézolide</label>
+                {{ form.dst_linezolide(class='form-select form-select-sm') }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="d-flex gap-2 justify-content-end">
+        <a href="{{ url_for('labo.index') }}" class="btn btn-outline-secondary">
+          <i class="fa fa-arrow-left me-1"></i>Annuler
+        </a>
+        {{ form.submit(class='btn btn-primary px-4') }}
+      </div>
+
+    </div>
+  </div>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function toggleSection(checkboxId, sectionId) {
+  const cb = document.getElementById(checkboxId);
+  const section = document.getElementById(sectionId);
+  if (cb && section) {
+    section.style.opacity = cb.checked ? '1' : '0.4';
+    section.querySelectorAll('select, input').forEach(el => el.disabled = !cb.checked);
+  }
+}
+
+['genexpert_effectue', 'frottis_effectue', 'culture_effectuee', 'dst_effectue'].forEach(id => {
+  const sectionId = id.replace('_effectue', '').replace('effectuee', '') + '-fields';
+  toggleSection(id, sectionId);
+  document.getElementById(id)?.addEventListener('change', () => toggleSection(id, sectionId));
+});
+</script>
+{% endblock %}

@@ -1,0 +1,315 @@
+{% extends 'base.html' %}
+{% block title %}Rapport Annuel TB-MR — {{ year }}{% endblock %}
+{% block breadcrumb %}
+  <a href="{{ url_for('dashboard.index') }}">Accueil</a> /
+  <a href="{{ url_for('rapports.index') }}">Rapports</a> /
+  Rapport annuel
+{% endblock %}
+{% block page_title %}Rapport Annuel Résultats TB-MR{% endblock %}
+{% block page_subtitle %}Année {{ year }} — {{ total }} patient(s) enregistré(s){% endblock %}
+
+{% block head %}
+<style>
+@media print {
+  .sidebar, .topbar, .page-header-actions, .btn, .no-print { display: none !important; }
+  .main-wrapper { margin-left: 0 !important; }
+  .card-panel { break-inside: avoid; border: 1px solid #ccc !important; }
+  body { background: #fff !important; color: #000 !important; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+
+{# ── Sélecteur année + actions ── #}
+<div class="card-panel mb-4 no-print">
+  <div class="panel-body">
+    <form method="get" class="row g-2 align-items-end">
+      <div class="col-auto">
+        <label class="form-label small fw-semibold mb-1">Année</label>
+        <select name="annee" class="form-select form-select-sm" style="width:auto">
+          {% for a in annees %}
+          <option value="{{ a }}" {% if a == year %}selected{% endif %}>{{ a }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-auto">
+        <button type="submit" class="btn btn-primary btn-sm">
+          <i class="fa fa-filter me-1"></i>Afficher
+        </button>
+      </div>
+      <div class="col-auto ms-auto d-flex gap-2">
+        <a href="{{ url_for('rapports.annuel_csv', annee=year) }}" class="btn btn-outline-success btn-sm">
+          <i class="fa fa-file-csv me-1"></i>Exporter CSV
+        </a>
+        <button onclick="window.print()" class="btn btn-outline-secondary btn-sm">
+          <i class="fa fa-print me-1"></i>Imprimer
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{# ── KPI ── #}
+<div class="row g-4 mb-4">
+  <div class="col-6 col-lg-3">
+    <div class="rapport-stat-card">
+      <div class="rs-value">{{ total }}</div>
+      <div class="rs-label">Patients enregistrés</div>
+    </div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="rapport-stat-card rs-success">
+      <div class="rs-value">{{ succes }}</div>
+      <div class="rs-label">Succès thérapeutiques</div>
+      <div class="rs-sub">{{ taux_succes }}% taux de succès</div>
+    </div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="rapport-stat-card rs-danger">
+      <div class="rs-value">{{ defavorables }}</div>
+      <div class="rs-label">Résultats défavorables</div>
+      <div class="rs-sub">PDV + Échec + Décédé</div>
+    </div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="rapport-stat-card rs-warning">
+      <div class="rs-value">{{ vih_pos }}</div>
+      <div class="rs-label">Co-infection VIH</div>
+      <div class="rs-sub">{{ taux_vih }}% de la cohorte</div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4 mb-4">
+  {# ── Résultats de traitement ── #}
+  <div class="col-12 col-lg-7">
+    <div class="card-panel">
+      <div class="panel-header">
+        <i class="fa fa-table-list me-2"></i>Résultats de traitement {{ year }}
+      </div>
+      <div class="panel-body">
+        {% set statut_rows = [
+          ('gueri',        'Guéri',              'success'),
+          ('termine',      'Traitement terminé', 'secondary'),
+          ('perdu_de_vue', 'Perdu de vue',        'warning'),
+          ('echec',        'Échec thérapeutique', 'danger'),
+          ('decede',       'Décédé',              'dark'),
+          ('transfert',    'Transféré',           'info'),
+          ('non_evalue',   'Non évalué',          'light'),
+          ('en_cours',     'En cours',            'primary'),
+        ] %}
+        <table class="table table-bordered mb-3">
+          <thead class="table-head">
+            <tr><th>Résultat</th><th class="text-center">Nombre</th><th class="text-center">%</th></tr>
+          </thead>
+          <tbody>
+            {% for key, label, col in statut_rows %}
+            {% set val = par_statut.get(key, 0) %}
+            <tr>
+              <td><span class="badge bg-{{ col }}">{{ label }}</span></td>
+              <td class="text-center fw-bold">{{ val }}</td>
+              <td class="text-center text-muted">{{ (val / total * 100) | round(1) if total else 0 }}%</td>
+            </tr>
+            {% endfor %}
+            <tr class="table-light fw-bold">
+              <td>Total</td>
+              <td class="text-center">{{ total }}</td>
+              <td class="text-center">100%</td>
+            </tr>
+          </tbody>
+        </table>
+
+        {# Taux de succès barre #}
+        <div class="small fw-semibold mb-1">Taux de succès thérapeutique</div>
+        <div class="progress mb-1" style="height:14px">
+          <div class="progress-bar bg-success" style="width:{{ taux_succes }}%">
+            {% if taux_succes >= 20 %}{{ taux_succes }}%{% endif %}
+          </div>
+        </div>
+        <div class="small text-muted">{{ taux_succes }}% — Objectif OMS End TB : ≥ 75%</div>
+      </div>
+    </div>
+  </div>
+
+  {# ── VIH + sexe ── #}
+  <div class="col-12 col-lg-5">
+    <div class="card-panel mb-4">
+      <div class="panel-header"><i class="fa fa-virus me-2"></i>Co-infection VIH</div>
+      <div class="panel-body">
+        {% if total == 0 %}
+          <div class="text-muted text-center py-2 small">Aucune donnée</div>
+        {% else %}
+        <div class="row g-2 text-center mb-3">
+          <div class="col-4">
+            <div class="pmdt-mini-card">
+              <div class="fw-bold text-danger fs-4">{{ vih_pos }}</div>
+              <div class="small text-muted">Positif</div>
+            </div>
+          </div>
+          <div class="col-4">
+            <div class="pmdt-mini-card">
+              <div class="fw-bold text-success fs-4">{{ vih_neg }}</div>
+              <div class="small text-muted">Négatif</div>
+            </div>
+          </div>
+          <div class="col-4">
+            <div class="pmdt-mini-card">
+              <div class="fw-bold text-secondary fs-4">{{ vih_inc }}</div>
+              <div class="small text-muted">Inconnu</div>
+            </div>
+          </div>
+        </div>
+        <div class="progress" style="height:16px">
+          <div class="progress-bar bg-danger"    style="width:{{ (vih_pos/total*100)|round(1) if total else 0 }}%" title="Positif"></div>
+          <div class="progress-bar bg-success"   style="width:{{ (vih_neg/total*100)|round(1) if total else 0 }}%" title="Négatif"></div>
+          <div class="progress-bar bg-secondary" style="width:{{ (vih_inc/total*100)|round(1) if total else 0 }}%" title="Inconnu"></div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="card-panel">
+      <div class="panel-header"><i class="fa fa-venus-mars me-2"></i>Sexe & effets sévères</div>
+      <div class="panel-body">
+        {% if total > 0 %}
+        <div class="row g-2 text-center mb-3">
+          <div class="col-6">
+            <div class="pmdt-mini-card">
+              <div class="fw-bold text-primary fs-3">{{ hommes }}</div>
+              <div class="small text-muted">Hommes ({{ (hommes/total*100)|round(0)|int if total else 0 }}%)</div>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="pmdt-mini-card">
+              <div class="fw-bold text-danger fs-3">{{ femmes }}</div>
+              <div class="small text-muted">Femmes ({{ (femmes/total*100)|round(0)|int if total else 0 }}%)</div>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+        <hr>
+        <div class="d-flex justify-content-between align-items-center">
+          <span class="small fw-semibold">Effets indésirables sévères</span>
+          <span class="badge bg-danger fs-6">{{ effets_severes }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4 mb-4">
+  {# ── Par type de résistance ── #}
+  <div class="col-12 col-lg-6">
+    <div class="card-panel">
+      <div class="panel-header"><i class="fa fa-dna me-2"></i>Par type de résistance</div>
+      <div class="panel-body">
+        {% if total == 0 %}
+          <div class="text-muted text-center py-2 small">Aucune donnée</div>
+        {% else %}
+        {% set res_colors = {'RR-TB': 'info', 'TB-MR': 'warning', 'pre-XDR': 'orange', 'XDR': 'danger', 'Autre / Non précisé': 'secondary'} %}
+        <table class="table table-bordered mb-0">
+          <thead class="table-head">
+            <tr><th>Type</th><th class="text-center">Nombre</th><th class="text-center">%</th></tr>
+          </thead>
+          <tbody>
+            {% for r, nb in par_resistance.items() %}
+            {% if nb > 0 %}
+            <tr>
+              <td><span class="badge bg-{{ res_colors.get(r, 'secondary') }}">{{ r }}</span></td>
+              <td class="text-center fw-bold">{{ nb }}</td>
+              <td class="text-center text-muted">{{ (nb / total * 100) | round(1) }}%</td>
+            </tr>
+            {% endif %}
+            {% endfor %}
+          </tbody>
+        </table>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  {# ── Par catégorie ── #}
+  <div class="col-12 col-lg-6">
+    <div class="card-panel">
+      <div class="panel-header"><i class="fa fa-layer-group me-2"></i>Par catégorie de cas</div>
+      <div class="panel-body">
+        {% if total == 0 %}
+          <div class="text-muted text-center py-2 small">Aucune donnée</div>
+        {% else %}
+        <table class="table table-bordered mb-0">
+          <thead class="table-head">
+            <tr><th>Catégorie</th><th class="text-center">Nombre</th><th class="text-center">%</th></tr>
+          </thead>
+          <tbody>
+            {% for label, nb in par_categorie.items() %}
+            {% if nb > 0 %}
+            <tr>
+              <td class="small">{{ label }}</td>
+              <td class="text-center fw-bold">{{ nb }}</td>
+              <td class="text-center text-muted">{{ (nb / total * 100) | round(1) }}%</td>
+            </tr>
+            {% endif %}
+            {% endfor %}
+          </tbody>
+        </table>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+{# ── Enrôlement mensuel ── #}
+<div class="card-panel mb-4">
+  <div class="panel-header"><i class="fa fa-chart-bar me-2"></i>Enrôlement mensuel {{ year }}</div>
+  <div class="panel-body">
+    {% set mois_noms = ['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'] %}
+    {% set max_mois = par_mois | max %}
+    {% if max_mois == 0 %}
+      <div class="text-muted text-center py-2 small">
+        Aucun patient avec date de diagnostic en {{ year }}.
+        {% if total > 0 %}<br>{{ total }} patient(s) affiché(s) sans date de diagnostic.{% endif %}
+      </div>
+    {% else %}
+    <div class="table-responsive">
+      <table class="table table-bordered mb-0" style="font-size:.85rem">
+        <thead class="table-head">
+          <tr>
+            {% for m in mois_noms %}<th class="text-center" style="min-width:55px">{{ m }}</th>{% endfor %}
+            <th class="text-center">Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            {% for nb in par_mois %}
+            <td class="text-center fw-bold {% if nb == max_mois and nb > 0 %}text-success{% endif %}">
+              {{ nb if nb > 0 else '—' }}
+            </td>
+            {% endfor %}
+            <td class="text-center fw-bold">{{ par_mois | sum }}</td>
+          </tr>
+          <tr>
+            {% for nb in par_mois %}
+            <td class="p-1">
+              {% if max_mois > 0 %}
+              <div class="bg-primary rounded" style="height:{{ ((nb / max_mois) * 40) | int }}px; min-height:2px"></div>
+              {% endif %}
+            </td>
+            {% endfor %}
+            <td></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+{% if total == 0 %}
+<div class="alert alert-info">
+  <i class="fa fa-circle-info me-2"></i>
+  Aucun patient enregistré pour l'année {{ year }}. Sélectionnez une autre année.
+</div>
+{% endif %}
+
+{% endblock %}

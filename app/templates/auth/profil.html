@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+{% block title %}Mon profil{% endblock %}
+{% block breadcrumb %}<a href="{{ url_for('dashboard.index') }}">Accueil</a> / Mon profil{% endblock %}
+{% block page_title %}Mon profil{% endblock %}
+{% block page_subtitle %}{{ current_user.email }} · {{ current_user.role_label }}{% endblock %}
+
+{% block content %}
+<div class="row g-4 justify-content-center">
+  <div class="col-12 col-lg-7">
+
+    <!-- Carte identité -->
+    <div class="card-panel mb-4">
+      <div class="panel-header"><i class="fa fa-id-card me-2"></i>Informations personnelles</div>
+      <div class="panel-body">
+        <form method="POST" novalidate>
+          {{ form.hidden_tag() }}
+
+          <div class="row g-3 mb-3">
+            <div class="col-6">
+              <label class="form-label fw-semibold">{{ form.prenom.label.text }}</label>
+              {{ form.prenom(class='form-control' + (' is-invalid' if form.prenom.errors else '')) }}
+              {% if form.prenom.errors %}<div class="invalid-feedback">{{ form.prenom.errors[0] }}</div>{% endif %}
+            </div>
+            <div class="col-6">
+              <label class="form-label fw-semibold">{{ form.nom.label.text }}</label>
+              {{ form.nom(class='form-control' + (' is-invalid' if form.nom.errors else '')) }}
+              {% if form.nom.errors %}<div class="invalid-feedback">{{ form.nom.errors[0] }}</div>{% endif %}
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold"><i class="fa fa-envelope me-1 opacity-50"></i>Email</label>
+            <input type="text" class="form-control" value="{{ current_user.email }}" disabled>
+            <div class="form-text">L'adresse email ne peut pas être modifiée.</div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold"><i class="fa fa-user-tag me-1 opacity-50"></i>Rôle</label>
+            <input type="text" class="form-control" value="{{ current_user.role_label }}" disabled>
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label fw-semibold"><i class="fa fa-hospital me-1 opacity-50"></i>{{ form.centre.label.text }}</label>
+            {{ form.centre(class='form-control' + (' is-invalid' if form.centre.errors else '')) }}
+            {% if form.centre.errors %}<div class="invalid-feedback">{{ form.centre.errors[0] }}</div>{% endif %}
+          </div>
+
+          <hr>
+          <div class="mb-1 fw-semibold text-muted small text-uppercase"><i class="fa fa-lock me-1"></i>Changer le mot de passe</div>
+          <div class="form-text mb-3">Laissez vide si vous ne souhaitez pas modifier votre mot de passe.</div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">{{ form.mot_de_passe_actuel.label.text }}</label>
+            <div class="input-group">
+              {{ form.mot_de_passe_actuel(id='pwdActuel', class='form-control' + (' is-invalid' if form.mot_de_passe_actuel.errors else ''), placeholder='••••••••', autocomplete='current-password') }}
+              <button class="pass-toggle-btn" type="button" onclick="togglePass('pwdActuel','eyeActuel')" aria-label="Afficher">
+                <i class="fa fa-eye" id="eyeActuel"></i>
+              </button>
+            </div>
+            {% if form.mot_de_passe_actuel.errors %}<div class="invalid-feedback d-block">{{ form.mot_de_passe_actuel.errors[0] }}</div>{% endif %}
+          </div>
+
+          <div class="row g-3 mb-4">
+            <div class="col-6">
+              <label class="form-label fw-semibold">{{ form.nouveau_mot_de_passe.label.text }}</label>
+              <div class="input-group">
+                {{ form.nouveau_mot_de_passe(id='pwdNew', class='form-control' + (' is-invalid' if form.nouveau_mot_de_passe.errors else ''), placeholder='••••••••', autocomplete='new-password') }}
+                <button class="pass-toggle-btn" type="button" onclick="togglePass('pwdNew','eyeNew')" aria-label="Afficher">
+                  <i class="fa fa-eye" id="eyeNew"></i>
+                </button>
+              </div>
+              {% if form.nouveau_mot_de_passe.errors %}<div class="invalid-feedback d-block">{{ form.nouveau_mot_de_passe.errors[0] }}</div>{% endif %}
+            </div>
+            <div class="col-6">
+              <label class="form-label fw-semibold">{{ form.confirmer.label.text }}</label>
+              <div class="input-group">
+                {{ form.confirmer(id='pwdConfirm', class='form-control' + (' is-invalid' if form.confirmer.errors else ''), placeholder='••••••••', autocomplete='new-password') }}
+                <button class="pass-toggle-btn" type="button" onclick="togglePass('pwdConfirm','eyeConfirm2')" aria-label="Afficher">
+                  <i class="fa fa-eye" id="eyeConfirm2"></i>
+                </button>
+              </div>
+              {% if form.confirmer.errors %}<div class="invalid-feedback d-block">{{ form.confirmer.errors[0] }}</div>{% endif %}
+            </div>
+          </div>
+
+          {{ form.submit(class='btn btn-primary px-5') }}
+        </form>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function togglePass(inputId, iconId) {
+  const input = document.getElementById(inputId);
+  const icon  = document.getElementById(iconId);
+  if (input.type === 'password') {
+    input.type = 'text';
+    icon.className = 'fa fa-eye-slash';
+  } else {
+    input.type = 'password';
+    icon.className = 'fa fa-eye';
+  }
+}
+</script>
+{% endblock %}

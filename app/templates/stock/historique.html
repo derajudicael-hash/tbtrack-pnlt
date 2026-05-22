@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% block title %}Historique stock — {{ med.nom }}{% endblock %}
+{% block breadcrumb %}
+  <a href="{{ url_for('dashboard.index') }}">Accueil</a> /
+  <a href="{{ url_for('stock.inventaire') }}">Stock</a> /
+  {{ med.nom }} / Historique
+{% endblock %}
+{% block page_title %}Historique des mouvements{% endblock %}
+{% block page_subtitle %}{{ med.nom }} — Stock actuel : {{ med.quantite_stock }} {{ med.unite }}{% endblock %}
+{% block page_actions %}
+  <a href="{{ url_for('stock.mouvement', med_id=med.id) }}" class="btn btn-primary">
+    <i class="fa fa-plus me-2"></i>Nouveau mouvement
+  </a>
+{% endblock %}
+
+{% block content %}
+<div class="card-panel">
+  <div class="panel-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-head">
+          <tr>
+            <th>Date</th>
+            <th>Type</th>
+            <th>Quantité</th>
+            <th>Stock avant</th>
+            <th>Stock après</th>
+            <th>Référence</th>
+            <th>Motif</th>
+            <th>Utilisateur</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for mv in mouvements %}
+          <tr>
+            <td class="small">{{ mv.date_mouvement.strftime('%d/%m/%Y %H:%M') }}</td>
+            <td><span class="badge bg-{{ mv.type_badge }}">{{ mv.type_label }}</span></td>
+            <td class="fw-semibold {% if mv.type_mouvement == 'entree' %}text-success{% elif mv.type_mouvement != 'ajustement' %}text-danger{% endif %}">
+              {% if mv.type_mouvement == 'entree' %}+{% elif mv.type_mouvement != 'ajustement' %}−{% endif %}{{ mv.quantite }} {{ med.unite }}
+            </td>
+            <td class="small text-muted">{{ mv.quantite_avant }}</td>
+            <td class="small fw-bold">{{ mv.quantite_apres }}</td>
+            <td class="small text-muted">{{ mv.reference_bon or '—' }}</td>
+            <td class="small text-muted">{{ mv.motif or '—' }}</td>
+            <td class="small">{{ mv.utilisateur.full_name if mv.utilisateur else '—' }}</td>
+          </tr>
+          {% else %}
+          <tr><td colspan="8" class="text-center text-muted py-4">Aucun mouvement enregistré.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="panel-footer text-muted small">
+    {{ mouvements | length }} mouvement(s)
+  </div>
+</div>
+{% endblock %}

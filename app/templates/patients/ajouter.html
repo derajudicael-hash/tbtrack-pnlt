@@ -1,0 +1,158 @@
+{% extends 'base.html' %}
+{% block title %}{{ titre }}{% endblock %}
+{% block breadcrumb %}<a href="{{ url_for('dashboard.index') }}">Accueil</a> / <a href="{{ url_for('patients.liste') }}">Patients</a> / {{ titre }}{% endblock %}
+{% block page_title %}{{ titre }}{% endblock %}
+{% block page_subtitle %}Remplir toutes les informations du patient TB-MR{% endblock %}
+
+{% block content %}
+<form method="POST">
+  {{ form.hidden_tag() }}
+  <div class="row g-4">
+
+    <!-- Identité -->
+    <div class="col-12 col-lg-6">
+      <div class="card-panel">
+        <div class="panel-header"><i class="fa fa-id-card me-2"></i>Identité du patient</div>
+        <div class="panel-body">
+          <div class="row g-3">
+            <div class="col-6">
+              <label class="form-label">{{ form.prenom.label }}</label>
+              {{ form.prenom(class='form-control') }}
+            </div>
+            <div class="col-6">
+              <label class="form-label">{{ form.nom.label }}</label>
+              {{ form.nom(class='form-control', placeholder='En majuscules') }}
+            </div>
+            <div class="col-6">
+              <label class="form-label">{{ form.date_naissance.label }}</label>
+              {{ form.date_naissance(class='form-control', type='date') }}
+            </div>
+            <div class="col-6">
+              <label class="form-label">{{ form.sexe.label }}</label>
+              {{ form.sexe(class='form-select') }}
+            </div>
+            <div class="col-6">
+              <label class="form-label">{{ form.telephone.label }}</label>
+              {{ form.telephone(class='form-control', placeholder='034 XX XXX XX') }}
+            </div>
+            <div class="col-6">
+              <label class="form-label">{{ form.poids.label }}</label>
+              {{ form.poids(class='form-control', placeholder='ex: 58.5') }}
+            </div>
+            <div class="col-12">
+              <label class="form-label">{{ form.adresse.label }}</label>
+              {{ form.adresse(class='form-control') }}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Diagnostic -->
+    <div class="col-12 col-lg-6">
+      <div class="card-panel">
+        <div class="panel-header"><i class="fa fa-microscope me-2"></i>Diagnostic & Résistance</div>
+        <div class="panel-body">
+          <div class="row g-3">
+            <div class="col-6">
+              <label class="form-label">{{ form.date_diagnostic.label }}</label>
+              {{ form.date_diagnostic(class='form-control', type='date') }}
+            </div>
+            <div class="col-6">
+              <label class="form-label">{{ form.statut_vih.label }}</label>
+              {{ form.statut_vih(class='form-select') }}
+            </div>
+            <div class="col-6">
+              <label class="form-label">{{ form.type_resistance.label }}</label>
+              {{ form.type_resistance(class='form-select') }}
+            </div>
+            <div class="col-6">
+              <label class="form-label">{{ form.categorie.label }}</label>
+              {{ form.categorie(class='form-select') }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card-panel mt-4">
+        <div class="panel-header"><i class="fa fa-pills me-2"></i>Traitement</div>
+        <div class="panel-body">
+          <div class="row g-3">
+            <div class="col-6">
+              <label class="form-label">{{ form.schema_therapeutique.label }}</label>
+              {{ form.schema_therapeutique(class='form-select') }}
+            </div>
+            <div class="col-6">
+              <label class="form-label">{{ form.statut.label }}</label>
+              {{ form.statut(class='form-select') }}
+            </div>
+            <div class="col-12">
+              <label class="form-label">{{ form.date_debut_traitement.label }}</label>
+              {{ form.date_debut_traitement(class='form-control', type='date') }}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notes -->
+    <div class="col-12">
+      <div class="card-panel">
+        <div class="panel-header"><i class="fa fa-notes-medical me-2"></i>Notes cliniques</div>
+        <div class="panel-body">
+          {{ form.notes_cliniques(class='form-control', rows=4, placeholder='Observations cliniques, antécédents, particularités…') }}
+        </div>
+      </div>
+    </div>
+
+    <!-- Sortie — visible uniquement si statut ≠ 'en_cours' -->
+    <div class="col-12" id="sortieSection" style="display:none">
+      <div class="card-panel border-warning">
+        <div class="panel-header text-warning"><i class="fa fa-door-open me-2"></i>Informations de sortie</div>
+        <div class="panel-body">
+          <div class="row g-3">
+            <div class="col-12 col-md-4">
+              <label class="form-label">{{ form.date_sortie.label }}</label>
+              {{ form.date_sortie(class='form-control', type='date') }}
+            </div>
+            <div class="col-12 col-md-8" id="transfertField" style="display:none">
+              <label class="form-label">{{ form.centre_transfert.label }}</label>
+              {{ form.centre_transfert(class='form-control', placeholder='Nom du centre de transfert…') }}
+            </div>
+            <div class="col-12">
+              <label class="form-label">{{ form.motif_sortie.label }}</label>
+              {{ form.motif_sortie(class='form-control', rows=3, placeholder='Observations, raison de sortie…') }}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 d-flex justify-content-end gap-2">
+      <a href="{{ url_for('patients.liste') }}" class="btn btn-outline-secondary">Annuler</a>
+      {{ form.submit(class='btn btn-primary px-5') }}
+    </div>
+  </div>
+</form>
+
+{% block scripts %}
+<script>
+(function() {
+  var statutSel = document.querySelector('[name="statut"]');
+  var sortieSection = document.getElementById('sortieSection');
+  var transfertField = document.getElementById('transfertField');
+
+  function updateSortie() {
+    var v = statutSel ? statutSel.value : '';
+    sortieSection.style.display = (v && v !== 'en_cours') ? '' : 'none';
+    transfertField.style.display = (v === 'transfert') ? '' : 'none';
+  }
+
+  if (statutSel) {
+    statutSel.addEventListener('change', updateSortie);
+    updateSortie();
+  }
+})();
+</script>
+{% endblock %}
+{% endblock %}

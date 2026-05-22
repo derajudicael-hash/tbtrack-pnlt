@@ -1,0 +1,163 @@
+{% extends 'base.html' %}
+{% block title %}Rapports PNLT{% endblock %}
+{% block breadcrumb %}<a href="{{ url_for('dashboard.index') }}">Accueil</a> / Rapports PNLT{% endblock %}
+{% block page_title %}Rapports PNLT — {{ trimestre }}{% endblock %}
+{% block page_subtitle %}Analyse de cohorte et indicateurs PMDT — Programme National de Lutte contre la Tuberculose{% endblock %}
+
+{% block head %}
+<style>
+@media print {
+  .sidebar, .topbar, .page-header-actions, .btn, .alert { display: none !important; }
+  .main-wrapper { margin-left: 0 !important; }
+  .card-panel { break-inside: avoid; border: 1px solid #ccc !important; }
+  body { background: #fff !important; color: #000 !important; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Actions export -->
+<div class="d-flex justify-content-end gap-2 mb-3 no-print">
+  <a href="{{ url_for('rapports.export_csv') }}" class="btn btn-outline-success btn-sm">
+    <i class="fa fa-file-csv me-1"></i>Exporter CSV (Excel)
+  </a>
+  <button onclick="window.print()" class="btn btn-outline-secondary btn-sm">
+    <i class="fa fa-print me-1"></i>Imprimer / PDF
+  </button>
+</div>
+
+<!-- Indicateurs clés -->
+<div class="row g-4 mb-4">
+  <div class="col-6 col-lg-3">
+    <div class="rapport-stat-card">
+      <div class="rs-value">{{ total }}</div>
+      <div class="rs-label">Total enregistrés</div>
+    </div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="rapport-stat-card rs-success">
+      <div class="rs-value">{{ succes }}</div>
+      <div class="rs-label">Succès thérapeutiques</div>
+      <div class="rs-sub">{{ taux_succes }}% de taux de succès</div>
+    </div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="rapport-stat-card rs-warning">
+      <div class="rs-value">{{ perdus }}</div>
+      <div class="rs-label">Perdus de vue</div>
+    </div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="rapport-stat-card rs-danger">
+      <div class="rs-value">{{ echecs }}</div>
+      <div class="rs-label">Échecs thérapeutiques</div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4 mb-4">
+  <!-- Résultats de traitement -->
+  <div class="col-12 col-lg-7">
+    <div class="card-panel">
+      <div class="panel-header"><i class="fa fa-table-list me-2"></i>Résultats de traitement — Cohorte {{ trimestre }}</div>
+      <div class="panel-body">
+        <table class="table table-bordered mb-0">
+          <thead class="table-head">
+            <tr><th>Résultat</th><th>Définition</th><th class="text-center">Nombre</th><th class="text-center">%</th></tr>
+          </thead>
+          <tbody>
+            {% set rows = [
+              ('Guéri', 'Cultures négatives + traitement terminé', gueris, 'success'),
+              ('Traitement terminé', 'Traitement terminé sans preuve bactério finale', termines, 'secondary'),
+              ('Perdu de vue', 'Interruption ≥ 2 mois consécutifs', perdus, 'warning'),
+              ('Échec thérapeutique', 'Culture positive ≥ M6 ou changement de schéma', echecs, 'danger'),
+              ('Décédé', 'Décès avant ou pendant le traitement', decedes, 'dark'),
+              ('Transféré', 'Transféré vers un autre centre', transferts, 'info'),
+              ('Non évalué', 'Résultat de traitement non documenté', non_evalues, 'light'),
+              ('En cours', 'Traitement actif', actifs, 'primary'),
+            ] %}
+            {% for label, defn, val, col in rows %}
+            <tr>
+              <td><span class="badge bg-{{ col }}">{{ label }}</span></td>
+              <td class="text-muted small">{{ defn }}</td>
+              <td class="text-center fw-bold">{{ val }}</td>
+              <td class="text-center text-muted">{{ (val / total * 100) | round(1) if total > 0 else 0 }}%</td>
+            </tr>
+            {% endfor %}
+            <tr class="table-light fw-bold">
+              <td colspan="2">Total cohorte</td>
+              <td class="text-center">{{ total }}</td>
+              <td class="text-center">100%</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Indicateurs PMDT -->
+  <div class="col-12 col-lg-5">
+    <div class="card-panel">
+      <div class="panel-header"><i class="fa fa-gauge-high me-2"></i>Indicateurs PMDT</div>
+      <div class="panel-body">
+        <div class="pmdt-indicator">
+          <div class="d-flex justify-content-between mb-1">
+            <span class="small fw-semibold">Taux de succès thérapeutique</span>
+            <span class="fw-bold text-success">{{ taux_succes }}%</span>
+          </div>
+          <div class="progress mb-3" style="height:10px">
+            <div class="progress-bar bg-success" style="width:{{ taux_succes }}%"></div>
+          </div>
+          <div class="text-muted small mb-3">Objectif OMS End TB : ≥ 75%</div>
+        </div>
+        <hr>
+        <div class="row g-3 text-center">
+          <div class="col-6">
+            <div class="pmdt-mini-card">
+              <div class="fw-bold text-danger fs-4">{{ contacts_tb_mr }}</div>
+              <div class="small text-muted">Contacts TB-MR confirmés</div>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="pmdt-mini-card">
+              <div class="fw-bold text-warning fs-4">{{ effets_severe }}</div>
+              <div class="small text-muted">Effets sévères déclarés</div>
+            </div>
+          </div>
+        </div>
+        <hr>
+        <div class="d-grid gap-2">
+          <a href="{{ url_for('rapports.export_csv') }}" class="btn btn-outline-success btn-sm">
+            <i class="fa fa-file-csv me-1"></i>Exporter CSV (Excel)
+          </a>
+          <button onclick="window.print()" class="btn btn-outline-secondary btn-sm">
+            <i class="fa fa-print me-1"></i>Imprimer / Exporter PDF
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card-panel mt-4">
+      <div class="panel-header"><i class="fa fa-folder-open me-2"></i>Autres rapports</div>
+      <div class="panel-body d-grid gap-2">
+        <a href="{{ url_for('rapports.depistage') }}" class="btn btn-outline-primary btn-sm text-start">
+          <i class="fa fa-microscope me-2"></i>
+          <strong>Dépistage trimestriel</strong>
+          <div class="small text-muted ms-4">GeneXpert, radio, IPT par trimestre</div>
+        </a>
+        <a href="{{ url_for('rapports.commande') }}" class="btn btn-outline-warning btn-sm text-start">
+          <i class="fa fa-pills me-2"></i>
+          <strong>Commande médicaments</strong>
+          <div class="small text-muted ms-4">Bon de commande trimestriel basé sur la conso réelle</div>
+        </a>
+        <a href="{{ url_for('rapports.annuel') }}" class="btn btn-outline-success btn-sm text-start">
+          <i class="fa fa-chart-bar me-2"></i>
+          <strong>Rapport annuel TB-MR</strong>
+          <div class="small text-muted ms-4">Résultats, résistances, VIH, enrôlement mensuel</div>
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,260 @@
+{% extends 'base.html' %}
+{% block title %}Dépistage TB-MR — T{{ q }} {{ year }}{% endblock %}
+{% block breadcrumb %}
+  <a href="{{ url_for('dashboard.index') }}">Accueil</a> /
+  <a href="{{ url_for('rapports.index') }}">Rapports</a> /
+  Dépistage
+{% endblock %}
+{% block page_title %}Rapport Trimestriel Dépistage{% endblock %}
+{% block page_subtitle %}Suivi contacts TB-MR — T{{ q }} {{ year }} ({{ debut.strftime('%d/%m/%Y') }} → {{ fin.strftime('%d/%m/%Y') }}){% endblock %}
+
+{% block head %}
+<style>
+@media print {
+  .sidebar, .topbar, .page-header-actions, .btn, .no-print { display: none !important; }
+  .main-wrapper { margin-left: 0 !important; }
+  .card-panel { break-inside: avoid; border: 1px solid #ccc !important; }
+  body { background: #fff !important; color: #000 !important; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+
+{# ── Sélecteur période ── #}
+<div class="card-panel mb-4 no-print">
+  <div class="panel-body">
+    <form method="get" class="row g-2 align-items-end">
+      <div class="col-auto">
+        <label class="form-label small fw-semibold mb-1">Trimestre</label>
+        <select name="trimestre" class="form-select form-select-sm" style="width:auto">
+          {% for tq in [1,2,3,4] %}
+          <option value="{{ tq }}" {% if tq == q %}selected{% endif %}>T{{ tq }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-auto">
+        <label class="form-label small fw-semibold mb-1">Année</label>
+        <select name="annee" class="form-select form-select-sm" style="width:auto">
+          {% for a in annees %}
+          <option value="{{ a }}" {% if a == year %}selected{% endif %}>{{ a }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-auto">
+        <button type="submit" class="btn btn-primary btn-sm">
+          <i class="fa fa-filter me-1"></i>Filtrer
+        </button>
+      </div>
+      <div class="col-auto ms-auto d-flex gap-2">
+        <a href="{{ url_for('rapports.depistage_csv', trimestre=q, annee=year) }}"
+           class="btn btn-outline-success btn-sm">
+          <i class="fa fa-file-csv me-1"></i>Exporter CSV
+        </a>
+        <button onclick="window.print()" class="btn btn-outline-secondary btn-sm">
+          <i class="fa fa-print me-1"></i>Imprimer
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{# ── Cartes résumé ── #}
+<div class="row g-4 mb-4">
+  <div class="col-6 col-lg-3">
+    <div class="rapport-stat-card">
+      <div class="rs-value">{{ total }}</div>
+      <div class="rs-label">Contacts enregistrés</div>
+    </div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="rapport-stat-card rs-success">
+      <div class="rs-value">{{ depistes }}</div>
+      <div class="rs-label">Dépistés</div>
+      <div class="rs-sub">{{ taux_depistage }}% couverture</div>
+    </div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="rapport-stat-card rs-danger">
+      <div class="rs-value">{{ tb_confirmes }}</div>
+      <div class="rs-label">TB-MR confirmés</div>
+      <div class="rs-sub">{{ taux_positif }}% des dépistés</div>
+    </div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="rapport-stat-card rs-warning">
+      <div class="rs-value">{{ ipt_accepte }}</div>
+      <div class="rs-label">IPT acceptés</div>
+      <div class="rs-sub">/ {{ ipt_propose }} proposés</div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4 mb-4">
+  {# ── Résultats GeneXpert ── #}
+  <div class="col-12 col-lg-6">
+    <div class="card-panel h-100">
+      <div class="panel-header"><i class="fa fa-microscope me-2"></i>Résultats GeneXpert</div>
+      <div class="panel-body">
+        {% if depistes == 0 %}
+          <div class="text-muted text-center py-3 small">Aucun contact dépisté sur cette période</div>
+        {% else %}
+        <table class="table table-bordered mb-3">
+          <thead class="table-head">
+            <tr><th>Résultat</th><th class="text-center">Nombre</th><th class="text-center">%</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="badge bg-danger">Positif (TB-MR)</span></td>
+              <td class="text-center fw-bold text-danger">{{ gx_pos }}</td>
+              <td class="text-center">{{ (gx_pos / depistes * 100) | round(1) if depistes else 0 }}%</td>
+            </tr>
+            <tr>
+              <td><span class="badge bg-success">Négatif</span></td>
+              <td class="text-center fw-bold">{{ gx_neg }}</td>
+              <td class="text-center">{{ (gx_neg / depistes * 100) | round(1) if depistes else 0 }}%</td>
+            </tr>
+            <tr>
+              <td><span class="badge bg-warning text-dark">Invalide</span></td>
+              <td class="text-center">{{ gx_inv }}</td>
+              <td class="text-center">{{ (gx_inv / depistes * 100) | round(1) if depistes else 0 }}%</td>
+            </tr>
+            <tr>
+              <td><span class="badge bg-secondary">Non effectué</span></td>
+              <td class="text-center">{{ gx_nf }}</td>
+              <td class="text-center">{{ (gx_nf / depistes * 100) | round(1) if depistes else 0 }}%</td>
+            </tr>
+          </tbody>
+        </table>
+
+        {# Barre de taux de positivité #}
+        <div class="small fw-semibold mb-1">Taux de positivité</div>
+        <div class="progress mb-1" style="height:14px">
+          <div class="progress-bar bg-danger" style="width:{{ taux_positif }}%"></div>
+        </div>
+        <div class="small text-muted">{{ taux_positif }}% — objectif PNLT : &lt; 5%</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  {# ── Radiographie thorax ── #}
+  <div class="col-12 col-lg-6">
+    <div class="card-panel h-100">
+      <div class="panel-header"><i class="fa fa-lungs me-2"></i>Radiographie thoracique & IPT</div>
+      <div class="panel-body">
+        <table class="table table-bordered mb-3">
+          <thead class="table-head">
+            <tr><th>Radiographie</th><th class="text-center">Nombre</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="badge bg-danger">Anormale</span></td>
+              <td class="text-center fw-bold text-danger">{{ radio_anorm }}</td>
+            </tr>
+            <tr>
+              <td><span class="badge bg-success">Normale</span></td>
+              <td class="text-center fw-bold">{{ radio_norm }}</td>
+            </tr>
+            <tr>
+              <td><span class="badge bg-secondary">Non faite</span></td>
+              <td class="text-center">{{ radio_nf }}</td>
+            </tr>
+          </tbody>
+        </table>
+        <hr>
+        <div class="d-flex justify-content-between mb-2">
+          <span class="small fw-semibold">IPT proposé</span>
+          <span class="fw-bold">{{ ipt_propose }}</span>
+        </div>
+        <div class="d-flex justify-content-between mb-2">
+          <span class="small fw-semibold">IPT accepté</span>
+          <span class="fw-bold text-success">{{ ipt_accepte }}</span>
+        </div>
+        {% if ipt_propose > 0 %}
+        <div class="progress mt-2" style="height:10px">
+          <div class="progress-bar bg-success" style="width:{{ taux_ipt }}%"></div>
+        </div>
+        <div class="small text-muted mt-1">{{ taux_ipt }}% d'adhésion à l'IPT</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+{# ── Profil contacts ── #}
+<div class="row g-4 mb-4">
+  <div class="col-12 col-lg-6">
+    <div class="card-panel">
+      <div class="panel-header"><i class="fa fa-users me-2"></i>Contacts par lien</div>
+      <div class="panel-body">
+        {% if total == 0 %}
+          <div class="text-muted text-center py-3 small">Aucun contact sur cette période</div>
+        {% else %}
+        <table class="table table-bordered mb-0">
+          <thead class="table-head">
+            <tr><th>Lien</th><th class="text-center">Nombre</th><th class="text-center">%</th></tr>
+          </thead>
+          <tbody>
+            {% set rel_labels = {'foyer': 'Foyer (cohabitants)', 'famille': 'Famille élargie', 'travail': 'Lieu de travail', 'autre': 'Autre'} %}
+            {% for rel, nb in par_relation.items() %}
+            <tr>
+              <td>{{ rel_labels[rel] }}</td>
+              <td class="text-center fw-bold">{{ nb }}</td>
+              <td class="text-center text-muted">{{ (nb / total * 100) | round(1) if total else 0 }}%</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-lg-6">
+    <div class="card-panel">
+      <div class="panel-header"><i class="fa fa-venus-mars me-2"></i>Répartition par sexe</div>
+      <div class="panel-body">
+        {% if total == 0 %}
+          <div class="text-muted text-center py-3 small">Aucune donnée</div>
+        {% else %}
+        <div class="row g-3 text-center">
+          <div class="col-6">
+            <div class="pmdt-mini-card">
+              <div class="fw-bold text-primary fs-3">{{ hommes }}</div>
+              <div class="small text-muted">Hommes</div>
+              <div class="small text-muted">{{ (hommes / total * 100) | round(1) if total else 0 }}%</div>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="pmdt-mini-card">
+              <div class="fw-bold text-danger fs-3">{{ femmes }}</div>
+              <div class="small text-muted">Femmes</div>
+              <div class="small text-muted">{{ (femmes / total * 100) | round(1) if total else 0 }}%</div>
+            </div>
+          </div>
+        </div>
+        <hr>
+        <div class="progress" style="height:20px">
+          <div class="progress-bar bg-primary" style="width:{{ (hommes/total*100)|round(1) if total else 0 }}%" title="Hommes">
+            H {{ (hommes/total*100)|round(0)|int if total else 0 }}%
+          </div>
+          <div class="progress-bar bg-danger" style="width:{{ (femmes/total*100)|round(1) if total else 0 }}%" title="Femmes">
+            F {{ (femmes/total*100)|round(0)|int if total else 0 }}%
+          </div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+{% if total == 0 %}
+<div class="alert alert-info">
+  <i class="fa fa-circle-info me-2"></i>
+  Aucun contact enregistré pour le T{{ q }} {{ year }}.
+  Sélectionnez une autre période ou enregistrez des contacts depuis les fiches patients.
+</div>
+{% endif %}
+
+{% endblock %}

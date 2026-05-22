@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+{% block title %}Recherche — {{ q }}{% endblock %}
+{% block breadcrumb %}<a href="{{ url_for('dashboard.index') }}">Accueil</a> / Recherche{% endblock %}
+{% block page_title %}Résultats de recherche{% endblock %}
+{% block page_subtitle %}
+  {% if q %}
+    {{ resultats | length }} résultat(s) pour "<strong>{{ q }}</strong>"
+  {% else %}
+    Saisissez un terme dans la barre de recherche
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+{% if q %}
+  {% if resultats %}
+  <div class="mb-3">
+    <span class="text-muted small"><i class="fa fa-magnifying-glass me-1"></i>Patients trouvés :</span>
+  </div>
+  <div class="row g-3">
+    {% for p in resultats %}
+    <div class="col-12 col-md-6 col-lg-4">
+      <a href="{{ url_for('patients.fiche', patient_id=p.id) }}" class="text-decoration-none">
+        <div class="card-panel h-100" style="transition: transform .1s; cursor: pointer;"
+             onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
+          <div class="panel-body">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+              <div>
+                <div class="fw-bold">{{ p.nom }} {{ p.prenom }}</div>
+                <code class="small text-primary">{{ p.code_patient }}</code>
+              </div>
+              <div class="d-flex flex-column align-items-end gap-1">
+                <span class="badge bg-{{ p.statut_badge }}">{{ p.statut_label }}</span>
+                {% if p.type_resistance %}
+                <span class="badge-resistance badge-{{ p.type_resistance | lower | replace('-','') }}">{{ p.type_resistance }}</span>
+                {% endif %}
+              </div>
+            </div>
+            <div class="text-muted small">
+              {% if p.age %}<span><i class="fa fa-cake-candles me-1"></i>{{ p.age }} ans</span>{% endif %}
+              {% if p.sexe %}<span class="ms-2"><i class="fa fa-venus-mars me-1"></i>{{ p.sexe }}</span>{% endif %}
+            </div>
+            {% if p.telephone %}
+            <div class="text-muted small mt-1"><i class="fa fa-phone me-1"></i>{{ p.telephone }}</div>
+            {% endif %}
+            {% if p.adresse %}
+            <div class="text-muted small text-truncate"><i class="fa fa-location-dot me-1"></i>{{ p.adresse }}</div>
+            {% endif %}
+          </div>
+        </div>
+      </a>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="text-center py-5">
+    <i class="fa fa-magnifying-glass fa-3x mb-3 d-block opacity-25"></i>
+    <p class="text-muted">Aucun patient trouvé pour "<strong>{{ q }}</strong>".</p>
+    <p class="text-muted small">Essayez le code patient (TB-MR-XXXX), le nom, le prénom ou le téléphone.</p>
+    <a href="{{ url_for('patients.ajouter') }}" class="btn btn-primary mt-2">
+      <i class="fa fa-user-plus me-2"></i>Enregistrer un nouveau patient
+    </a>
+  </div>
+  {% endif %}
+{% else %}
+<div class="text-center py-5">
+  <i class="fa fa-magnifying-glass fa-3x mb-3 d-block opacity-25"></i>
+  <p class="text-muted">Utilisez la barre de recherche en haut de page pour trouver un patient.</p>
+  <p class="text-muted small">Recherche par : code patient, nom, prénom, téléphone ou adresse.</p>
+</div>
+{% endif %}
+{% endblock %}

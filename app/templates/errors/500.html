@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% block title %}Erreur serveur{% endblock %}
+
+{% block content %}
+<div class="text-center py-5">
+  <div style="font-size:5rem;font-weight:800;color:var(--danger)">500</div>
+  <h2 class="mb-2">Erreur interne</h2>
+  <p class="text-muted mb-4">Une erreur inattendue s'est produite. L'équipe technique a été notifiée.</p>
+  <div class="d-flex gap-2 justify-content-center">
+    <a href="{{ url_for('dashboard.index') }}" class="btn btn-primary">
+      <i class="fa fa-chart-pie me-2"></i>Tableau de bord
+    </a>
+    <button onclick="location.reload()" class="btn btn-outline-secondary">
+      <i class="fa fa-rotate me-2"></i>Réessayer
+    </button>
+  </div>
+</div>
+{% endblock %}

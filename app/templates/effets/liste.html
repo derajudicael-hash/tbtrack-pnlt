@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+{% block title %}Effets secondaires{% endblock %}
+{% block breadcrumb %}<a href="{{ url_for('dashboard.index') }}">Accueil</a> / Effets secondaires{% endblock %}
+{% block page_title %}Effets secondaires{% endblock %}
+{% block page_subtitle %}Surveillance et notification des effets indésirables — Obligation de notification sous 24h pour les effets sévères{% endblock %}
+{% block page_actions %}
+  <a href="{{ url_for('effets.declarer') }}" class="btn btn-danger">
+    <i class="fa fa-plus me-2"></i>Déclarer un effet
+  </a>
+{% endblock %}
+
+{% block content %}
+{% if alertes %}
+<div class="alert alert-danger mb-4 d-flex align-items-center gap-3">
+  <i class="fa fa-triangle-exclamation fa-2x"></i>
+  <div>
+    <strong>{{ alertes | length }} alerte(s) active(s)</strong> — Effets sévères non notifiés au CRPC.<br>
+    <small>Obligation réglementaire : notification dans les 24 heures (Guide TBMR-PNLT 2021, §IV.1.1)</small>
+  </div>
+</div>
+{% endif %}
+
+<div class="card-panel">
+  <div class="panel-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-head">
+          <tr>
+            <th>Patient</th>
+            <th>Médicament incriminé</th>
+            <th>Symptôme / Effet</th>
+            <th>Sévérité</th>
+            <th>Date déclaration</th>
+            <th>Délai</th>
+            <th>Statut CRPC</th>
+            <th>Déclaré par</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for e in effets %}
+          <tr class="{% if e.alerte_active %}row-alerte{% endif %}">
+            <td>
+              <a href="{{ url_for('patients.fiche', patient_id=e.patient.id) }}" class="fw-semibold text-decoration-none">
+                {{ e.patient.code_patient }}
+              </a>
+              <div class="text-muted small">{{ e.patient.nom }}</div>
+            </td>
+            <td><strong>{{ e.medicament_incrimine or '—' }}</strong></td>
+            <td>{{ e.symptome }}</td>
+            <td>
+              {% if e.severite == 'severe' %}<span class="badge bg-danger">⚠ Sévère</span>
+              {% elif e.severite == 'modere' %}<span class="badge bg-warning text-dark">Modéré</span>
+              {% else %}<span class="badge bg-success">Léger</span>{% endif %}
+            </td>
+            <td class="small text-muted">{{ e.date_declaration.strftime('%d/%m/%Y %H:%M') }}</td>
+            <td class="small">
+              {% set h = e.heures_depuis_declaration | int %}
+              {% if h < 24 %}
+                <span class="text-success">{{ h }}h</span>
+              {% elif h < 48 %}
+                <span class="text-warning fw-bold">{{ h }}h</span>
+              {% else %}
+                <span class="text-danger fw-bold">{{ (h / 24) | int }}j</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if e.notifie_crpc %}
+                <span class="text-success"><i class="fa fa-check-circle me-1"></i>Notifié</span>
+                <div class="text-muted small">{{ e.date_notification.strftime('%d/%m %H:%M') if e.date_notification else '' }}</div>
+              {% elif e.severite == 'severe' %}
+                <form method="POST" action="{{ url_for('effets.marquer_notifie', effet_id=e.id) }}">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button class="btn btn-sm btn-danger">
+                    <i class="fa fa-bell me-1"></i>Notifier
+                  </button>
+                </form>
+              {% else %}
+                <span class="text-muted small">N/A</span>
+              {% endif %}
+            </td>
+            <td class="small text-muted">{{ e.declare_par or '—' }}</td>
+          </tr>
+          {% else %}
+          <tr><td colspan="8" class="text-center text-muted py-4">Aucun effet secondaire déclaré.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

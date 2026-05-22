@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+{% block title %}Gestion utilisateurs{% endblock %}
+{% block breadcrumb %}<a href="{{ url_for('dashboard.index') }}">Accueil</a> / Administration / Utilisateurs{% endblock %}
+{% block page_title %}Gestion des utilisateurs{% endblock %}
+{% block page_subtitle %}Comptes et accès au système TBTrack — Réservé aux coordinateurs PNLT{% endblock %}
+{% block page_actions %}
+  <a href="{{ url_for('admin.creer_utilisateur') }}" class="btn btn-primary">
+    <i class="fa fa-user-plus me-2"></i>Créer un compte
+  </a>
+{% endblock %}
+
+{% block content %}
+<div class="card-panel">
+  <div class="panel-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-head">
+          <tr>
+            <th>Utilisateur</th>
+            <th>Email</th>
+            <th>Rôle</th>
+            <th>Centre</th>
+            <th>Patients</th>
+            <th>Statut</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for u in users %}
+          <tr class="{% if not u.actif %}opacity-50{% endif %}">
+            <td>
+              <div class="d-flex align-items-center gap-2">
+                <div class="user-avatar" style="width:32px;height:32px;font-size:12px">
+                  {{ u.prenom[0] if u.prenom else '?' }}{{ u.nom[0] if u.nom else '' }}
+                </div>
+                <div>
+                  <div class="fw-semibold">{{ u.full_name }}</div>
+                  <div class="text-muted small">Créé le {{ u.created_at.strftime('%d/%m/%Y') }}</div>
+                </div>
+              </div>
+            </td>
+            <td class="small">{{ u.email }}</td>
+            <td>
+              <span class="badge {% if u.role == 'coordinateur' %}bg-primary{% elif u.role == 'medecin' %}bg-info{% elif u.role == 'infirmier' %}bg-success{% else %}bg-secondary{% endif %}">
+                {{ u.role_label }}
+              </span>
+            </td>
+            <td class="small text-muted">{{ u.centre or '—' }}</td>
+            <td>
+              <span class="badge bg-light text-dark border">{{ nb_patients_par_user.get(u.id, 0) }}</span>
+            </td>
+            <td>
+              {% if u.actif %}
+                <span class="badge bg-success">Actif</span>
+              {% else %}
+                <span class="badge bg-danger">Inactif</span>
+              {% endif %}
+            </td>
+            <td class="text-end">
+              <div class="d-flex gap-1 justify-content-end">
+                {% if u.id != current_user.id %}
+                <a href="{{ url_for('admin.modifier_utilisateur', user_id=u.id) }}" class="btn btn-sm btn-outline-secondary">
+                  <i class="fa fa-pen"></i>
+                </a>
+                <form method="POST" action="{{ url_for('admin.toggle_actif', user_id=u.id) }}" class="d-inline">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button class="btn btn-sm {% if not u.actif %}btn-outline-success{% else %}btn-outline-danger{% endif %}"
+                          title="{{ 'Réactiver' if not u.actif else 'Désactiver' }}">
+                    <i class="fa fa-{% if not u.actif %}unlock{% else %}lock{% endif %}"></i>
+                  </button>
+                </form>
+                {% else %}
+                <span class="text-muted small">Vous</span>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="7" class="text-center text-muted py-4">Aucun utilisateur.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="panel-footer text-muted small">{{ users | length }} utilisateur(s)</div>
+</div>
+{% endblock %}

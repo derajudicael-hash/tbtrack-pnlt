@@ -1,0 +1,266 @@
+{% extends 'base.html' %}
+{% block title %}Créer un compte{% endblock %}
+
+{% block auth_content %}
+<div class="auth-split">
+
+  <!-- ── PANNEAU GAUCHE ───────────────────────────────────────────── -->
+  <div class="auth-left">
+    <div class="auth-brand">
+      <i class="fa fa-lungs fa-3x mb-3"></i>
+      <h1>TBTrack</h1>
+      <p class="auth-tagline">Programme National de Lutte<br>contre la Tuberculose — Madagascar</p>
+    </div>
+    <div class="auth-features">
+      <div class="auth-feature"><i class="fa fa-shield-halved"></i> Accès sécurisé par rôle (médecin, infirmier, labo…)</div>
+      <div class="auth-feature"><i class="fa fa-user-lock"></i> Compte activé après vérification coordinateur</div>
+      <div class="auth-feature"><i class="fa fa-database"></i> Données hébergées sur le serveur PNLT Madagascar</div>
+    </div>
+  </div>
+
+  <!-- ── PANNEAU DROIT : FORMULAIRE ──────────────────────────────── -->
+  <div class="auth-right" style="overflow-y:auto; align-items:flex-start; padding-top:40px; padding-bottom:40px;">
+    <div class="auth-form-box" style="max-width:420px; width:100%;">
+
+      <div class="auth-form-header">
+        <h2>Créer un compte</h2>
+        <p class="text-muted">Inscription personnel CRPC / CDT</p>
+      </div>
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}{% for cat, msg in messages %}
+          <div class="alert alert-{{ cat }} d-flex align-items-center gap-2 mb-3 py-2">
+            {% if cat == 'danger' %}<i class="fa fa-circle-exclamation"></i>
+            {% elif cat == 'success' %}<i class="fa fa-circle-check"></i>
+            {% else %}<i class="fa fa-circle-info"></i>{% endif %}
+            <span>{{ msg }}</span>
+          </div>
+        {% endfor %}{% endif %}
+      {% endwith %}
+
+      <form method="POST" novalidate id="registerForm">
+        {{ form.hidden_tag() }}
+
+        <!-- Email -->
+        <div class="mb-3">
+          <label class="form-label fw-semibold" for="regEmail">
+            <i class="fa fa-envelope me-1 opacity-50"></i>{{ form.email.label.text }}
+          </label>
+          {{ form.email(
+              id='regEmail',
+              class='form-control' + (' is-invalid' if form.email.errors else ''),
+              placeholder='votre@email.mg',
+              autocomplete='email'
+          ) }}
+          {% if form.email.errors %}
+            <div class="invalid-feedback">{{ form.email.errors[0] }}</div>
+          {% endif %}
+        </div>
+
+        <!-- Prénom + Nom -->
+        <div class="row g-3 mb-3">
+          <div class="col-6">
+            <label class="form-label fw-semibold" for="regPrenom">
+              <i class="fa fa-id-card me-1 opacity-50"></i>{{ form.prenom.label.text }}
+            </label>
+            {{ form.prenom(
+                id='regPrenom',
+                class='form-control' + (' is-invalid' if form.prenom.errors else ''),
+                placeholder='Jean',
+                autocomplete='given-name'
+            ) }}
+            {% if form.prenom.errors %}
+              <div class="invalid-feedback">{{ form.prenom.errors[0] }}</div>
+            {% endif %}
+          </div>
+          <div class="col-6">
+            <label class="form-label fw-semibold" for="regNom">{{ form.nom.label.text }}</label>
+            {{ form.nom(
+                id='regNom',
+                class='form-control' + (' is-invalid' if form.nom.errors else ''),
+                placeholder='RAKOTO',
+                autocomplete='family-name'
+            ) }}
+            {% if form.nom.errors %}
+              <div class="invalid-feedback">{{ form.nom.errors[0] }}</div>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Rôle + Centre -->
+        <div class="row g-3 mb-3">
+          <div class="col-6">
+            <label class="form-label fw-semibold" for="regRole">
+              <i class="fa fa-user-tag me-1 opacity-50"></i>{{ form.role.label.text }}
+            </label>
+            {{ form.role(
+                id='regRole',
+                class='form-select' + (' is-invalid' if form.role.errors else '')
+            ) }}
+            {% if form.role.errors %}
+              <div class="invalid-feedback">{{ form.role.errors[0] }}</div>
+            {% endif %}
+          </div>
+          <div class="col-6">
+            <label class="form-label fw-semibold" for="regCentre">
+              <i class="fa fa-hospital me-1 opacity-50"></i>{{ form.centre.label.text }}
+            </label>
+            {{ form.centre(
+                id='regCentre',
+                class='form-control' + (' is-invalid' if form.centre.errors else ''),
+                placeholder='CRPC Antananarivo…'
+            ) }}
+            {% if form.centre.errors %}
+              <div class="invalid-feedback">{{ form.centre.errors[0] }}</div>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Mot de passe + toggle + barre de force -->
+        <div class="mb-3">
+          <label class="form-label fw-semibold" for="regPwd">
+            <i class="fa fa-lock me-1 opacity-50"></i>{{ form.password.label.text }}
+          </label>
+          <div class="input-group">
+            {{ form.password(
+                id='regPwd',
+                class='form-control' + (' is-invalid' if form.password.errors else ''),
+                placeholder='••••••••',
+                autocomplete='new-password'
+            ) }}
+            <button class="pass-toggle-btn" type="button"
+                    onclick="togglePass('regPwd','eyePwd')"
+                    aria-label="Afficher le mot de passe">
+              <i class="fa fa-eye" id="eyePwd"></i>
+            </button>
+          </div>
+          {% if form.password.errors %}
+            <div class="invalid-feedback d-block">{{ form.password.errors[0] }}</div>
+          {% endif %}
+
+          <!-- Barre de force -->
+          <div class="d-flex gap-1 mt-2">
+            <div class="strength-bar" id="sb1"></div>
+            <div class="strength-bar" id="sb2"></div>
+            <div class="strength-bar" id="sb3"></div>
+            <div class="strength-bar" id="sb4"></div>
+          </div>
+          <div class="d-flex justify-content-between mt-1">
+            <small id="strengthLabel" class="fw-semibold"></small>
+            <small class="field-hint">Min. 6 caractères</small>
+          </div>
+        </div>
+
+        <!-- Confirmer mot de passe + toggle + match -->
+        <div class="mb-4">
+          <label class="form-label fw-semibold" for="regConfirm">
+            <i class="fa fa-lock me-1 opacity-50"></i>{{ form.confirm.label.text }}
+          </label>
+          <div class="input-group">
+            {{ form.confirm(
+                id='regConfirm',
+                class='form-control' + (' is-invalid' if form.confirm.errors else ''),
+                placeholder='••••••••',
+                autocomplete='new-password'
+            ) }}
+            <button class="pass-toggle-btn" type="button"
+                    onclick="togglePass('regConfirm','eyeConfirm')"
+                    aria-label="Afficher la confirmation">
+              <i class="fa fa-eye" id="eyeConfirm"></i>
+            </button>
+          </div>
+          <div id="confirmFeedback" class="mt-1" style="font-size:0.8rem;"></div>
+          {% if form.confirm.errors %}
+            <div class="invalid-feedback d-block">{{ form.confirm.errors[0] }}</div>
+          {% endif %}
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-lg w-100 fw-semibold">
+          <i class="fa fa-user-plus me-2"></i>Créer le compte
+        </button>
+      </form>
+
+      <div class="auth-divider my-4">ou</div>
+
+      <p class="text-center text-muted small mb-0">
+        Déjà inscrit ?
+        <a href="{{ url_for('auth.login') }}" class="text-primary fw-semibold">Se connecter</a>
+      </p>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+/* ── Toggle affichage mot de passe ─────────────────────────────── */
+function togglePass(inputId, iconId) {
+  const input = document.getElementById(inputId);
+  const icon  = document.getElementById(iconId);
+  if (input.type === 'password') {
+    input.type = 'text';
+    icon.className = 'fa fa-eye-slash';
+  } else {
+    input.type = 'password';
+    icon.className = 'fa fa-eye';
+  }
+}
+
+/* ── Indicateur de force du mot de passe ───────────────────────── */
+const bars          = [document.getElementById('sb1'), document.getElementById('sb2'),
+                       document.getElementById('sb3'), document.getElementById('sb4')];
+const strengthLabel = document.getElementById('strengthLabel');
+const COLORS  = ['', '#EF4444', '#F59E0B', '#3B82F6', '#22C55E'];
+const LABELS  = ['', 'Très faible', 'Moyen', 'Fort', 'Très fort'];
+
+function calcStrength(p) {
+  if (!p) return 0;
+  let s = 0;
+  if (p.length >= 6)  s++;
+  if (p.length >= 10) s++;
+  if (/[A-Z]/.test(p) && /[a-z]/.test(p)) s++;
+  if (/\d/.test(p))   s++;
+  if (/[^a-zA-Z0-9]/.test(p)) s++;
+  return Math.min(Math.max(Math.ceil(s * 4 / 5), p.length >= 6 ? 1 : 0), 4);
+}
+
+function updateStrength(val) {
+  const s = calcStrength(val);
+  bars.forEach(function(b, i) {
+    b.style.background = i < s ? COLORS[s] : 'var(--border-2)';
+  });
+  strengthLabel.textContent  = val ? LABELS[s] : '';
+  strengthLabel.style.color  = COLORS[s];
+}
+
+/* ── Vérification correspondance mots de passe ─────────────────── */
+const pwdInput      = document.getElementById('regPwd');
+const confirmInput  = document.getElementById('regConfirm');
+const confirmFb     = document.getElementById('confirmFeedback');
+
+function checkMatch() {
+  const pwd  = pwdInput.value;
+  const conf = confirmInput.value;
+  if (!conf) {
+    confirmInput.classList.remove('is-valid', 'is-invalid');
+    confirmFb.textContent = '';
+    return;
+  }
+  if (pwd === conf) {
+    confirmInput.classList.add('is-valid');
+    confirmInput.classList.remove('is-invalid');
+    confirmFb.innerHTML = '<span style="color:var(--success)"><i class="fa fa-check me-1"></i>Mots de passe identiques</span>';
+  } else {
+    confirmInput.classList.add('is-invalid');
+    confirmInput.classList.remove('is-valid');
+    confirmFb.innerHTML = '<span style="color:var(--danger)"><i class="fa fa-times me-1"></i>Les mots de passe ne correspondent pas</span>';
+  }
+}
+
+pwdInput.addEventListener('input', function() {
+  updateStrength(this.value);
+  if (confirmInput.value) checkMatch();
+});
+confirmInput.addEventListener('input', checkMatch);
+</script>
+{% endblock %}

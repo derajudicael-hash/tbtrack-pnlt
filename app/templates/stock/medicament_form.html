@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+{% block title %}{{ titre }}{% endblock %}
+{% block breadcrumb %}
+  <a href="{{ url_for('dashboard.index') }}">Accueil</a> /
+  <a href="{{ url_for('stock.inventaire') }}">Stock</a> /
+  {{ titre }}
+{% endblock %}
+{% block page_title %}{{ titre }}{% endblock %}
+{% block page_subtitle %}Gestion des médicaments TB-MR de 2ème ligne{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-12 col-lg-7">
+    <div class="card-panel">
+      <div class="panel-header"><i class="fa fa-pills me-2"></i>{{ titre }}</div>
+      <div class="panel-body">
+        <form method="POST">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+          <div class="row g-3">
+            <div class="col-12">
+              <label class="form-label fw-semibold">{{ form.nom.label.text }} <span class="text-danger">*</span></label>
+              {{ form.nom(class='form-control', placeholder='Ex: Bédaquiline') }}
+            </div>
+            <div class="col-6">
+              <label class="form-label fw-semibold">{{ form.abreviation.label.text }}</label>
+              {{ form.abreviation(class='form-control', placeholder='Ex: Bdq') }}
+            </div>
+            <div class="col-6">
+              <label class="form-label fw-semibold">{{ form.forme.label.text }}</label>
+              {{ form.forme(class='form-select') }}
+            </div>
+            <div class="col-6">
+              <label class="form-label fw-semibold">{{ form.dosage_unitaire.label.text }}</label>
+              {{ form.dosage_unitaire(class='form-control', placeholder='Ex: 100 mg') }}
+            </div>
+            <div class="col-6">
+              <label class="form-label fw-semibold">{{ form.quantite_stock.label.text }}</label>
+              {{ form.quantite_stock(class='form-control', min=0) }}
+            </div>
+            <div class="col-6">
+              <label class="form-label fw-semibold">{{ form.seuil_alerte.label.text }} <span class="text-danger">*</span></label>
+              {{ form.seuil_alerte(class='form-control', min=1) }}
+              {% for e in form.seuil_alerte.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+            </div>
+            <div class="col-6">
+              <label class="form-label fw-semibold">{{ form.date_expiration.label.text }}</label>
+              {{ form.date_expiration(class='form-control', type='date') }}
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold">{{ form.centre.label.text }}</label>
+              {{ form.centre(class='form-control', placeholder='Ex: CRPC Mahajanga') }}
+            </div>
+          </div>
+
+          <div class="d-flex gap-2 mt-4">
+            {{ form.submit(class='btn btn-primary') }}
+            <a href="{{ url_for('stock.inventaire') }}" class="btn btn-outline-secondary">Annuler</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,135 @@
+{% extends 'base.html' %}
+{% block title %}Bilan M0 — {{ patient.code_patient }}{% endblock %}
+{% block breadcrumb %}
+  <a href="{{ url_for('dashboard.index') }}">Accueil</a> /
+  <a href="{{ url_for('patients.fiche', patient_id=patient.id) }}">{{ patient.code_patient }}</a> /
+  Bilan M0
+{% endblock %}
+{% block page_title %}Bilan initial M0{% endblock %}
+{% block page_subtitle %}{{ patient.nom }} {{ patient.prenom }} · {{ patient.code_patient }} — Bilan paraclinique obligatoire (Guide PNLT 2021){% endblock %}
+
+{% block content %}
+<form method="POST">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+  <div class="row g-4">
+    <!-- Anthropométrie -->
+    <div class="col-12 col-md-6 col-lg-4">
+      <div class="card-panel h-100">
+        <div class="panel-header"><i class="fa fa-weight-scale me-2"></i>Anthropométrie</div>
+        <div class="panel-body">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">{{ form.date_bilan.label.text }} <span class="text-danger">*</span></label>
+            {{ form.date_bilan(class='form-control', type='date') }}
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">{{ form.poids_kg.label.text }}</label>
+            {{ form.poids_kg(class='form-control', placeholder='ex: 55.5') }}
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">{{ form.taille_cm.label.text }}</label>
+            {{ form.taille_cm(class='form-control', placeholder='ex: 168') }}
+          </div>
+          {% if bilan and bilan.imc %}
+          <div class="alert alert-info small">
+            <i class="fa fa-calculator me-1"></i>
+            IMC actuel : <strong>{{ bilan.imc }} kg/m²</strong>
+            {% set cat_col, cat_txt = bilan.imc_categorie %} — {{ cat_txt }}
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Bilan biologique -->
+    <div class="col-12 col-md-6 col-lg-4">
+      <div class="card-panel h-100">
+        <div class="panel-header"><i class="fa fa-vials me-2"></i>Bilan biologique</div>
+        <div class="panel-body">
+          <div class="mb-2">
+            <label class="form-label fw-semibold small">{{ form.creatinine_umol_l.label.text }}</label>
+            {{ form.creatinine_umol_l(class='form-control form-control-sm', placeholder='µmol/L') }}
+          </div>
+          <div class="mb-2">
+            <label class="form-label fw-semibold small">{{ form.clairance_creatinine.label.text }}</label>
+            {{ form.clairance_creatinine(class='form-control form-control-sm', placeholder='ml/min') }}
+            {% if bilan and bilan.insuffisance_renale %}
+            <div class="text-danger small"><i class="fa fa-triangle-exclamation me-1"></i>Insuffisance rénale — adapter posologie !</div>
+            {% endif %}
+          </div>
+          <div class="mb-2">
+            <label class="form-label fw-semibold small">{{ form.hb_g_dl.label.text }}</label>
+            {{ form.hb_g_dl(class='form-control form-control-sm', placeholder='g/dL') }}
+          </div>
+          <div class="mb-2">
+            <label class="form-label fw-semibold small">{{ form.alt_u_l.label.text }}</label>
+            {{ form.alt_u_l(class='form-control form-control-sm', placeholder='U/L') }}
+          </div>
+          <div class="mb-2">
+            <label class="form-label fw-semibold small">{{ form.ast_u_l.label.text }}</label>
+            {{ form.ast_u_l(class='form-control form-control-sm', placeholder='U/L') }}
+          </div>
+          <div class="mb-2">
+            <label class="form-label fw-semibold small">{{ form.glycemie_mmol_l.label.text }}</label>
+            {{ form.glycemie_mmol_l(class='form-control form-control-sm', placeholder='mmol/L') }}
+          </div>
+          <div class="mb-2">
+            <label class="form-label fw-semibold small">{{ form.kaliemie_mmol_l.label.text }}</label>
+            {{ form.kaliemie_mmol_l(class='form-control form-control-sm', placeholder='mmol/L') }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toxicités spécifiques -->
+    <div class="col-12 col-md-6 col-lg-4">
+      <div class="card-panel h-100">
+        <div class="panel-header"><i class="fa fa-heart-pulse me-2"></i>Toxicités médicamenteuses</div>
+        <div class="panel-body">
+          <div class="mb-3">
+            <label class="form-label fw-semibold small">{{ form.ecg_qt_ms.label.text }}</label>
+            {{ form.ecg_qt_ms(class='form-control form-control-sm', placeholder='ms (normal < 450)') }}
+            {% if bilan and bilan.ecg_alerte %}
+            <div class="text-danger small"><i class="fa fa-triangle-exclamation me-1"></i>QTc prolongé ({{ bilan.ecg_qt_ms }} ms) — risque torsades de pointes !</div>
+            {% endif %}
+          </div>
+
+          <div class="mb-3">
+            <div class="form-check">
+              {{ form.audiogramme_normal(class='form-check-input') }}
+              <label class="form-check-label small">{{ form.audiogramme_normal.label.text }}</label>
+            </div>
+            <div class="text-muted small ps-4">Surveillance ototoxicité (Amikacine)</div>
+          </div>
+
+          <div class="mb-3">
+            <div class="form-check">
+              {{ form.acuite_visuelle_normale(class='form-check-input') }}
+              <label class="form-check-label small">{{ form.acuite_visuelle_normale.label.text }}</label>
+            </div>
+            <div class="text-muted small ps-4">Surveillance névrite optique (Éthambutol)</div>
+          </div>
+
+          <div class="mb-3">
+            <div class="form-check">
+              {{ form.thyroide_normale(class='form-check-input') }}
+              <label class="form-check-label small">{{ form.thyroide_normale.label.text }}</label>
+            </div>
+            <div class="text-muted small ps-4">Surveillance hypothyroïdie (Éthionamide / Pto)</div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold small">{{ form.notes.label.text }}</label>
+            {{ form.notes(class='form-control form-control-sm', rows=3, placeholder='Observations cliniques, résultats supplémentaires…') }}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="d-flex gap-2 mt-4">
+    {{ form.submit(class='btn btn-primary') }}
+    <a href="{{ url_for('patients.fiche', patient_id=patient.id) }}" class="btn btn-outline-secondary">Annuler</a>
+  </div>
+</form>
+{% endblock %}

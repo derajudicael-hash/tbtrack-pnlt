@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+{% block title %}Stock médicaments{% endblock %}
+{% block breadcrumb %}<a href="{{ url_for('dashboard.index') }}">Accueil</a> / Stock médicaments{% endblock %}
+{% block page_title %}Stock de médicaments de 2ème ligne{% endblock %}
+{% block page_subtitle %}Suivi de l'inventaire — Alerte automatique si stock ≤ seuil{% endblock %}
+
+{% block content %}
+{% if alerts %}
+<div class="row g-3 mb-4">
+  {% for m in alerts[:3] %}
+  <div class="col-12 col-md-4">
+    <div class="stock-alert-card">
+      <div class="stock-alert-icon">
+        {% if m.quantite_stock == 0 %}<i class="fa fa-ban text-danger"></i>
+        {% else %}<i class="fa fa-triangle-exclamation text-warning"></i>{% endif %}
+      </div>
+      <div>
+        <div class="fw-semibold">{{ m.nom }}</div>
+        <div class="small text-muted">{{ m.quantite_stock }} {{ m.unite }} restants (seuil : {{ m.seuil_alerte }})</div>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<div class="card-panel">
+  <div class="panel-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-head">
+          <tr>
+            <th>Médicament</th>
+            <th>Abrév.</th>
+            <th>Forme / Dosage</th>
+            <th>Stock actuel</th>
+            <th>Niveau</th>
+            <th>Expiration</th>
+            <th>Statut</th>
+            <th class="text-end">Ajuster</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for m in medicaments %}
+          {% set badge_col, badge_txt = m.statut %}
+          <tr class="{% if m.quantite_stock == 0 %}table-danger{% elif m.stock_bas %}table-warning-light{% endif %}">
+            <td class="fw-semibold">{{ m.nom }}</td>
+            <td><span class="badge bg-dark">{{ m.abreviation or '—' }}</span></td>
+            <td class="text-muted small">{{ m.forme }} · {{ m.dosage_unitaire }}</td>
+            <td>
+              <strong class="{% if m.quantite_stock == 0 %}text-danger{% elif m.stock_bas %}text-warning{% else %}text-success{% endif %}">
+                {{ m.quantite_stock }}
+              </strong>
+              <span class="text-muted small"> {{ m.unite }}</span>
+            </td>
+            <td style="min-width:120px">
+              <div class="progress" style="height:8px">
+                <div class="progress-bar bg-{{ badge_col }}" style="width:{{ m.pourcentage_stock }}%"></div>
+              </div>
+            </td>
+            <td class="small {% if m.expire_bientot %}text-warning fw-bold{% else %}text-muted{% endif %}">
+              {{ m.date_expiration.strftime('%d/%m/%Y') if m.date_expiration else '—' }}
+              {% if m.expire_bientot %}<i class="fa fa-clock ms-1"></i>{% endif %}
+            </td>
+            <td><span class="badge bg-{{ badge_col }}">{{ badge_txt }}</span></td>
+            <td class="text-end">
+              <form method="POST" action="{{ url_for('stock.ajuster_stock', med_id=m.id) }}" class="d-flex gap-1 justify-content-end align-items-center">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="number" name="delta" class="form-control form-control-sm text-center" style="width:80px" placeholder="±">
+                <button class="btn btn-sm btn-outline-primary" title="Appliquer">
+                  <i class="fa fa-check"></i>
+                </button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="panel-footer text-muted small">
+    {{ medicaments | length }} médicaments · {{ alerts | length }} en alerte
+  </div>
+</div>
+{% endblock %}

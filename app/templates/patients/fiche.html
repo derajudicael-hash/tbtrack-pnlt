@@ -1,0 +1,537 @@
+{% extends 'base.html' %}
+{% block title %}{{ patient.code_patient }}{% endblock %}
+{% block breadcrumb %}<a href="{{ url_for('dashboard.index') }}">Accueil</a> / <a href="{{ url_for('patients.liste') }}">Patients</a> / {{ patient.code_patient }}{% endblock %}
+{% block page_title %}{{ patient.nom }} {{ patient.prenom }}{% endblock %}
+{% block page_subtitle %}{{ patient.code_patient }} · {{ patient.type_resistance or '—' }} · Enregistré le {{ patient.created_at.strftime('%d/%m/%Y') }}{% endblock %}
+{% block page_actions %}
+  <button onclick="window.print()" class="btn btn-outline-secondary me-2">
+    <i class="fa fa-print me-1"></i>Imprimer
+  </button>
+  <a href="{{ url_for('patients.modifier', patient_id=patient.id) }}" class="btn btn-outline-warning me-2">
+    <i class="fa fa-pen me-1"></i>Modifier
+  </a>
+  <a href="{{ url_for('dosage.calculateur') }}" class="btn btn-primary">
+    <i class="fa fa-calculator me-1"></i>Calculer dosage
+  </a>
+{% endblock %}
+
+{% block content %}
+
+<!-- Patient Header Card -->
+<div class="patient-header-card mb-4">
+  <div class="patient-avatar-big">
+    {{ patient.prenom[0] }}{{ patient.nom[0] }}
+  </div>
+  <div class="patient-header-info">
+    <div class="d-flex align-items-center gap-2 mb-2">
+      <h3 class="mb-0">{{ patient.prenom }} {{ patient.nom }}</h3>
+      <span class="badge bg-{{ patient.statut_badge }} fs-6">{{ patient.statut_label }}</span>
+      {% if patient.type_resistance %}
+      <span class="badge-resistance badge-{{ patient.type_resistance | lower | replace('-','') }}">{{ patient.type_resistance }}</span>
+      {% endif %}
+    </div>
+    <div class="patient-header-meta">
+      <span><i class="fa fa-id-badge me-1"></i>{{ patient.code_patient }}</span>
+      <span><i class="fa fa-cake-candles me-1"></i>{{ patient.age or '?' }} ans</span>
+      <span><i class="fa fa-venus-mars me-1"></i>{{ patient.sexe or '—' }}</span>
+      <span><i class="fa fa-weight-scale me-1"></i>{{ patient.poids or '—' }} kg</span>
+      {% if patient.statut_vih == 'positif' %}
+        <span class="text-danger"><i class="fa fa-virus me-1"></i>VIH Positif</span>
+      {% elif patient.statut_vih == 'negatif' %}
+        <span class="text-success"><i class="fa fa-shield-virus me-1"></i>VIH Négatif</span>
+      {% else %}
+        <span class="text-muted"><i class="fa fa-question-circle me-1"></i>VIH inconnu</span>
+      {% endif %}
+      <span><i class="fa fa-location-dot me-1"></i>{{ patient.adresse or '—' }}</span>
+    </div>
+  </div>
+</div>
+
+{% if patient.date_sortie %}
+<div class="alert alert-warning d-flex align-items-start gap-3 mb-4">
+  <i class="fa fa-door-open fa-lg mt-1"></i>
+  <div>
+    <strong>Sorti le {{ patient.date_sortie.strftime('%d/%m/%Y') }}</strong>
+    {% if patient.statut == 'transfert' and patient.centre_transfert %}
+      — Transféré vers <em>{{ patient.centre_transfert }}</em>
+    {% endif %}
+    {% if patient.motif_sortie %}
+      <div class="small mt-1 text-muted">{{ patient.motif_sortie }}</div>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+
+<!-- Tabs -->
+<ul class="nav nav-tabs mb-4" id="patientTabs">
+  <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#tab-traitement">
+    <i class="fa fa-pills me-1"></i>Traitement
+  </a></li>
+  <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-effets">
+    <i class="fa fa-triangle-exclamation me-1"></i>Effets secondaires
+    {% if patient.nb_effets_non_notifies > 0 %}
+      <span class="badge bg-danger ms-1">{{ patient.nb_effets_non_notifies }}</span>
+    {% endif %}
+  </a></li>
+  <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-contacts">
+    <i class="fa fa-people-arrows me-1"></i>Contacts ({{ contacts | length }})
+  </a></li>
+  <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-labo">
+    <i class="fa fa-microscope me-1"></i>Labo
+    {% if patient.examens_labo | length > 0 %}
+      <span class="badge bg-info ms-1">{{ patient.examens_labo | length }}</span>
+    {% endif %}
+  </a></li>
+  <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-bilan">
+    <i class="fa fa-stethoscope me-1"></i>Bilan M0
+    {% if bilan %}<span class="badge bg-success ms-1">OK</span>{% else %}<span class="badge bg-warning ms-1">!</span>{% endif %}
+  </a></li>
+  <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-dot">
+    <i class="fa fa-calendar-check me-1"></i>DOT
+    {% if taux_adherence is not none %}
+      <span class="badge {% if taux_adherence >= 85 %}bg-success{% elif taux_adherence >= 70 %}bg-warning text-dark{% else %}bg-danger{% endif %} ms-1">{{ taux_adherence }}%</span>
+    {% endif %}
+  </a></li>
+  <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-notes">
+    <i class="fa fa-notes-medical me-1"></i>Notes
+  </a></li>
+</ul>
+
+<div class="tab-content">
+
+  <!-- TAB TRAITEMENT -->
+  <div class="tab-pane fade show active" id="tab-traitement">
+    {% if traitement %}
+    <div class="d-flex justify-content-end mb-3 gap-2">
+      <a href="{{ url_for('traitement.modifier', traitement_id=traitement.id) }}" class="btn btn-sm btn-outline-warning">
+        <i class="fa fa-pen me-1"></i>Modifier traitement
+      </a>
+      <a href="{{ url_for('traitement.detail', traitement_id=traitement.id) }}" class="btn btn-sm btn-outline-primary">
+        <i class="fa fa-timeline me-1"></i>Voir timeline & DOT
+      </a>
+    </div>
+    <div class="row g-4">
+      <div class="col-12 col-lg-5">
+        <div class="card-panel">
+          <div class="panel-header"><i class="fa fa-clipboard-list me-2"></i>Schéma actif</div>
+          <div class="panel-body">
+            <div class="mb-3">
+              <div class="text-muted small mb-1">Protocole</div>
+              <code class="fw-bold text-primary">{{ traitement.schema_nom }}</code>
+            </div>
+            <div class="row g-2 mb-3">
+              <div class="col-6">
+                <div class="text-muted small">Phase</div>
+                <span class="badge bg-info">{{ traitement.phase | capitalize }}</span>
+              </div>
+              <div class="col-6">
+                <div class="text-muted small">Durée prévue</div>
+                <strong>{{ patient.schema_therapeutique or '—' }}</strong>
+              </div>
+              <div class="col-6">
+                <div class="text-muted small">Début</div>
+                <strong>{{ patient.date_debut_traitement.strftime('%d/%m/%Y') if patient.date_debut_traitement else '—' }}</strong>
+              </div>
+              <div class="col-6">
+                <div class="text-muted small">Jours écoulés</div>
+                <strong>{{ patient.jours_traitement }} jours</strong>
+              </div>
+            </div>
+            <div class="mb-1 text-muted small">Progression</div>
+            <div class="progress" style="height:10px;">
+              <div class="progress-bar bg-primary" style="width:{{ traitement.progression }}%"></div>
+            </div>
+            <div class="text-end small text-muted mt-1">{{ traitement.progression }}%</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-12 col-lg-7">
+        <div class="card-panel">
+          <div class="panel-header"><i class="fa fa-pills me-2"></i>Médicaments du schéma</div>
+          <div class="panel-body">
+            <div class="medicament-grid">
+              {% for med in traitement.medicaments %}
+              <div class="med-chip">
+                <i class="fa fa-capsules me-1"></i>{{ med }}
+              </div>
+              {% endfor %}
+            </div>
+            <a href="{{ url_for('dosage.calculateur') }}" class="btn btn-outline-primary mt-3 w-100">
+              <i class="fa fa-calculator me-2"></i>Calculer les doses pour {{ patient.poids or '?' }} kg
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% else %}
+    <div class="text-center text-muted py-5">
+      <i class="fa fa-pills fa-3x mb-3 d-block opacity-25"></i>
+      <p>Aucun traitement enregistré pour ce patient.</p>
+      <a href="{{ url_for('traitement.ajouter', patient_id=patient.id) }}" class="btn btn-primary">
+        <i class="fa fa-plus me-2"></i>Créer un traitement
+      </a>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- TAB EFFETS -->
+  <div class="tab-pane fade" id="tab-effets">
+    <div class="d-flex justify-content-end mb-3">
+      <a href="{{ url_for('effets.declarer', patient_id=patient.id) }}" class="btn btn-danger btn-sm">
+        <i class="fa fa-plus me-1"></i>Déclarer un effet
+      </a>
+    </div>
+    {% if effets %}
+    <div class="card-panel">
+      <div class="panel-body p-0">
+        <table class="table table-hover mb-0">
+          <thead class="table-head">
+            <tr><th>Médicament</th><th>Symptôme</th><th>Sévérité</th><th>Date</th><th>Notifié CRPC</th></tr>
+          </thead>
+          <tbody>
+            {% for e in effets %}
+            <tr class="{% if e.alerte_active %}table-danger-light{% endif %}">
+              <td><strong>{{ e.medicament_incrimine or '—' }}</strong></td>
+              <td>{{ e.symptome }}</td>
+              <td>
+                {% if e.severite == 'severe' %}<span class="badge bg-danger">Sévère</span>
+                {% elif e.severite == 'modere' %}<span class="badge bg-warning text-dark">Modéré</span>
+                {% else %}<span class="badge bg-success">Léger</span>{% endif %}
+              </td>
+              <td class="small text-muted">{{ e.date_declaration.strftime('%d/%m/%Y %H:%M') }}</td>
+              <td>
+                {% if e.notifie_crpc %}<span class="text-success"><i class="fa fa-check"></i> Oui</span>
+                {% elif e.severite == 'severe' %}
+                  <form method="POST" action="{{ url_for('effets.marquer_notifie', effet_id=e.id) }}" class="d-inline">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button class="btn btn-danger btn-sm">Notifier maintenant</button>
+                  </form>
+                {% else %}<span class="text-muted">N/A</span>{% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% else %}
+    <div class="text-center text-muted py-5">
+      <i class="fa fa-shield-halved fa-3x d-block mb-3 opacity-25"></i>
+      Aucun effet secondaire déclaré.
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- TAB CONTACTS -->
+  <div class="tab-pane fade" id="tab-contacts">
+    <div class="d-flex justify-content-end mb-3">
+      <a href="{{ url_for('contacts.ajouter', patient_source_id=patient.id) }}" class="btn btn-primary btn-sm">
+        <i class="fa fa-plus me-1"></i>Ajouter un contact
+      </a>
+    </div>
+    {% if contacts %}
+    <div class="row g-3">
+      {% for c in contacts %}
+      <div class="col-12 col-md-6">
+        <div class="contact-card {% if c.statut == 'tb_mr_confirmee' %}border-danger{% endif %}">
+          <div class="d-flex justify-content-between align-items-start mb-2">
+            <strong>{{ c.nom }} {{ c.prenom or '' }}</strong>
+            <span class="badge bg-{{ c.statut_badge }}">{{ c.statut_label }}</span>
+          </div>
+          <div class="text-muted small mb-2">
+            {{ c.relation | capitalize }} · {{ c.age or '?' }} ans · {{ c.sexe or '?' }}
+          </div>
+          <div class="mb-2">
+            <div class="d-flex justify-content-between small mb-1">
+              <span>Suivi 2 ans</span>
+              <span>{{ c.progression_suivi }}%</span>
+            </div>
+            <div class="progress" style="height:6px">
+              <div class="progress-bar bg-{{ c.statut_badge }}" style="width:{{ c.progression_suivi }}%"></div>
+            </div>
+          </div>
+          {% if c.date_prochaine_visite %}
+          <div class="small text-muted">
+            <i class="fa fa-calendar me-1"></i>Prochaine visite : {{ c.date_prochaine_visite.strftime('%d/%m/%Y') }}
+          </div>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center text-muted py-5">
+      <i class="fa fa-people-arrows fa-3x d-block mb-3 opacity-25"></i>
+      Aucun contact enregistré.
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- TAB LABO -->
+  <div class="tab-pane fade" id="tab-labo">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <span class="text-muted small">Suivi bactériologique mensuel — PNLT 2021</span>
+      {% if current_user.role in ['laborantin', 'coordinateur', 'medecin'] %}
+      <a href="{{ url_for('labo.saisir', patient_id=patient.id) }}" class="btn btn-primary btn-sm">
+        <i class="fa fa-flask me-1"></i>Saisir un examen
+      </a>
+      {% endif %}
+    </div>
+    {% if patient.examens_labo %}
+    <div class="card-panel">
+      <div class="panel-body p-0">
+        <table class="table table-hover mb-0">
+          <thead class="table-head">
+            <tr><th>Mois</th><th>Prélèvement</th><th>GeneXpert</th><th>Frottis</th><th>Culture</th><th>DST</th><th></th></tr>
+          </thead>
+          <tbody>
+            {% for e in patient.examens_labo %}
+            <tr>
+              <td><span class="badge bg-primary">M{{ e.mois_suivi }}</span></td>
+              <td class="small">{{ e.date_prelevement.strftime('%d/%m/%Y') }}</td>
+              <td>
+                {% if e.genexpert_effectue and e.genexpert_resultat %}
+                  {% if e.genexpert_resultat == 'positif' %}<span class="badge bg-danger">MTB+</span>
+                  {% else %}<span class="badge bg-success">MTB-</span>{% endif %}
+                {% else %}<span class="text-muted small">—</span>{% endif %}
+              </td>
+              <td>
+                {% if e.frottis_effectue and e.frottis_resultat %}
+                  {% if e.frottis_resultat == 'positif' %}<span class="badge bg-warning text-dark">BAAR+</span>
+                  {% else %}<span class="badge bg-success">BAAR-</span>{% endif %}
+                {% else %}<span class="text-muted small">—</span>{% endif %}
+              </td>
+              <td>
+                {% if e.culture_effectuee %}
+                  <span class="badge bg-{{ e.conversion_badge }}">{{ e.conversion_label }}</span>
+                {% else %}<span class="text-muted small">—</span>{% endif %}
+              </td>
+              <td>
+                {% if e.dst_effectue %}<span class="badge bg-info text-dark">Oui</span>
+                {% else %}<span class="text-muted small">—</span>{% endif %}
+              </td>
+              <td>
+                <a href="{{ url_for('labo.detail', examen_id=e.id) }}" class="btn btn-sm btn-outline-secondary">
+                  <i class="fa fa-eye"></i>
+                </a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="mt-2 text-end">
+      <a href="{{ url_for('labo.suivi_patient', patient_id=patient.id) }}" class="btn btn-sm btn-outline-info">
+        <i class="fa fa-timeline me-1"></i>Voir la courbe de conversion
+      </a>
+    </div>
+    {% else %}
+    <div class="text-center text-muted py-5">
+      <i class="fa fa-microscope fa-3x d-block mb-3 opacity-25"></i>
+      <p>Aucun examen bactériologique enregistré.</p>
+      {% if current_user.role in ['laborantin', 'coordinateur', 'medecin'] %}
+      <a href="{{ url_for('labo.saisir', patient_id=patient.id) }}" class="btn btn-primary btn-sm">
+        <i class="fa fa-flask me-1"></i>Saisir le premier examen (M0)
+      </a>
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- TAB BILAN M0 -->
+  <div class="tab-pane fade" id="tab-bilan">
+    <div class="d-flex justify-content-end mb-3">
+      <a href="{{ url_for('patients.bilan', patient_id=patient.id) }}" class="btn btn-primary btn-sm">
+        <i class="fa fa-{% if bilan %}pen{% else %}plus{% endif %} me-1"></i>
+        {% if bilan %}Modifier le bilan M0{% else %}Saisir le bilan initial M0{% endif %}
+      </a>
+    </div>
+    {% if bilan %}
+    <div class="row g-3">
+      <div class="col-12 col-md-6">
+        <div class="card-panel">
+          <div class="panel-header"><i class="fa fa-weight-scale me-2"></i>Anthropométrie</div>
+          <div class="panel-body">
+            <div class="row g-2">
+              <div class="col-6">
+                <div class="text-muted small">Poids</div>
+                <strong>{{ bilan.poids_kg or '—' }} kg</strong>
+              </div>
+              <div class="col-6">
+                <div class="text-muted small">Taille</div>
+                <strong>{{ bilan.taille_cm or '—' }} cm</strong>
+              </div>
+              <div class="col-6">
+                <div class="text-muted small">IMC</div>
+                {% if bilan.imc %}
+                  {% set cat_col, cat_txt = bilan.imc_categorie %}
+                  <span class="badge bg-{{ cat_col }}">{{ bilan.imc }} kg/m² — {{ cat_txt }}</span>
+                {% else %}
+                  <strong>—</strong>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-12 col-md-6">
+        <div class="card-panel">
+          <div class="panel-header"><i class="fa fa-vials me-2"></i>Biologie</div>
+          <div class="panel-body">
+            <div class="row g-2 small">
+              <div class="col-6"><span class="text-muted">Créatinine :</span> {{ bilan.creatinine_umol_l or '—' }} µmol/L</div>
+              <div class="col-6">
+                <span class="text-muted">Clairance :</span>
+                {% if bilan.insuffisance_renale %}<span class="text-danger fw-bold">{{ bilan.clairance_creatinine }} ml/min !</span>
+                {% else %}{{ bilan.clairance_creatinine or '—' }} ml/min{% endif %}
+              </div>
+              <div class="col-6"><span class="text-muted">Hb :</span>
+                {% if bilan.anemie %}<span class="text-warning">{{ bilan.hb_g_dl }} g/dL (anémie)</span>
+                {% else %}{{ bilan.hb_g_dl or '—' }} g/dL{% endif %}
+              </div>
+              <div class="col-6"><span class="text-muted">ALAT :</span> {{ bilan.alt_u_l or '—' }} U/L</div>
+              <div class="col-6"><span class="text-muted">ASAT :</span> {{ bilan.ast_u_l or '—' }} U/L</div>
+              <div class="col-6"><span class="text-muted">Glycémie :</span> {{ bilan.glycemie_mmol_l or '—' }} mmol/L</div>
+              <div class="col-6"><span class="text-muted">Kaliémie :</span> {{ bilan.kaliemie_mmol_l or '—' }} mmol/L</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-12">
+        <div class="card-panel">
+          <div class="panel-header"><i class="fa fa-heart-pulse me-2"></i>Toxicités spécifiques</div>
+          <div class="panel-body">
+            <div class="row g-2">
+              <div class="col-6 col-md-3 small">
+                <span class="text-muted">ECG QT :</span>
+                {% if bilan.ecg_alerte %}
+                  <span class="text-danger fw-bold">{{ bilan.ecg_qt_ms }} ms (ALERTE !)</span>
+                {% else %}
+                  {{ bilan.ecg_qt_ms or '—' }} ms
+                {% endif %}
+              </div>
+              <div class="col-6 col-md-3 small">
+                <i class="fa fa-{% if bilan.audiogramme_normal %}check text-success{% else %}xmark text-warning{% endif %} me-1"></i>
+                Audiogramme {{ 'normal' if bilan.audiogramme_normal else 'anormal/non fait' }}
+              </div>
+              <div class="col-6 col-md-3 small">
+                <i class="fa fa-{% if bilan.acuite_visuelle_normale %}check text-success{% else %}xmark text-warning{% endif %} me-1"></i>
+                Acuité visuelle {{ 'normale' if bilan.acuite_visuelle_normale else 'anormale/non faite' }}
+              </div>
+              <div class="col-6 col-md-3 small">
+                <i class="fa fa-{% if bilan.thyroide_normale %}check text-success{% else %}xmark text-warning{% endif %} me-1"></i>
+                Thyroïde {{ 'normale' if bilan.thyroide_normale else 'anormale/non faite' }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% else %}
+    <div class="text-center text-muted py-5">
+      <i class="fa fa-stethoscope fa-3x d-block mb-3 opacity-25"></i>
+      <p>Bilan initial M0 non encore saisi.</p>
+      <p class="small">Le bilan paraclinique initial est obligatoire selon le Guide PNLT 2021.</p>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- TAB DOT -->
+  <div class="tab-pane fade" id="tab-dot">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <span class="text-muted small">Directly Observed Therapy — suivi de l'adhérence médicamenteuse</span>
+      {% if traitement %}
+      <div class="d-flex gap-2">
+        <a href="{{ url_for('traitement.dot_ajouter', traitement_id=traitement.id, depuis_fiche=1) }}" class="btn btn-success btn-sm">
+          <i class="fa fa-plus me-1"></i>Saisir prise DOT
+        </a>
+        <a href="{{ url_for('traitement.dot_historique', traitement_id=traitement.id) }}" class="btn btn-outline-secondary btn-sm">
+          <i class="fa fa-list me-1"></i>Historique complet
+        </a>
+      </div>
+      {% endif %}
+    </div>
+
+    {% if dot_recent %}
+    <div class="row g-3 mb-4">
+      <div class="col-12 col-md-4">
+        <div class="card-panel text-center">
+          <div class="panel-body">
+            {% if taux_adherence is not none %}
+            <div class="display-5 fw-bold {% if taux_adherence >= 85 %}text-success{% elif taux_adherence >= 70 %}text-warning{% else %}text-danger{% endif %}">
+              {{ taux_adherence }}%
+            </div>
+            <div class="text-muted small">Adhérence sur 30 jours</div>
+            {% if taux_adherence < 85 %}
+            <div class="alert alert-warning mt-2 small py-1">Objectif ≥ 85%</div>
+            {% endif %}
+            {% else %}
+            <div class="text-muted py-2 small">
+              <i class="fa fa-clock-rotate-left fa-2x d-block mb-2 opacity-50"></i>
+              Pas de prise récente (30j)
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      <div class="col-12 col-md-8">
+        <div class="card-panel">
+          <div class="panel-body p-0">
+            <table class="table table-sm mb-0">
+              <thead class="table-head"><tr><th>Date</th><th>Prise</th><th>Observateur</th></tr></thead>
+              <tbody>
+                {% for d in dot_recent[:10] %}
+                <tr>
+                  <td class="small">{{ d.date_observation.strftime('%d/%m/%Y') }}</td>
+                  <td>{% if d.prise_confirmee %}<span class="badge bg-success">✓ Confirmée</span>{% else %}<span class="badge bg-danger">✗ Omise</span>{% endif %}</td>
+                  <td class="small text-muted">{{ d.observateur_nom or '—' }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% elif traitement %}
+    <div class="text-center text-muted py-5">
+      <i class="fa fa-calendar-check fa-3x d-block mb-3 opacity-25"></i>
+      <p>Aucune observation DOT enregistrée pour ce traitement.</p>
+      <a href="{{ url_for('traitement.dot_ajouter', traitement_id=traitement.id, depuis_fiche=1) }}" class="btn btn-success">
+        <i class="fa fa-plus me-2"></i>Saisir la première prise
+      </a>
+    </div>
+    {% else %}
+    <div class="text-center text-muted py-5">
+      <i class="fa fa-calendar-check fa-3x d-block mb-3 opacity-25"></i>
+      <p>Créez d'abord un traitement pour pouvoir enregistrer les prises DOT.</p>
+      <a href="{{ url_for('traitement.ajouter', patient_id=patient.id) }}" class="btn btn-primary btn-sm">
+        <i class="fa fa-plus me-1"></i>Créer un traitement
+      </a>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- TAB NOTES -->
+  <div class="tab-pane fade" id="tab-notes">
+    <div class="card-panel">
+      <div class="panel-body">
+        {% if patient.notes_cliniques %}
+        <p class="mb-0" style="white-space:pre-line">{{ patient.notes_cliniques }}</p>
+        {% else %}
+        <p class="text-muted">Aucune note clinique.</p>
+        {% endif %}
+        <a href="{{ url_for('patients.modifier', patient_id=patient.id) }}" class="btn btn-outline-secondary btn-sm mt-3">
+          <i class="fa fa-pen me-1"></i>Éditer les notes
+        </a>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/patients.js') }}"></script>
+{% endblock %}

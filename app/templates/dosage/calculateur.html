@@ -1,0 +1,185 @@
+{% extends 'base.html' %}
+{% block title %}Calculateur de dosage{% endblock %}
+{% block breadcrumb %}<a href="{{ url_for('dashboard.index') }}">Accueil</a> / Calculateur de dosage{% endblock %}
+{% block page_title %}Calculateur de dosage{% endblock %}
+{% block page_subtitle %}Doses calculées selon les Tableaux II et III du Guide TBMR-PNLT 2021 (Madagascar){% endblock %}
+
+{% block content %}
+<div class="row g-4">
+
+  <!-- Formulaire -->
+  <div class="col-12 col-lg-4">
+    <div class="card-panel sticky-top" style="top:80px">
+      <div class="panel-header"><i class="fa fa-sliders me-2"></i>Paramètres patient</div>
+      <div class="panel-body">
+        <form method="POST">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+          <div class="mb-4">
+            <label class="form-label fw-semibold">Groupe d'âge</label>
+            <div class="d-flex gap-2">
+              <label class="age-option flex-fill {% if not resultat or resultat.adulte %}selected{% endif %}">
+                <input type="radio" name="groupe_age" value="adulte" {% if not resultat or resultat.adulte %}checked{% endif %}>
+                <i class="fa fa-person fa-lg d-block mb-1"></i>
+                <span>Adulte</span>
+                <small class="d-block text-muted">≥15 ans / ≥30 kg</small>
+              </label>
+              <label class="age-option flex-fill {% if resultat and not resultat.adulte %}selected{% endif %}">
+                <input type="radio" name="groupe_age" value="enfant" {% if resultat and not resultat.adulte %}checked{% endif %}>
+                <i class="fa fa-child fa-lg d-block mb-1"></i>
+                <span>Enfant</span>
+                <small class="d-block text-muted">&lt;15 ans / &lt;30 kg</small>
+              </label>
+            </div>
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label fw-semibold">Poids du patient (kg)</label>
+            <input type="number" name="poids" class="form-control form-control-lg text-center fw-bold"
+                   step="0.1" min="5" max="120"
+                   value="{{ resultat.poids if resultat else '' }}" required
+                   placeholder="ex: 58.5">
+            {% if resultat %}
+            <div class="text-muted small mt-1">
+              <i class="fa fa-check-circle text-success me-1"></i>
+              Tranche : <strong>{{ resultat.tranche }}</strong>
+            </div>
+            {% endif %}
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label fw-semibold">Schéma thérapeutique</label>
+            {% for key, s in schemas.items() %}
+            <label class="schema-option {% if resultat and resultat.schema.get('label') == s.label %}selected{% endif %}">
+              <input type="radio" name="schema" value="{{ key }}"
+                     {% if resultat and resultat.schema.get('label') == s.label %}checked
+                     {% elif loop.first and not resultat %}checked{% endif %}>
+              <div class="d-flex justify-content-between align-items-start">
+                <div>
+                  <div class="fw-semibold small">{{ s.label }}</div>
+                  <div class="text-muted" style="font-size:0.75rem">{{ s.duree }}</div>
+                </div>
+                <i class="fa fa-chevron-right text-muted small"></i>
+              </div>
+            </label>
+            {% endfor %}
+          </div>
+
+          <button type="submit" class="btn btn-primary w-100 btn-lg">
+            <i class="fa fa-calculator me-2"></i>Calculer les doses
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Résultats -->
+  <div class="col-12 col-lg-8">
+    {% if resultat %}
+
+    <!-- Schéma -->
+    <div class="card-panel mb-4">
+      <div class="panel-header">
+        <span><i class="fa fa-clipboard-list me-2"></i>{{ resultat.schema.label }}</span>
+        <span class="badge bg-primary">{{ resultat.schema.duree }}</span>
+      </div>
+      <div class="panel-body">
+        <div class="row g-3 mb-3">
+          {% for ph in resultat.schema.phases %}
+          <div class="col-12 col-md-6">
+            <div class="phase-card">
+              <div class="phase-label">{{ ph.phase }}</div>
+              <div class="med-chips-small">
+                {% for m in ph.medicaments %}
+                <span class="med-chip-sm">{{ m }}</span>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% if resultat.schema.note %}
+        <div class="alert alert-info mb-0 small">
+          <i class="fa fa-circle-info me-2"></i>{{ resultat.schema.note }}
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Table des doses -->
+    <div class="card-panel">
+      <div class="panel-header">
+        <span><i class="fa fa-pills me-2"></i>Doses calculées — Poids {{ resultat.poids }} kg ({{ resultat.tranche }})</span>
+        <button onclick="window.print()" class="btn btn-sm btn-outline-secondary">
+          <i class="fa fa-print me-1"></i>Imprimer
+        </button>
+      </div>
+      <div class="panel-body p-0">
+        <table class="table table-hover mb-0">
+          <thead class="table-head">
+            <tr>
+              <th>Abr.</th>
+              <th>Médicament</th>
+              <th>Forme</th>
+              <th class="text-center">Dose journalière</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for m in resultat.medicaments %}
+            <tr>
+              <td><span class="badge bg-dark">{{ m.abreviation }}</span></td>
+              <td class="fw-semibold">{{ m.nom }}</td>
+              <td class="text-muted small">{{ m.forme }}</td>
+              <td class="text-center">
+                <span class="dose-value">
+                  {% if m.unite %}
+                    {{ m.dose }} {{ m.unite }}
+                  {% else %}
+                    {{ m.dose }}
+                  {% endif %}
+                </span>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <div class="panel-footer">
+        <small class="text-muted">
+          <i class="fa fa-book-open me-1"></i>
+          Source : Guide TBMR-PNLT 2021, Tableaux II et III · Version {{ 'adulte' if resultat.adulte else 'pédiatrique' }}
+        </small>
+      </div>
+    </div>
+
+    {% else %}
+    <!-- État vide -->
+    <div class="card-panel">
+      <div class="panel-body text-center py-5">
+        <div class="empty-icon mb-4"><i class="fa fa-calculator fa-4x opacity-25"></i></div>
+        <h5 class="text-muted">Sélectionnez les paramètres</h5>
+        <p class="text-muted small">Entrez le poids du patient et le schéma thérapeutique<br>pour obtenir les doses calculées selon le guide PNLT.</p>
+
+        <div class="row g-3 mt-3 text-start">
+          {% for key, s in schemas.items() %}
+          <div class="col-12 col-md-6">
+            <div class="info-schema-card">
+              <div class="fw-semibold small">{{ s.label }}</div>
+              <div class="text-muted" style="font-size:0.75rem;">{{ s.duree }}</div>
+              <div class="mt-2">
+                {% for ph in s.phases %}
+                <div class="small"><span class="text-primary">{{ ph.phase }}</span> :
+                  {% for m in ph.medicaments %}<span class="badge-med-xs">{{ m }}</span>{% endfor %}
+                </div>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

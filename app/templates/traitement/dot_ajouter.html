@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+{% block title %}Saisir prise DOT{% endblock %}
+{% block breadcrumb %}
+  <a href="{{ url_for('dashboard.index') }}">Accueil</a> /
+  <a href="{{ url_for('traitement.detail', traitement_id=traitement.id) }}">Traitement</a> /
+  Prise DOT
+{% endblock %}
+{% block page_title %}Observation DOT{% endblock %}
+{% block page_subtitle %}Directly Observed Therapy — {{ patient.code_patient }} · {{ patient.nom }} {{ patient.prenom }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-12 col-lg-7">
+    <div class="card-panel">
+      <div class="panel-header"><i class="fa fa-calendar-check me-2"></i>Saisir une observation DOT</div>
+      <div class="panel-body">
+        <form method="POST">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="depuis_fiche" value="{{ depuis_fiche }}">
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">{{ form.date_observation.label.text }} <span class="text-danger">*</span></label>
+            {{ form.date_observation(class='form-control', type='date') }}
+          </div>
+
+          <div class="mb-3">
+            <div class="form-check form-switch">
+              {{ form.prise_confirmee(class='form-check-input', role='switch', id='priseConfirmee') }}
+              <label class="form-check-label fw-semibold" for="priseConfirmee">
+                Prise médicamenteuse confirmée (toutes les doses prises)
+              </label>
+            </div>
+          </div>
+
+          <div id="sectionOmission" class="mb-3 d-none">
+            <label class="form-label fw-semibold">{{ form.raison_omission.label.text }}</label>
+            {{ form.raison_omission(class='form-control', placeholder="Ex: Patient absent, vomissements, refus…") }}
+          </div>
+
+          <div class="row g-2 mb-3">
+            <div class="col-6">
+              <label class="form-label fw-semibold">{{ form.observateur_nom.label.text }}</label>
+              {{ form.observateur_nom(class='form-control', placeholder='Nom complet') }}
+            </div>
+            <div class="col-6">
+              <label class="form-label fw-semibold">{{ form.observateur_role.label.text }}</label>
+              {{ form.observateur_role(class='form-select') }}
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">{{ form.notes.label.text }}</label>
+            {{ form.notes(class='form-control', rows=3, placeholder='Observations complémentaires…') }}
+          </div>
+
+          <!-- Médicaments du traitement (informatif) -->
+          <div class="mb-4">
+            <div class="text-muted small mb-1">Médicaments du schéma (pris ou omis ce jour) :</div>
+            <div class="d-flex flex-wrap gap-1">
+              {% for med in traitement.medicaments %}
+              <span class="badge bg-secondary">{{ med }}</span>
+              {% else %}
+              <span class="text-muted small">Aucun médicament renseigné.</span>
+              {% endfor %}
+            </div>
+          </div>
+
+          <div class="d-flex gap-2">
+            {{ form.submit(class='btn btn-success') }}
+            <a href="{{ url_for('traitement.detail', traitement_id=traitement.id) }}" class="btn btn-outline-secondary">Annuler</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const toggle = document.getElementById('priseConfirmee');
+const sectionOmission = document.getElementById('sectionOmission');
+function majOmission() {
+  sectionOmission.classList.toggle('d-none', toggle.checked);
+}
+toggle.addEventListener('change', majOmission);
+majOmission();
+</script>
+{% endblock %}

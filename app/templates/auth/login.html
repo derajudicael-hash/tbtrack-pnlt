@@ -1,0 +1,133 @@
+{% extends 'base.html' %}
+{% block title %}Connexion{% endblock %}
+
+{% block auth_content %}
+<div class="auth-split">
+
+  <!-- ── PANNEAU GAUCHE ───────────────────────────────────────────── -->
+  <div class="auth-left">
+    <div class="auth-brand">
+      <i class="fa fa-lungs fa-3x mb-3"></i>
+      <h1>TBTrack</h1>
+      <p class="auth-tagline">Plateforme nationale de gestion<br>de la Tuberculose Multi-Résistante</p>
+    </div>
+
+    <div class="auth-features">
+      <div class="auth-feature"><i class="fa fa-calculator"></i> Calculateur de dosage TBMR-PNLT 2021</div>
+      <div class="auth-feature"><i class="fa fa-users"></i> Registre numérique des patients TB-MR / RR / XDR</div>
+      <div class="auth-feature"><i class="fa fa-bell"></i> Alertes effets secondaires &lt;24h</div>
+      <div class="auth-feature"><i class="fa fa-people-arrows"></i> Suivi des contacts sur 2 ans</div>
+      <div class="auth-feature"><i class="fa fa-chart-bar"></i> Rapports trimestriels PNLT automatisés</div>
+    </div>
+
+    <div class="auth-demo-info">
+      <small>Compte démo :</small><br>
+      <code>medecin@crpc.mg</code> / <code>tbtrack2025</code>
+    </div>
+  </div>
+
+  <!-- ── PANNEAU DROIT : FORMULAIRE ──────────────────────────────── -->
+  <div class="auth-right">
+    <div class="auth-form-box">
+
+      <div class="auth-form-header">
+        <h2>Connexion</h2>
+        <p class="text-muted">Accédez à votre espace CRPC / CDT</p>
+      </div>
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}{% for cat, msg in messages %}
+          <div class="alert alert-{{ cat }} d-flex align-items-center gap-2 mb-3 py-2">
+            {% if cat == 'danger' %}<i class="fa fa-circle-exclamation"></i>
+            {% elif cat == 'success' %}<i class="fa fa-circle-check"></i>
+            {% else %}<i class="fa fa-circle-info"></i>{% endif %}
+            <span>{{ msg }}</span>
+          </div>
+        {% endfor %}{% endif %}
+      {% endwith %}
+
+      <form method="POST" novalidate>
+        {{ form.hidden_tag() }}
+
+        <!-- Email -->
+        <div class="mb-3">
+          <label class="form-label fw-semibold" for="loginEmail">
+            <i class="fa fa-envelope me-1 opacity-50"></i>{{ form.email.label.text }}
+          </label>
+          {{ form.email(
+              id='loginEmail',
+              class='form-control form-control-lg' + (' is-invalid' if form.email.errors else ''),
+              placeholder='votre@email.mg',
+              autocomplete='email',
+              autofocus=true
+          ) }}
+          {% if form.email.errors %}
+            <div class="invalid-feedback">{{ form.email.errors[0] }}</div>
+          {% endif %}
+        </div>
+
+        <!-- Mot de passe + toggle -->
+        <div class="mb-3">
+          <label class="form-label fw-semibold" for="loginPwd">
+            <i class="fa fa-lock me-1 opacity-50"></i>{{ form.password.label.text }}
+          </label>
+          <div class="input-group input-group-lg">
+            {{ form.password(
+                id='loginPwd',
+                class='form-control' + (' is-invalid' if form.password.errors else ''),
+                placeholder='••••••••',
+                autocomplete='current-password'
+            ) }}
+            <button class="pass-toggle-btn" type="button"
+                    onclick="togglePass('loginPwd','eyeLogin')"
+                    title="Afficher / masquer le mot de passe"
+                    aria-label="Afficher le mot de passe">
+              <i class="fa fa-eye" id="eyeLogin"></i>
+            </button>
+          </div>
+          {% if form.password.errors %}
+            <div class="invalid-feedback d-block">{{ form.password.errors[0] }}</div>
+          {% endif %}
+        </div>
+
+        <!-- Remember me -->
+        <div class="auth-helper-row mb-4">
+          <div class="form-check">
+            {{ form.remember(class='form-check-input', id='rememberMe') }}
+            <label class="form-check-label text-muted small" for="rememberMe">
+              Se souvenir de moi
+            </label>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-lg w-100 fw-semibold">
+          <i class="fa fa-right-to-bracket me-2"></i>Se connecter
+        </button>
+      </form>
+
+      <div class="auth-divider my-4">ou</div>
+
+      <p class="text-center text-muted small mb-0">
+        Pas encore de compte ?
+        <a href="{{ url_for('auth.register') }}" class="text-primary fw-semibold">Créer un compte</a>
+      </p>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function togglePass(inputId, iconId) {
+  const input = document.getElementById(inputId);
+  const icon  = document.getElementById(iconId);
+  if (input.type === 'password') {
+    input.type = 'text';
+    icon.className = 'fa fa-eye-slash';
+  } else {
+    input.type = 'password';
+    icon.className = 'fa fa-eye';
+  }
+}
+</script>
+{% endblock %}

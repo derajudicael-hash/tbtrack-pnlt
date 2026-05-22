@@ -1,0 +1,44 @@
+# Environnement virtuel
+.venv/
+venv/
+env/
+
+# Variables d'environnement (ne jamais commiter !)
+.env
+
+# Base de données locale
+instance/
+*.db
+*.sqlite
+*.sqlite3
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Migrations (garder les fichiers, ignorer le cache)
+migrations/versions/__pycache__/
+
+# Fichiers de test temporaires
+audit_v2.py
+upgrade_v02.py

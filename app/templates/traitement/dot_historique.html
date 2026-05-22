@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+{% block title %}Historique DOT{% endblock %}
+{% block breadcrumb %}
+  <a href="{{ url_for('dashboard.index') }}">Accueil</a> /
+  <a href="{{ url_for('traitement.detail', traitement_id=traitement.id) }}">Traitement</a> /
+  Historique DOT
+{% endblock %}
+{% block page_title %}Historique DOT{% endblock %}
+{% block page_subtitle %}{{ patient.code_patient }} · {{ patient.nom }} {{ patient.prenom }}{% endblock %}
+{% block page_actions %}
+  <a href="{{ url_for('traitement.dot_ajouter', traitement_id=traitement.id) }}" class="btn btn-success">
+    <i class="fa fa-plus me-2"></i>Nouvelle prise
+  </a>
+{% endblock %}
+
+{% block content %}
+
+<!-- KPI adhérence -->
+<div class="row g-4 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="kpi-card {% if taux_adherence and taux_adherence >= 85 %}kpi-primary{% elif taux_adherence %}kpi-warning{% else %}kpi-secondary{% endif %}">
+      <div class="kpi-icon"><i class="fa fa-percent"></i></div>
+      <div class="kpi-body">
+        <div class="kpi-value">{{ taux_adherence if taux_adherence is not none else '—' }}{% if taux_adherence is not none %}%{% endif %}</div>
+        <div class="kpi-label">Adhérence 30j</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="kpi-card kpi-info">
+      <div class="kpi-icon"><i class="fa fa-calendar-check"></i></div>
+      <div class="kpi-body">
+        <div class="kpi-value">{{ dots | length }}</div>
+        <div class="kpi-label">Observations totales</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="kpi-card kpi-primary">
+      <div class="kpi-icon"><i class="fa fa-check-circle"></i></div>
+      <div class="kpi-body">
+        <div class="kpi-value">{{ dots | selectattr('prise_confirmee', 'equalto', true) | list | length }}</div>
+        <div class="kpi-label">Prises confirmées</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="kpi-card kpi-danger">
+      <div class="kpi-icon"><i class="fa fa-xmark-circle"></i></div>
+      <div class="kpi-body">
+        <div class="kpi-value">{{ dots | selectattr('prise_confirmee', 'equalto', false) | list | length }}</div>
+        <div class="kpi-label">Doses manquées</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card-panel">
+  <div class="panel-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-head">
+          <tr>
+            <th>Date</th>
+            <th>Prise</th>
+            <th>Observateur</th>
+            <th>Rôle</th>
+            <th>Raison omission</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for d in dots %}
+          <tr class="{% if not d.prise_confirmee %}table-warning{% endif %}">
+            <td class="fw-semibold small">{{ d.date_observation.strftime('%d/%m/%Y') }}</td>
+            <td>
+              {% if d.prise_confirmee %}
+                <span class="badge bg-success"><i class="fa fa-check me-1"></i>Confirmée</span>
+              {% else %}
+                <span class="badge bg-danger"><i class="fa fa-xmark me-1"></i>Dose manquée</span>
+              {% endif %}
+            </td>
+            <td class="small">{{ d.observateur_nom or '—' }}</td>
+            <td class="small text-muted">{{ d.observateur_role | capitalize if d.observateur_role else '—' }}</td>
+            <td class="small text-muted">{{ d.raison_omission or '—' }}</td>
+            <td class="small text-muted">{{ d.notes[:60] if d.notes else '—' }}{{ '…' if d.notes and d.notes|length > 60 else '' }}</td>
+          </tr>
+          {% else %}
+          <tr><td colspan="6" class="text-center text-muted py-4">Aucune observation DOT enregistrée.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

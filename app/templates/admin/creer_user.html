@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+{% block title %}Créer un compte{% endblock %}
+{% block breadcrumb %}
+  <a href="{{ url_for('dashboard.index') }}">Accueil</a> /
+  <a href="{{ url_for('admin.utilisateurs') }}">Administration</a> /
+  Créer un compte
+{% endblock %}
+{% block page_title %}Créer un compte utilisateur{% endblock %}
+{% block page_subtitle %}Nouveau compte TBTrack — Accès sécurisé par rôle{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-12 col-lg-6">
+    <div class="card-panel">
+      <div class="panel-header"><i class="fa fa-user-plus me-2"></i>Informations du nouveau compte</div>
+      <div class="panel-body">
+        <form method="POST">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+          <div class="row g-3">
+            <div class="col-6">
+              <label class="form-label fw-semibold">{{ form.prenom.label.text }} <span class="text-danger">*</span></label>
+              {{ form.prenom(class='form-control') }}
+            </div>
+            <div class="col-6">
+              <label class="form-label fw-semibold">{{ form.nom.label.text }} <span class="text-danger">*</span></label>
+              {{ form.nom(class='form-control') }}
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold">{{ form.email.label.text }} <span class="text-danger">*</span></label>
+              {{ form.email(class='form-control', type='email') }}
+              {% for e in form.email.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+            </div>
+            <div class="col-6">
+              <label class="form-label fw-semibold">{{ form.role.label.text }}</label>
+              {{ form.role(class='form-select') }}
+            </div>
+            <div class="col-6">
+              <label class="form-label fw-semibold">{{ form.centre.label.text }}</label>
+              {{ form.centre(class='form-control', placeholder='Ex: CRPC Mahajanga') }}
+            </div>
+            <div class="col-12"><hr></div>
+            <div class="col-6">
+              <label class="form-label fw-semibold">{{ form.password.label.text }} <span class="text-danger">*</span></label>
+              {{ form.password(class='form-control') }}
+              {% for e in form.password.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+            </div>
+            <div class="col-6">
+              <label class="form-label fw-semibold">{{ form.password_confirm.label.text }} <span class="text-danger">*</span></label>
+              {{ form.password_confirm(class='form-control') }}
+              {% for e in form.password_confirm.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+            </div>
+          </div>
+
+          <div class="d-flex gap-2 mt-4">
+            {{ form.submit(class='btn btn-primary') }}
+            <a href="{{ url_for('admin.utilisateurs') }}" class="btn btn-outline-secondary">Annuler</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

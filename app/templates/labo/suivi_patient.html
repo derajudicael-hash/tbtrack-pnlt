@@ -1,0 +1,125 @@
+{% extends 'base.html' %}
+{% block title %}Suivi labo · {{ patient.code_patient }}{% endblock %}
+{% block breadcrumb %}
+  <a href="{{ url_for('dashboard.index') }}">Accueil</a> /
+  <a href="{{ url_for('labo.index') }}">Laboratoire</a> /
+  Suivi {{ patient.code_patient }}
+{% endblock %}
+{% block page_title %}Suivi bactériologique — {{ patient.nom }} {{ patient.prenom }}{% endblock %}
+{% block page_subtitle %}{{ patient.code_patient }} · {{ patient.type_resistance }} · Schéma {{ patient.schema_therapeutique or '—' }}{% endblock %}
+{% block page_actions %}
+  <a href="{{ url_for('labo.saisir') }}?patient_id={{ patient.id }}" class="btn btn-primary">
+    <i class="fa fa-flask me-1"></i>Ajouter un examen
+  </a>
+{% endblock %}
+
+{% block content %}
+
+<!-- Timeline bactériologique -->
+<div class="card-panel mb-4">
+  <div class="panel-header"><i class="fa fa-timeline me-2"></i>Courbe de conversion bactériologique</div>
+  <div class="panel-body">
+    {% if examens %}
+    <div class="d-flex gap-3 align-items-end flex-wrap">
+      {% for e in examens %}
+      <div class="text-center" style="min-width:70px">
+        <div class="small text-muted mb-1">M{{ e.mois_suivi }}</div>
+        <a href="{{ url_for('labo.detail', examen_id=e.id) }}"
+           class="d-block p-2 rounded border text-decoration-none
+           {% if e.conversion_badge == 'success' %}border-success bg-success bg-opacity-10
+           {% elif e.conversion_badge == 'danger' %}border-danger bg-danger bg-opacity-10
+           {% else %}border-secondary bg-light{% endif %}"
+           title="{{ e.conversion_label }}">
+          {% if e.culture_resultat == 'negatif' %}
+            <i class="fa fa-circle-check text-success fa-lg"></i>
+          {% elif e.culture_resultat == 'positif' %}
+            <i class="fa fa-circle-xmark text-danger fa-lg"></i>
+          {% elif e.frottis_resultat == 'negatif' %}
+            <i class="fa fa-minus-circle text-info fa-lg"></i>
+          {% else %}
+            <i class="fa fa-circle-half-stroke text-secondary fa-lg"></i>
+          {% endif %}
+          <div class="small mt-1">{{ e.conversion_label }}</div>
+        </a>
+        <div class="small text-muted mt-1">{{ e.date_prelevement.strftime('%d/%m') }}</div>
+      </div>
+      {% if not loop.last %}
+      <div class="text-muted" style="font-size:1.2rem;padding-bottom:30px">→</div>
+      {% endif %}
+      {% endfor %}
+    </div>
+    {% else %}
+    <p class="text-muted mb-0">Aucun examen enregistré pour ce patient.</p>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Tableau détaillé -->
+<div class="card-panel">
+  <div class="panel-header"><i class="fa fa-table me-2"></i>Résultats détaillés</div>
+  <div class="panel-body p-0">
+    {% if examens %}
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead class="table-head">
+          <tr>
+            <th>Mois</th>
+            <th>Date prélèv.</th>
+            <th>GeneXpert</th>
+            <th>Frottis</th>
+            <th>Culture</th>
+            <th>DST</th>
+            <th>Réalisé par</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for e in examens %}
+          <tr>
+            <td><span class="badge bg-primary">M{{ e.mois_suivi }}</span></td>
+            <td class="small">{{ e.date_prelevement.strftime('%d/%m/%Y') }}</td>
+            <td>
+              {% if e.genexpert_effectue and e.genexpert_resultat %}
+                {% if e.genexpert_resultat == 'positif' %}
+                  <span class="badge bg-danger">MTB+</span>
+                {% else %}
+                  <span class="badge bg-success">MTB-</span>
+                {% endif %}
+              {% else %}<span class="text-muted small">—</span>{% endif %}
+            </td>
+            <td>
+              {% if e.frottis_effectue and e.frottis_resultat %}
+                {% if e.frottis_resultat == 'positif' %}
+                  <span class="badge bg-warning text-dark">BAAR+ {{ e.frottis_quantite or '' }}</span>
+                {% else %}
+                  <span class="badge bg-success">BAAR-</span>
+                {% endif %}
+              {% else %}<span class="text-muted small">—</span>{% endif %}
+            </td>
+            <td>
+              {% if e.culture_effectuee %}
+                <span class="badge bg-{{ e.conversion_badge }}">{{ e.conversion_label }}</span>
+              {% else %}<span class="text-muted small">—</span>{% endif %}
+            </td>
+            <td>
+              {% if e.dst_effectue %}<span class="badge bg-info text-dark">Oui</span>
+              {% else %}<span class="text-muted small">—</span>{% endif %}
+            </td>
+            <td class="small text-muted">{{ e.laborantin.full_name }}</td>
+            <td>
+              <a href="{{ url_for('labo.detail', examen_id=e.id) }}" class="btn btn-sm btn-outline-secondary">
+                <i class="fa fa-eye"></i>
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="text-center text-muted py-4">Aucun examen.</div>
+    {% endif %}
+  </div>
+</div>
+
+{% endblock %}

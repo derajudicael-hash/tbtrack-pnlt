@@ -1,0 +1,128 @@
+{% extends 'base.html' %}
+{% block title %}Modifier contact{% endblock %}
+{% block breadcrumb %}
+  <a href="{{ url_for('dashboard.index') }}">Accueil</a> /
+  <a href="{{ url_for('contacts.liste') }}">Contacts</a> /
+  Modifier
+{% endblock %}
+{% block page_title %}Modifier le contact{% endblock %}
+{% block page_subtitle %}{{ contact.nom }} {{ contact.prenom or '' }} — Contact de {{ contact.patient_source.code_patient }}{% endblock %}
+
+{% block content %}
+<form method="POST">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+  <div class="row g-4">
+    <!-- Informations générales -->
+    <div class="col-12 col-lg-6">
+      <div class="card-panel">
+        <div class="panel-header"><i class="fa fa-person me-2"></i>Informations générales</div>
+        <div class="panel-body">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Patient source</label>
+            {{ form.patient_source_id(class='form-select') }}
+          </div>
+          <div class="row g-2 mb-3">
+            <div class="col-6">
+              <label class="form-label fw-semibold">{{ form.nom.label.text }} <span class="text-danger">*</span></label>
+              {{ form.nom(class='form-control') }}
+            </div>
+            <div class="col-6">
+              <label class="form-label fw-semibold">{{ form.prenom.label.text }}</label>
+              {{ form.prenom(class='form-control') }}
+            </div>
+          </div>
+          <div class="row g-2 mb-3">
+            <div class="col-4">
+              <label class="form-label fw-semibold">{{ form.age.label.text }}</label>
+              {{ form.age(class='form-control', min=0) }}
+            </div>
+            <div class="col-4">
+              <label class="form-label fw-semibold">{{ form.sexe.label.text }}</label>
+              {{ form.sexe(class='form-select') }}
+            </div>
+            <div class="col-4">
+              <label class="form-label fw-semibold">{{ form.relation.label.text }}</label>
+              {{ form.relation(class='form-select') }}
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">{{ form.telephone.label.text }}</label>
+            {{ form.telephone(class='form-control') }}
+          </div>
+          <div class="row g-2 mb-3">
+            <div class="col-6">
+              <label class="form-label fw-semibold">{{ form.statut.label.text }}</label>
+              {{ form.statut(class='form-select') }}
+            </div>
+            <div class="col-6">
+              <label class="form-label fw-semibold">{{ form.date_prochaine_visite.label.text }}</label>
+              {{ form.date_prochaine_visite(class='form-control', type='date') }}
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">{{ form.notes.label.text }}</label>
+            {{ form.notes(class='form-control', rows=3) }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Résultats de dépistage -->
+    <div class="col-12 col-lg-6">
+      <div class="card-panel">
+        <div class="panel-header"><i class="fa fa-microscope me-2"></i>Résultats de dépistage TB-MR</div>
+        <div class="panel-body">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">{{ form.date_depistage.label.text }}</label>
+            {{ form.date_depistage(class='form-control', type='date') }}
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">{{ form.resultat_genexpert.label.text }}</label>
+            {{ form.resultat_genexpert(class='form-select') }}
+            {% if contact.necessite_suivi_urgent %}
+            <div class="alert alert-danger mt-2 small">
+              <i class="fa fa-triangle-exclamation me-1"></i>
+              GeneXpert positif — ce contact doit être pris en charge immédiatement !
+            </div>
+            {% endif %}
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">{{ form.radiographie_thorax.label.text }}</label>
+            {{ form.radiographie_thorax(class='form-select') }}
+          </div>
+          <hr>
+          <div class="mb-2">
+            <div class="form-check">
+              {{ form.ipt_propose(class='form-check-input') }}
+              <label class="form-check-label fw-semibold">{{ form.ipt_propose.label.text }}</label>
+            </div>
+            <div class="text-muted small ps-4">Thérapie Préventive Tuberculose proposée à ce contact</div>
+          </div>
+          <div class="mb-3">
+            <div class="form-check">
+              {{ form.ipt_accepte(class='form-check-input') }}
+              <label class="form-check-label fw-semibold">{{ form.ipt_accepte.label.text }}</label>
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">{{ form.date_prochain_controle.label.text }}</label>
+            {{ form.date_prochain_controle(class='form-control', type='date') }}
+          </div>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="d-flex gap-2 mt-3">
+        {{ form.submit(class='btn btn-primary') }}
+        <a href="{{ url_for('contacts.liste') }}" class="btn btn-outline-secondary">Annuler</a>
+        <form method="POST" action="{{ url_for('contacts.supprimer', contact_id=contact.id) }}" class="ms-auto"
+              onsubmit="return confirm('Supprimer ce contact ? Action irréversible.')">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button class="btn btn-outline-danger"><i class="fa fa-trash me-1"></i>Supprimer</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</form>
+{% endblock %}

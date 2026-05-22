@@ -1,0 +1,211 @@
+{% extends 'base.html' %}
+{% block title %}Examen M{{ examen.mois_suivi }} · {{ examen.patient.code_patient }}{% endblock %}
+{% block breadcrumb %}
+  <a href="{{ url_for('dashboard.index') }}">Accueil</a> /
+  <a href="{{ url_for('labo.index') }}">Laboratoire</a> /
+  {{ examen.patient.code_patient }} M{{ examen.mois_suivi }}
+{% endblock %}
+{% block page_title %}Examen M{{ examen.mois_suivi }} — {{ examen.patient.nom }} {{ examen.patient.prenom }}{% endblock %}
+{% block page_subtitle %}
+  {{ examen.patient.code_patient }} · {{ examen.patient.type_resistance }} ·
+  Prélèvement du {{ examen.date_prelevement.strftime('%d/%m/%Y') }}
+{% endblock %}
+{% block page_actions %}
+  <a href="{{ url_for('patients.fiche', patient_id=examen.patient.id) }}" class="btn btn-outline-secondary me-2">
+    <i class="fa fa-user me-1"></i>Fiche patient
+  </a>
+  {% if current_user.role in ['laborantin', 'coordinateur'] %}
+  <form method="POST" action="{{ url_for('labo.supprimer', examen_id=examen.id) }}"
+        onsubmit="return confirm('Supprimer cet examen ?')" class="d-inline">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button class="btn btn-outline-danger"><i class="fa fa-trash me-1"></i>Supprimer</button>
+  </form>
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+
+  <!-- Résumé patient -->
+  <div class="col-12">
+    <div class="card-panel">
+      <div class="panel-body">
+        <div class="d-flex align-items-center gap-3">
+          <div class="user-avatar" style="width:50px;height:50px;font-size:1.1rem">
+            {{ examen.patient.prenom[0] }}{{ examen.patient.nom[0] }}
+          </div>
+          <div>
+            <div class="fw-bold fs-5">{{ examen.patient.nom }} {{ examen.patient.prenom }}</div>
+            <div class="text-muted small">
+              {{ examen.patient.code_patient }} ·
+              {{ examen.patient.type_resistance }} ·
+              {{ examen.patient.age or '?' }} ans ·
+              {{ examen.patient.sexe or '—' }} ·
+              {{ examen.patient.poids or '?' }} kg
+            </div>
+          </div>
+          <div class="ms-auto text-end">
+            <div class="text-muted small">Mois de suivi</div>
+            <span class="badge bg-primary fs-5 px-3">M{{ examen.mois_suivi }}</span>
+          </div>
+          <div class="text-end">
+            <div class="text-muted small">Conversion</div>
+            <span class="badge bg-{{ examen.conversion_badge }}">{{ examen.conversion_label }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- GeneXpert -->
+  {% if examen.genexpert_effectue %}
+  <div class="col-12 col-md-4">
+    <div class="card-panel h-100">
+      <div class="panel-header" style="color:#8b5cf6">
+        <i class="fa fa-dna me-2"></i>GeneXpert MTB/RIF
+      </div>
+      <div class="panel-body">
+        <div class="mb-3">
+          <div class="text-muted small mb-1">Résultat MTB</div>
+          {% if examen.genexpert_resultat == 'positif' %}
+            <span class="badge bg-danger fs-6"><i class="fa fa-circle-exclamation me-1"></i>MTB Détecté</span>
+          {% elif examen.genexpert_resultat == 'negatif' %}
+            <span class="badge bg-success fs-6"><i class="fa fa-circle-check me-1"></i>MTB Non détecté</span>
+          {% else %}
+            <span class="badge bg-secondary">Indéterminé</span>
+          {% endif %}
+        </div>
+        {% if examen.genexpert_resultat == 'positif' %}
+        <div>
+          <div class="text-muted small mb-1">Résistance Rifampicine</div>
+          {% if examen.genexpert_resistance_rif == 'detected' %}
+            <span class="badge bg-danger"><i class="fa fa-triangle-exclamation me-1"></i>RIF Résistant</span>
+          {% elif examen.genexpert_resistance_rif == 'not_detected' %}
+            <span class="badge bg-success">RIF Sensible</span>
+          {% else %}
+            <span class="badge bg-secondary">Indéterminée</span>
+          {% endif %}
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Frottis -->
+  {% if examen.frottis_effectue %}
+  <div class="col-12 col-md-4">
+    <div class="card-panel h-100">
+      <div class="panel-header" style="color:#3b82f6">
+        <i class="fa fa-microscope me-2"></i>Frottis (microscopie)
+      </div>
+      <div class="panel-body">
+        <div class="mb-3">
+          <div class="text-muted small mb-1">Résultat BAAR</div>
+          {% if examen.frottis_resultat == 'positif' %}
+            <span class="badge bg-warning text-dark fs-6">BAAR Positif</span>
+          {% elif examen.frottis_resultat == 'negatif' %}
+            <span class="badge bg-success fs-6">BAAR Négatif</span>
+          {% else %}
+            <span class="badge bg-secondary">—</span>
+          {% endif %}
+        </div>
+        {% if examen.frottis_quantite %}
+        <div>
+          <div class="text-muted small mb-1">Charge bacillaire</div>
+          <strong>{{ examen.frottis_quantite }}</strong>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Culture -->
+  {% if examen.culture_effectuee %}
+  <div class="col-12 col-md-4">
+    <div class="card-panel h-100">
+      <div class="panel-header" style="color:#10b981">
+        <i class="fa fa-vial me-2"></i>Culture mycobactérienne
+      </div>
+      <div class="panel-body">
+        <div class="mb-3">
+          <div class="text-muted small mb-1">Résultat</div>
+          <span class="badge bg-{{ examen.conversion_badge }} fs-6">{{ examen.conversion_label }}</span>
+        </div>
+        {% if examen.culture_milieu %}
+        <div>
+          <div class="text-muted small mb-1">Milieu</div>
+          <strong>{{ examen.culture_milieu }}</strong>
+        </div>
+        {% endif %}
+        {% if examen.date_resultat %}
+        <div class="mt-2">
+          <div class="text-muted small mb-1">Date résultat</div>
+          <strong>{{ examen.date_resultat.strftime('%d/%m/%Y') }}</strong>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- DST / Antibiogramme -->
+  {% if examen.dst_effectue %}
+  <div class="col-12">
+    <div class="card-panel">
+      <div class="panel-header" style="color:#ef4444">
+        <i class="fa fa-shield-halved me-2"></i>Antibiogramme — Drug Susceptibility Testing (DST)
+      </div>
+      <div class="panel-body">
+        {% set dst = examen.dst_summary() %}
+        {% if dst %}
+        <div class="row g-2">
+          {% for molecule, resultat in dst.items() %}
+          <div class="col-6 col-md-3">
+            <div class="p-2 rounded border text-center" style="
+              {% if resultat == 'resistant' %}background:#fef2f2;border-color:#fca5a5!important;
+              {% elif resultat == 'sensible' %}background:#f0fdf4;border-color:#86efac!important;
+              {% else %}background:#fffbeb;border-color:#fcd34d!important;{% endif %}">
+              <div class="small text-muted mb-1">{{ molecule }}</div>
+              {% if resultat == 'resistant' %}
+                <span class="badge bg-danger">Résistant</span>
+              {% elif resultat == 'sensible' %}
+                <span class="badge bg-success">Sensible</span>
+              {% else %}
+                <span class="badge bg-warning text-dark">Intermédiaire</span>
+              {% endif %}
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-muted mb-0">Résultats DST non renseignés.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Notes -->
+  {% if examen.notes %}
+  <div class="col-12">
+    <div class="card-panel">
+      <div class="panel-header"><i class="fa fa-comment-medical me-2"></i>Observations</div>
+      <div class="panel-body">
+        <p class="mb-0" style="white-space:pre-line">{{ examen.notes }}</p>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Métadonnées -->
+  <div class="col-12">
+    <div class="text-muted small text-end">
+      Enregistré par <strong>{{ examen.laborantin.full_name }}</strong>
+      ({{ examen.laborantin.role_label }}) le {{ examen.created_at.strftime('%d/%m/%Y à %H:%M') }}
+    </div>
+  </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% block title %}Contacts{% endblock %}
+{% block breadcrumb %}<a href="{{ url_for('dashboard.index') }}">Accueil</a> / Contacts{% endblock %}
+{% block page_title %}Suivi des contacts{% endblock %}
+{% block page_subtitle %}Contacts proches des cas TB-MR/RR — Suivi clinique obligatoire sur 2 ans (Guide PNLT §VI.4){% endblock %}
+{% block page_actions %}
+  <a href="{{ url_for('contacts.ajouter') }}" class="btn btn-primary">
+    <i class="fa fa-plus me-2"></i>Ajouter un contact
+  </a>
+{% endblock %}
+
+{% block content %}
+<div class="card-panel">
+  <div class="panel-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-head">
+          <tr>
+            <th>Contact</th>
+            <th>Patient source</th>
+            <th>Relation</th>
+            <th>Téléphone</th>
+            <th>Statut</th>
+            <th>Progression suivi</th>
+            <th>Prochaine visite</th>
+            <th>Jours restants</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for c in contacts %}
+          <tr class="{% if c.statut == 'tb_mr_confirmee' %}table-danger{% endif %}">
+            <td>
+              <strong>{{ c.nom }} {{ c.prenom or '' }}</strong>
+              <div class="text-muted small">{{ c.age or '?' }} ans · {{ c.sexe or '?' }}</div>
+            </td>
+            <td>
+              <a href="{{ url_for('patients.fiche', patient_id=c.patient_source.id) }}" class="text-decoration-none">
+                {{ c.patient_source.code_patient }}
+              </a>
+            </td>
+            <td><span class="badge bg-light text-dark border">{{ c.relation | capitalize }}</span></td>
+            <td class="small text-muted">{{ c.telephone or '—' }}</td>
+            <td><span class="badge bg-{{ c.statut_badge }}">{{ c.statut_label }}</span></td>
+            <td style="min-width:140px">
+              <div class="d-flex align-items-center gap-2">
+                <div class="progress flex-fill" style="height:8px">
+                  <div class="progress-bar bg-{{ c.statut_badge }}" style="width:{{ c.progression_suivi }}%"></div>
+                </div>
+                <small class="text-muted">{{ c.progression_suivi }}%</small>
+              </div>
+            </td>
+            <td class="small {% if c.date_prochaine_visite and c.date_prochaine_visite < today %}text-danger fw-bold{% endif %}">
+              {{ c.date_prochaine_visite.strftime('%d/%m/%Y') if c.date_prochaine_visite else '—' }}
+            </td>
+            <td class="small">
+              {% if c.jours_restants_suivi is not none %}
+                {% if c.jours_restants_suivi > 0 %}
+                  <span class="text-muted">{{ c.jours_restants_suivi }} j</span>
+                {% else %}
+                  <span class="badge bg-secondary">Suivi terminé</span>
+                {% endif %}
+              {% else %}—{% endif %}
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="8" class="text-center text-muted py-4">Aucun contact enregistré.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="panel-footer text-muted small">
+    {{ contacts | length }} contact(s) · Durée de suivi recommandée : 2 ans minimum
+  </div>
+</div>
+{% endblock %}
