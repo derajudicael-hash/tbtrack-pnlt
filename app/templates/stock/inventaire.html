@@ -79,6 +79,13 @@
                 <a href="{{ url_for('stock.modifier', med_id=m.id) }}" class="btn btn-sm btn-outline-warning" title="Modifier">
                   <i class="fa fa-pen"></i>
                 </a>
+                <form method="POST" action="{{ url_for('stock.supprimer', med_id=m.id) }}"
+                      onsubmit="return confirm('Supprimer {{ m.nom }} ?')">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button class="btn btn-sm btn-outline-danger" title="Supprimer">
+                    <i class="fa fa-trash"></i>
+                  </button>
+                </form>
               </div>
             </td>
           </tr>

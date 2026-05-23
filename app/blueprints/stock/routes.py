@@ -104,6 +104,19 @@ def historique(med_id):
     return render_template('stock/historique.html', med=med, mouvements=mouvements)
 
 
+@stock_bp.route('/<int:med_id>/supprimer', methods=['POST'])
+@login_required
+def supprimer(med_id):
+    med = Medicament.query.get_or_404(med_id)
+    if med.mouvements:
+        flash(f'Impossible de supprimer "{med.nom}" : il a un historique de mouvements.', 'danger')
+        return redirect(url_for('stock.inventaire'))
+    db.session.delete(med)
+    db.session.commit()
+    flash(f'Médicament "{med.nom}" supprimé.', 'success')
+    return redirect(url_for('stock.inventaire'))
+
+
 # Route rétro-compatible avec l'ancien système delta +/-
 @stock_bp.route('/<int:med_id>/ajuster', methods=['POST'])
 @login_required
