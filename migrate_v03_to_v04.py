@@ -54,6 +54,34 @@ MIGRATIONS = [
 conn = sqlite3.connect(DB_PATH)
 cur = conn.cursor()
 
+# Créer suivi_ponderal si elle n'existe pas (nouvelle table V0.4)
+cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='suivi_ponderal'")
+if not cur.fetchone():
+    cur.execute("""
+        CREATE TABLE suivi_ponderal (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            patient_id INTEGER NOT NULL REFERENCES patients(id),
+            mois_suivi INTEGER NOT NULL,
+            date_mesure DATE NOT NULL,
+            poids FLOAT,
+            taille FLOAT,
+            tension_sys INTEGER,
+            tension_dia INTEGER,
+            temperature FLOAT,
+            kaliemie_mmol_l FLOAT,
+            creatinine_umol_l FLOAT,
+            gpt_u_l FLOAT,
+            got_u_l FLOAT,
+            leucocytes_g_l FLOAT,
+            plaquettes_g_l FLOAT,
+            notes TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+    print("  [OK]    Table suivi_ponderal créée")
+else:
+    print("  [SKIP]  Table suivi_ponderal — déjà présente")
+
 ok = 0
 skip = 0
 err = 0
