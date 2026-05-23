@@ -95,6 +95,7 @@
 </aside>
 
 <!-- ═══ MAIN ══════════════════════════════════════════════════════════════════ -->
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
 <main class="main-wrapper" id="main-wrapper">
   <header class="topbar">
     <button class="hamburger" onclick="toggleSidebar()" title="Menu">
@@ -162,24 +163,32 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
 function toggleSidebar() {
-  const sidebar = document.getElementById('sidebar');
-  const wrapper = document.getElementById('main-wrapper');
+  const sidebar  = document.getElementById('sidebar');
+  const wrapper  = document.getElementById('main-wrapper');
+  const overlay  = document.getElementById('sidebarOverlay');
   const isMobile = window.innerWidth <= 768;
   if (isMobile) {
+    const opening = !sidebar.classList.contains('mobile-open');
     sidebar.classList.toggle('mobile-open');
+    if (overlay) overlay.classList.toggle('active', opening);
+    document.body.style.overflow = opening ? 'hidden' : '';
   } else {
     sidebar.classList.toggle('collapsed');
     wrapper.classList.toggle('expanded');
   }
 }
-// Ferme la sidebar mobile si on clique en dehors
-document.addEventListener('click', function(e) {
+function closeSidebar() {
   const sidebar = document.getElementById('sidebar');
-  if (window.innerWidth <= 768 && sidebar.classList.contains('mobile-open')) {
-    if (!sidebar.contains(e.target) && !e.target.closest('.hamburger')) {
-      sidebar.classList.remove('mobile-open');
-    }
-  }
+  const overlay = document.getElementById('sidebarOverlay');
+  sidebar.classList.remove('mobile-open');
+  if (overlay) overlay.classList.remove('active');
+  document.body.style.overflow = '';
+}
+// Ferme la sidebar si on clique sur un lien dedans (navigation mobile)
+document.querySelectorAll('.sidebar .nav-item').forEach(function(link) {
+  link.addEventListener('click', function() {
+    if (window.innerWidth <= 768) closeSidebar();
+  });
 });
 </script>
 {% block scripts %}{% endblock %}
