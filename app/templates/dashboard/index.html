@@ -116,6 +116,69 @@
   </div>
 </div>
 
+<!-- ALERTES CLINIQUES CRITIQUES V0.4 -->
+{% if patients_ecg_urgents or patients_echec_potentiel %}
+<div class="row g-4 mb-4">
+  {% if patients_ecg_urgents %}
+  <div class="col-12 col-lg-6">
+    <div class="card-panel border-danger" style="border-left:4px solid #ef4444!important">
+      <div class="panel-header text-danger">
+        <span><i class="fa fa-circle-stop me-2"></i>ECG CRITIQUE — QTc ≥ 500 ms ({{ patients_ecg_urgents | length }})</span>
+        <span class="badge bg-danger">ARRÊT MÉDICAMENTS</span>
+      </div>
+      <div class="panel-body p-0">
+        <table class="table table-hover mb-0">
+          <tbody>
+            {% for p in patients_ecg_urgents %}
+            <tr class="table-danger">
+              <td><a href="{{ url_for('patients.fiche', patient_id=p.id) }}" class="fw-bold text-decoration-none">{{ p.code_patient }}</a></td>
+              <td>{{ p.nom }} {{ p.prenom }}</td>
+              <td class="text-end">
+                <a href="{{ url_for('patients.bilan', patient_id=p.id) }}" class="btn btn-sm btn-danger">
+                  <i class="fa fa-heart-pulse me-1"></i>Voir ECG
+                </a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        <div class="p-2 small text-muted"><i class="fa fa-book-open me-1"></i>Arrêt immédiat : Bdq, Dlm, Mfx — Guide PNLT p.27</div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  {% if patients_echec_potentiel %}
+  <div class="col-12 col-lg-6">
+    <div class="card-panel border-danger" style="border-left:4px solid #dc2626!important">
+      <div class="panel-header text-danger">
+        <span><i class="fa fa-virus me-2"></i>ÉCHEC THÉRAPEUTIQUE POTENTIEL ({{ patients_echec_potentiel | length }})</span>
+        <span class="badge bg-danger">Culture+ ≥ M6</span>
+      </div>
+      <div class="panel-body p-0">
+        <table class="table table-hover mb-0">
+          <tbody>
+            {% for p in patients_echec_potentiel %}
+            <tr class="table-danger">
+              <td><a href="{{ url_for('patients.fiche', patient_id=p.id) }}" class="fw-bold text-decoration-none">{{ p.code_patient }}</a></td>
+              <td>{{ p.nom }} {{ p.prenom }}</td>
+              <td class="text-end">
+                <a href="{{ url_for('labo.suivi_patient', patient_id=p.id) }}" class="btn btn-sm btn-danger">
+                  <i class="fa fa-microscope me-1"></i>Voir labo
+                </a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        <div class="p-2 small text-muted"><i class="fa fa-book-open me-1"></i>Révision du schéma requise — Guide PNLT p.31</div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endif %}
+
 <!-- ALERTES PATIENTS SANS SUIVI -->
 {% if patients_sans_examen %}
 <div class="card-panel mb-4">

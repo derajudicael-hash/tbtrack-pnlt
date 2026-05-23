@@ -30,11 +30,23 @@ class BilanInitial(db.Model):
     glycemie_mmol_l = db.Column(db.Float)
     kaliemie_mmol_l = db.Column(db.Float)
 
+    # Examens obligatoires M0 (guide PNLT 2021 p.24-25)
+    test_grossesse = db.Column(db.Boolean)            # Obligatoire chez toute femme en âge de procréer
+    rx_thorax_normale = db.Column(db.Boolean)         # Radiographie thorax M0
+    lpa_1ere_ligne = db.Column(db.String(200))        # LPA 1ère ligne (résultat texte)
+    lpa_2eme_ligne = db.Column(db.String(200))        # LPA 2ème ligne (résultat texte)
+
+    # NFS complète (guide p.27 — critique pour suivi Linézolide)
+    leucocytes_g_l = db.Column(db.Float)              # G/L (normale 4–10)
+    plaquettes_g_l = db.Column(db.Float)              # G/L (normale 150–400)
+
     # Toxicités spécifiques aux médicaments TB-MR
-    audiogramme_normal = db.Column(db.Boolean)       # Toxicité aminoglycosides (Am)
-    ecg_qt_ms = db.Column(db.Integer)                # Allongement QT (Bdq, Dlm, Mfx)
-    acuite_visuelle_normale = db.Column(db.Boolean)  # Éthambutol
-    thyroide_normale = db.Column(db.Boolean)         # Éthionamide / Prothionamide
+    audiogramme_normal = db.Column(db.Boolean)        # Toxicité aminoglycosides (Am)
+    ecg_qt_ms = db.Column(db.Integer)                 # ECG M0 — intervalle QTc (ms)
+    ecg_j7_qt_ms = db.Column(db.Integer)              # ECG J7 post-début traitement (guide p.27)
+    acuite_visuelle_normale = db.Column(db.Boolean)   # Éthambutol
+    thyroide_normale = db.Column(db.Boolean)          # Éthionamide / Prothionamide (boolean, rétrocompat)
+    tsh_miu_l = db.Column(db.Float)                   # TSH numérique (mIU/L) — seuil 1.5× norme = traitement
 
     notes = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -70,8 +82,36 @@ class BilanInitial(db.Model):
 
     @property
     def ecg_alerte(self):
-        """Vrai si l'intervalle QTc est supérieur à 450 ms (risque torsades de pointes)."""
-        return self.ecg_qt_ms is not None and self.ecg_qt_ms > 450
+        """Niveau d'alerte ECG selon guide PNLT 2021 p.27 :
+        - 'stop' : QTc ≥ 500 ms → arrêter tous les médicaments allongeant le QT
+        - 'surveillance' : QTc 450–499 ms → surveillance rapprochée
+        - None : QTc normal (<450 ms)
+        """
+        if self.ecg_qt_ms is None:
+            return None
+        if self.ecg_qt_ms >= 500:
+            return 'stop'
+        if self.ecg_qt_ms > 450:
+            return 'surveillance'
+        return None
+
+    @property
+    def ecg_alerte_j7(self):
+        """Même logique pour l'ECG à J7 post-début traitement."""
+        if self.ecg_j7_qt_ms is None:
+            return None
+        if self.ecg_j7_qt_ms >= 500:
+            return 'stop'
+        if self.ecg_j7_qt_ms > 450:
+            return 'surveillance'
+        return None
+
+    @property
+    def tsh_alerte(self):
+        """Vrai si TSH > 1.5× la norme haute (4.5 mIU/L) → commencer traitement substitutif."""
+        if self.tsh_miu_l is None:
+            return False
+        return self.tsh_miu_l > 6.75  # 1.5 × 4.5 mIU/L
 
     @property
     def insuffisance_renale(self):

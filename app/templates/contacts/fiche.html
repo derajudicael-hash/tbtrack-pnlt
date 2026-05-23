@@ -1,0 +1,124 @@
+{% extends 'base.html' %}
+{% block title %}Contact — {{ contact.nom }} {{ contact.prenom or '' }}{% endblock %}
+{% block breadcrumb %}
+  <a href="{{ url_for('dashboard.index') }}">Accueil</a> /
+  <a href="{{ url_for('contacts.liste') }}">Contacts</a> /
+  {{ contact.nom }} {{ contact.prenom or '' }}
+{% endblock %}
+{% block page_title %}{{ contact.nom }} {{ contact.prenom or '' }}{% endblock %}
+{% block page_subtitle %}
+  Contact de
+  <a href="{{ url_for('patients.fiche', patient_id=contact.patient_source.id) }}">
+    {{ contact.patient_source.code_patient }} — {{ contact.patient_source.nom }} {{ contact.patient_source.prenom }}
+  </a>
+{% endblock %}
+{% block page_actions %}
+  <a href="{{ url_for('contacts.modifier', contact_id=contact.id) }}" class="btn btn-outline-primary btn-sm">
+    <i class="fa fa-edit me-1"></i>Modifier
+  </a>
+{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+  <!-- Informations personnelles -->
+  <div class="col-lg-6">
+    <div class="card-panel h-100">
+      <div class="panel-header"><h6 class="mb-0"><i class="fa fa-user me-2"></i>Informations personnelles</h6></div>
+      <div class="panel-body">
+        <dl class="row mb-0">
+          <dt class="col-sm-5 text-muted">Nom complet</dt>
+          <dd class="col-sm-7 fw-semibold">{{ contact.nom }} {{ contact.prenom or '' }}</dd>
+
+          <dt class="col-sm-5 text-muted">Âge / Sexe</dt>
+          <dd class="col-sm-7">{{ contact.age or '?' }} ans · {{ contact.sexe or '?' }}</dd>
+
+          <dt class="col-sm-5 text-muted">Relation</dt>
+          <dd class="col-sm-7">{{ contact.relation | capitalize if contact.relation else '—' }}</dd>
+
+          <dt class="col-sm-5 text-muted">Téléphone</dt>
+          <dd class="col-sm-7">{{ contact.telephone or '—' }}</dd>
+
+          <dt class="col-sm-5 text-muted">Premier contact</dt>
+          <dd class="col-sm-7">{{ contact.date_premier_contact.strftime('%d/%m/%Y') if contact.date_premier_contact else '—' }}</dd>
+
+          <dt class="col-sm-5 text-muted">Statut</dt>
+          <dd class="col-sm-7"><span class="badge bg-{{ contact.statut_badge }}">{{ contact.statut_label }}</span></dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+
+  <!-- Suivi clinique -->
+  <div class="col-lg-6">
+    <div class="card-panel h-100">
+      <div class="panel-header"><h6 class="mb-0"><i class="fa fa-calendar me-2"></i>Suivi sur 2 ans</h6></div>
+      <div class="panel-body">
+        {% if contact.jours_restants_suivi is not none %}
+          {% if contact.jours_restants_suivi > 0 %}
+            <div class="mb-3">
+              <div class="d-flex justify-content-between mb-1">
+                <small class="text-muted">Progression du suivi</small>
+                <small class="text-muted">{{ contact.progression_suivi }}%</small>
+              </div>
+              <div class="progress" style="height:10px">
+                <div class="progress-bar bg-{{ contact.statut_badge }}" style="width:{{ contact.progression_suivi }}%"></div>
+              </div>
+              <small class="text-muted mt-1 d-block">{{ contact.jours_restants_suivi }} jours restants</small>
+            </div>
+          {% else %}
+            <div class="alert alert-secondary py-2 mb-3">Suivi de 2 ans terminé.</div>
+          {% endif %}
+        {% endif %}
+
+        <dl class="row mb-0">
+          <dt class="col-sm-5 text-muted">Prochaine visite</dt>
+          <dd class="col-sm-7 {% if contact.date_prochaine_visite and contact.date_prochaine_visite < today %}text-danger fw-bold{% endif %}">
+            {{ contact.date_prochaine_visite.strftime('%d/%m/%Y') if contact.date_prochaine_visite else '—' }}
+          </dd>
+
+          <dt class="col-sm-5 text-muted">Prochain contrôle</dt>
+          <dd class="col-sm-7">{{ contact.date_prochain_controle.strftime('%d/%m/%Y') if contact.date_prochain_controle else '—' }}</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dépistage -->
+  <div class="col-12">
+    <div class="card-panel">
+      <div class="panel-header"><h6 class="mb-0"><i class="fa fa-flask me-2"></i>Bilan de dépistage</h6></div>
+      <div class="panel-body">
+        <div class="row g-3">
+          <div class="col-md-3">
+            <div class="text-muted small mb-1">Date dépistage</div>
+            <div>{{ contact.date_depistage.strftime('%d/%m/%Y') if contact.date_depistage else '—' }}</div>
+          </div>
+          <div class="col-md-3">
+            <div class="text-muted small mb-1">GeneXpert</div>
+            <span class="badge bg-{{ contact.genexpert_badge }}">{{ contact.genexpert_label }}</span>
+            {% if contact.necessite_suivi_urgent %}
+              <div class="text-danger small mt-1"><i class="fa fa-exclamation-triangle me-1"></i>Prise en charge urgente requise</div>
+            {% endif %}
+          </div>
+          <div class="col-md-3">
+            <div class="text-muted small mb-1">Radiographie thorax</div>
+            <div>{{ contact.radiographie_thorax | replace('_', ' ') | capitalize if contact.radiographie_thorax else '—' }}</div>
+          </div>
+          <div class="col-md-3">
+            <div class="text-muted small mb-1">Thérapie Préventive (IPT)</div>
+            <div>
+              Proposée : <strong>{{ 'Oui' if contact.ipt_propose else 'Non' }}</strong> ·
+              Acceptée : <strong>{{ 'Oui' if contact.ipt_accepte else 'Non' }}</strong>
+            </div>
+          </div>
+        </div>
+        {% if contact.notes %}
+        <hr class="my-3">
+        <div class="text-muted small mb-1">Notes</div>
+        <p class="mb-0">{{ contact.notes }}</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

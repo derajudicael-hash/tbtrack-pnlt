@@ -1143,6 +1143,31 @@ textarea.form-control { height: auto; padding: 10px 12px; resize: vertical; }
   .page-title { color: #000 !important; }
 }
 
+/* ── 23b. RECHERCHE MOBILE ───────────────────────────────────────────── */
+.mobile-search-btn {
+  display: none; background: none; border: none;
+  color: var(--text-2); font-size: 1rem; padding: 6px 8px; cursor: pointer;
+}
+.mobile-search-overlay {
+  display: none; position: fixed; inset: 0; z-index: 2000;
+  background: var(--card-bg); align-items: center;
+}
+.mobile-search-overlay.active { display: flex; }
+.mobile-search-form {
+  display: flex; align-items: center; width: 100%;
+  padding: 0 12px; gap: 8px;
+}
+.mobile-search-close, .mobile-search-submit {
+  background: none; border: none; color: var(--text-2);
+  font-size: 1.1rem; padding: 8px; cursor: pointer; flex-shrink: 0;
+}
+.mobile-search-input {
+  flex: 1; background: var(--input-bg); border: 1px solid var(--border-2);
+  border-radius: 8px; color: var(--text-1); font-size: 1rem;
+  padding: 10px 14px; outline: none;
+}
+.mobile-search-input:focus { border-color: var(--accent); }
+
 /* ── 24. RESPONSIVE ─────────────────────────────────────────────────── */
 @media (max-width: 768px) {
 
@@ -1161,8 +1186,9 @@ textarea.form-control { height: auto; padding: 10px 12px; resize: vertical; }
   .main-wrapper { margin-left: 0; }
   .content-area { padding: 14px 12px; }
 
-  /* Topbar : cacher la recherche, garder le hamburger */
+  /* Topbar : cacher la recherche desktop, montrer le bouton loupe */
   .search-topbar { display: none; }
+  .mobile-search-btn { display: flex; align-items: center; }
   .topbar-breadcrumb { font-size: 0.78rem; max-width: 55vw;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .topbar-logout-btn { display: flex; }

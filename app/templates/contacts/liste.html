@@ -30,7 +30,9 @@
           {% for c in contacts %}
           <tr class="{% if c.statut == 'tb_mr_confirmee' %}table-danger{% endif %}">
             <td>
-              <strong>{{ c.nom }} {{ c.prenom or '' }}</strong>
+              <a href="{{ url_for('contacts.fiche', contact_id=c.id) }}" class="text-decoration-none text-dark">
+                <strong>{{ c.nom }} {{ c.prenom or '' }}</strong>
+              </a>
               <div class="text-muted small">{{ c.age or '?' }} ans · {{ c.sexe or '?' }}</div>
             </td>
             <td>

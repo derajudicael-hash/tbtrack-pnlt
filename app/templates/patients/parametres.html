@@ -1,0 +1,236 @@
+{% extends 'base.html' %}
+{% block title %}Paramètres de suivi — {{ patient.nom }}{% endblock %}
+{% block breadcrumb %}
+  <a href="{{ url_for('dashboard.index') }}">Accueil</a> /
+  <a href="{{ url_for('patients.liste') }}">Patients</a> /
+  <a href="{{ url_for('patients.fiche', patient_id=patient.id) }}">{{ patient.nom }} {{ patient.prenom }}</a> /
+  Paramètres de suivi
+{% endblock %}
+{% block page_title %}Paramètres de suivi — {{ patient.nom }} {{ patient.prenom }}{% endblock %}
+{% block page_subtitle %}Poids, taille, IMC et signes vitaux mensuels{% endblock %}
+{% block page_actions %}
+  <a href="{{ url_for('patients.fiche', patient_id=patient.id) }}" class="btn btn-outline-secondary">
+    <i class="fa fa-arrow-left me-1"></i> Retour à la fiche
+  </a>
+{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+
+  {# ── Formulaire ── #}
+  <div class="col-12 col-md-5">
+    <div class="card-panel">
+      <div class="panel-header">
+        <i class="fa fa-weight-scale me-2"></i> Nouvelle mesure
+      </div>
+      <div class="panel-body">
+        <form method="POST">
+          {{ form.hidden_tag() }}
+          <div class="mb-3">
+            {{ form.mois_suivi.label(class='form-label fw-semibold') }}
+            {{ form.mois_suivi(class='form-control', placeholder='Ex: 0 pour M0, 1 pour M1...') }}
+          </div>
+          <div class="mb-3">
+            {{ form.date_mesure.label(class='form-label fw-semibold') }}
+            {{ form.date_mesure(class='form-control') }}
+          </div>
+          <div class="mb-3">
+            {{ form.poids.label(class='form-label fw-semibold') }}
+            <div class="input-group">
+              {{ form.poids(class='form-control', placeholder='Ex: 58.5') }}
+              <span class="input-group-text">kg</span>
+            </div>
+          </div>
+          <div class="mb-3">
+            {{ form.taille.label(class='form-label fw-semibold') }}
+            <div class="input-group">
+              {{ form.taille(class='form-control', placeholder='Ex: 165') }}
+              <span class="input-group-text">cm</span>
+            </div>
+            <div class="form-text">Saisir uniquement à M0, laisser vide ensuite.</div>
+          </div>
+          <div class="row g-2 mb-3">
+            <div class="col-6">
+              {{ form.tension_sys.label(class='form-label fw-semibold') }}
+              <div class="input-group">
+                {{ form.tension_sys(class='form-control', placeholder='120') }}
+                <span class="input-group-text">mmHg</span>
+              </div>
+            </div>
+            <div class="col-6">
+              {{ form.tension_dia.label(class='form-label fw-semibold') }}
+              <div class="input-group">
+                {{ form.tension_dia(class='form-control', placeholder='80') }}
+                <span class="input-group-text">mmHg</span>
+              </div>
+            </div>
+          </div>
+          <div class="mb-3">
+            {{ form.temperature.label(class='form-label fw-semibold') }}
+            <div class="input-group">
+              {{ form.temperature(class='form-control', placeholder='37.0') }}
+              <span class="input-group-text">°C</span>
+            </div>
+          </div>
+
+          <hr class="my-3">
+          <p class="fw-semibold small text-muted mb-2"><i class="fa fa-vials me-1"></i>Bilan biologique mensuel (Tableau IV PNLT)</p>
+
+          <div class="row g-2 mb-2">
+            <div class="col-6">
+              {{ form.kaliemie_mmol_l.label(class='form-label small fw-semibold') }}
+              <div class="input-group input-group-sm">
+                {{ form.kaliemie_mmol_l(class='form-control', placeholder='3.5–5') }}
+                <span class="input-group-text">mmol/L</span>
+              </div>
+            </div>
+            <div class="col-6">
+              {{ form.creatinine_umol_l.label(class='form-label small fw-semibold') }}
+              <div class="input-group input-group-sm">
+                {{ form.creatinine_umol_l(class='form-control', placeholder='µmol/L') }}
+                <span class="input-group-text">µmol/L</span>
+              </div>
+            </div>
+          </div>
+          <div class="row g-2 mb-2">
+            <div class="col-6">
+              {{ form.gpt_u_l.label(class='form-label small fw-semibold') }}
+              <div class="input-group input-group-sm">
+                {{ form.gpt_u_l(class='form-control', placeholder='U/L') }}
+                <span class="input-group-text">U/L</span>
+              </div>
+            </div>
+            <div class="col-6">
+              {{ form.got_u_l.label(class='form-label small fw-semibold') }}
+              <div class="input-group input-group-sm">
+                {{ form.got_u_l(class='form-control', placeholder='U/L') }}
+                <span class="input-group-text">U/L</span>
+              </div>
+            </div>
+          </div>
+          <div class="row g-2 mb-3">
+            <div class="col-6">
+              {{ form.leucocytes_g_l.label(class='form-label small fw-semibold') }}
+              <div class="input-group input-group-sm">
+                {{ form.leucocytes_g_l(class='form-control', placeholder='4–10') }}
+                <span class="input-group-text">G/L</span>
+              </div>
+            </div>
+            <div class="col-6">
+              {{ form.plaquettes_g_l.label(class='form-label small fw-semibold') }}
+              <div class="input-group input-group-sm">
+                {{ form.plaquettes_g_l(class='form-control', placeholder='150–400') }}
+                <span class="input-group-text">G/L</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            {{ form.notes.label(class='form-label fw-semibold') }}
+            {{ form.notes(class='form-control', rows=2) }}
+          </div>
+          {{ form.submit(class='btn btn-primary w-100') }}
+        </form>
+      </div>
+    </div>
+  </div>
+
+  {# ── Historique ── #}
+  <div class="col-12 col-md-7">
+    <div class="card-panel">
+      <div class="panel-header">
+        <i class="fa fa-chart-line me-2"></i> Historique des mesures
+      </div>
+      <div class="panel-body p-0">
+        {% if historique %}
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-head">
+              <tr>
+                <th>Mois</th>
+                <th>Date</th>
+                <th>Poids / IMC</th>
+                <th class="col-mob-hide">Tension</th>
+                <th class="col-mob-hide">K+ <small class="text-muted">(mmol/L)</small></th>
+                <th class="col-mob-hide">Créat. <small class="text-muted">(µmol/L)</small></th>
+                <th class="col-mob-hide">GPT <small class="text-muted">(U/L)</small></th>
+                <th class="col-mob-hide">Leuco <small class="text-muted">(G/L)</small></th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {% set ns = namespace(derniere_taille=None) %}
+              {% for m in historique %}
+                {% if m.taille %}{% set ns.derniere_taille = m.taille %}{% endif %}
+                {# IMC calculé avec la taille du mois courant OU la dernière connue #}
+                {% set taille_effective = m.taille or ns.derniere_taille %}
+                {% set imc_val = (m.poids / ((taille_effective / 100) ** 2)) | round(1) if (m.poids and taille_effective) else None %}
+                {% if imc_val %}
+                  {% if imc_val < 16 %}{% set imc_col, imc_lbl = 'danger', 'Dénutrition sévère' %}
+                  {% elif imc_val < 18.5 %}{% set imc_col, imc_lbl = 'warning', 'Insuffisance pondérale' %}
+                  {% elif imc_val < 25 %}{% set imc_col, imc_lbl = 'success', 'Normal' %}
+                  {% elif imc_val < 30 %}{% set imc_col, imc_lbl = 'info', 'Surpoids' %}
+                  {% else %}{% set imc_col, imc_lbl = 'warning', 'Obésité' %}{% endif %}
+                {% else %}{% set imc_col, imc_lbl = 'secondary', '—' %}{% endif %}
+              <tr>
+                <td><span class="badge bg-primary">M{{ m.mois_suivi }}</span></td>
+                <td class="text-muted small">{{ m.date_mesure.strftime('%d/%m/%Y') }}</td>
+                <td>
+                  <div class="fw-semibold">{{ m.poids ~ ' kg' if m.poids else '—' }}</div>
+                  {% if imc_val %}
+                    <span class="badge bg-{{ imc_col }} badge-sm">{{ imc_val }}</span>
+                  {% endif %}
+                </td>
+                <td class="col-mob-hide text-muted small">{{ m.tension_label }}</td>
+                <td class="col-mob-hide small">
+                  {% if m.kaliemie_mmol_l %}
+                    {% if m.kaliemie_mmol_l < 3.5 %}
+                      <span class="text-danger fw-bold">{{ m.kaliemie_mmol_l }}</span>
+                    {% elif m.kaliemie_mmol_l > 5.5 %}
+                      <span class="text-warning fw-bold">{{ m.kaliemie_mmol_l }}</span>
+                    {% else %}
+                      {{ m.kaliemie_mmol_l }}
+                    {% endif %}
+                  {% else %}—{% endif %}
+                </td>
+                <td class="col-mob-hide small">{{ m.creatinine_umol_l or '—' }}</td>
+                <td class="col-mob-hide small">
+                  {% if m.gpt_u_l %}
+                    {% if m.gpt_u_l > 120 %}
+                      <span class="text-danger fw-bold">{{ m.gpt_u_l }}</span>
+                    {% else %}{{ m.gpt_u_l }}{% endif %}
+                  {% else %}—{% endif %}
+                </td>
+                <td class="col-mob-hide small">
+                  {% if m.leucocytes_g_l %}
+                    {% if m.leucocytes_g_l < 2.0 %}
+                      <span class="text-danger fw-bold">{{ m.leucocytes_g_l }}</span>
+                    {% else %}{{ m.leucocytes_g_l }}{% endif %}
+                  {% else %}—{% endif %}
+                </td>
+                <td class="text-end">
+                  {% if current_user.role in ('coordinateur', 'medecin') %}
+                  <form method="POST"
+                        action="{{ url_for('patients.parametres_supprimer', patient_id=patient.id, mesure_id=m.id) }}"
+                        onsubmit="return confirm('Supprimer cette mesure ?')">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button class="btn btn-sm btn-outline-danger"><i class="fa fa-trash"></i></button>
+                  </form>
+                  {% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div class="text-center text-muted py-5">
+          <i class="fa fa-weight-scale fa-2x mb-3 d-block opacity-25"></i>
+          Aucune mesure enregistrée.<br>Saisir la première mesure à M0.
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

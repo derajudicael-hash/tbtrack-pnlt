@@ -3,6 +3,7 @@ from flask_login import login_required, current_user
 from ...models import EffetSecondaire, Patient
 from ...extensions import db
 from .forms import EffetForm
+from ...utils.decorators import role_required
 from datetime import datetime
 
 effets_bp = Blueprint('effets', __name__, url_prefix='/effets')
@@ -18,6 +19,7 @@ def liste():
 
 @effets_bp.route('/declarer', methods=['GET', 'POST'])
 @login_required
+@role_required('coordinateur', 'medecin', 'infirmier')
 def declarer():
     form = EffetForm()
     # Tous les patients (pas uniquement "en_cours") — un effet peut survenir pour tout statut

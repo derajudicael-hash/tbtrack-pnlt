@@ -100,5 +100,37 @@ class Patient(db.Model):
     def nb_effets_non_notifies(self):
         return sum(1 for e in self.effets if e.severite == 'severe' and not e.notifie_crpc)
 
+    @property
+    def alerte_ecg_critique(self):
+        """QTc ≥ 500 ms au bilan M0 ou ECG J7 → ARRÊT immédiat des médicaments (guide p.27)."""
+        b = self.bilan_initial
+        if b:
+            return b.ecg_alerte == 'stop' or b.ecg_alerte_j7 == 'stop'
+        return False
+
+    @property
+    def alerte_echec_therapeutique(self):
+        """Culture positive à M6 ou plus → échec thérapeutique potentiel (guide p.31)."""
+        return any(
+            e.mois_suivi >= 6 and e.culture_resultat == 'positif'
+            for e in self.examens_labo
+        )
+
+    @property
+    def categorie_label(self):
+        return {
+            'nouveau_cas':    'N — Nouveau cas',
+            'echec_primo':    'E1 — Échec primotraitement',
+            'echec_retrait':  'E2 — Échec retraitement',
+            'reprise':        'RT — Reprise après PDV',
+            'rechute_primo':  'R1 — Rechute primo',
+            'rechute_retrait':'R2 — Rechute retraitement',
+            'transfert':      'TE — Transféré entrant',
+            'echec_tbmr':     'E4 — Échec schéma TB-MR',
+            'reprise_tbmr':   'RT4 — Reprise PDV TB-MR',
+            'rechute_tbmr':   'R4 — Rechute TB-MR',
+            'autres':         'A — Autres',
+        }.get(self.categorie, self.categorie or '—')
+
     def __repr__(self):
         return f'<Patient {self.code_patient} - {self.nom} {self.prenom}>'

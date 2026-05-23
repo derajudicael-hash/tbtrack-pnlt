@@ -4,6 +4,7 @@ from flask_login import login_required, current_user
 from ...models import Medicament, MouvementStock
 from ...extensions import db
 from .forms import MouvementForm, MedicamentForm
+from ...utils.decorators import role_required
 
 stock_bp = Blueprint('stock', __name__, url_prefix='/stock')
 
@@ -18,6 +19,7 @@ def inventaire():
 
 @stock_bp.route('/ajouter', methods=['GET', 'POST'])
 @login_required
+@role_required('coordinateur')
 def ajouter():
     form = MedicamentForm()
     if form.validate_on_submit():
@@ -40,6 +42,7 @@ def ajouter():
 
 @stock_bp.route('/<int:med_id>/modifier', methods=['GET', 'POST'])
 @login_required
+@role_required('coordinateur')
 def modifier(med_id):
     med = Medicament.query.get_or_404(med_id)
     form = MedicamentForm(obj=med)
@@ -53,6 +56,7 @@ def modifier(med_id):
 
 @stock_bp.route('/<int:med_id>/mouvement', methods=['GET', 'POST'])
 @login_required
+@role_required('coordinateur')
 def mouvement(med_id):
     med = Medicament.query.get_or_404(med_id)
     form = MouvementForm()
@@ -106,6 +110,7 @@ def historique(med_id):
 
 @stock_bp.route('/<int:med_id>/supprimer', methods=['POST'])
 @login_required
+@role_required('coordinateur')
 def supprimer(med_id):
     med = Medicament.query.get_or_404(med_id)
     if med.mouvements:

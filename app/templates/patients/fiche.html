@@ -47,6 +47,26 @@
   </div>
 </div>
 
+{% if patient.alerte_ecg_critique %}
+<div class="alert alert-danger d-flex align-items-start gap-3 mb-3">
+  <i class="fa fa-circle-stop fa-lg mt-1"></i>
+  <div>
+    <strong>ALERTE ECG — QTc ≥ 500 ms</strong> · Arrêt immédiat de tous les médicaments allongeant le QT (Bdq, Dlm, Mfx)
+    <div class="small mt-1">Guide PNLT 2021 p.27 · <a href="{{ url_for('patients.bilan', patient_id=patient.id) }}" class="alert-link">Voir bilan M0</a></div>
+  </div>
+</div>
+{% endif %}
+
+{% if patient.alerte_echec_therapeutique %}
+<div class="alert alert-danger d-flex align-items-start gap-3 mb-3">
+  <i class="fa fa-virus fa-lg mt-1"></i>
+  <div>
+    <strong>ÉCHEC THÉRAPEUTIQUE POTENTIEL</strong> · Culture positive à M6 ou plus
+    <div class="small mt-1">Guide PNLT 2021 p.31 · Contacter le médecin référent · <a href="{{ url_for('labo.suivi_patient', patient_id=patient.id) }}" class="alert-link">Voir suivi bactériologique</a></div>
+  </div>
+</div>
+{% endif %}
+
 {% if patient.date_sortie %}
 <div class="alert alert-warning d-flex align-items-start gap-3 mb-4">
   <i class="fa fa-door-open fa-lg mt-1"></i>
@@ -86,6 +106,11 @@
     <i class="fa fa-stethoscope me-1"></i>Bilan M0
     {% if bilan %}<span class="badge bg-success ms-1">OK</span>{% else %}<span class="badge bg-warning ms-1">!</span>{% endif %}
   </a></li>
+  <li class="nav-item">
+    <a class="nav-link" href="{{ url_for('patients.parametres', patient_id=patient.id) }}">
+      <i class="fa fa-weight-scale me-1"></i>Paramètres
+    </a>
+  </li>
   <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-dot">
     <i class="fa fa-calendar-check me-1"></i>DOT
     {% if taux_adherence is not none %}
@@ -377,23 +402,51 @@
       </div>
       <div class="col-12 col-md-6">
         <div class="card-panel">
-          <div class="panel-header"><i class="fa fa-vials me-2"></i>Biologie</div>
+          <div class="panel-header"><i class="fa fa-vials me-2"></i>Biologie M0</div>
           <div class="panel-body">
-            <div class="row g-2 small">
+            <p class="small text-muted fw-semibold mb-1">Bilan rénal</p>
+            <div class="row g-2 small mb-2">
               <div class="col-6"><span class="text-muted">Créatinine :</span> {{ bilan.creatinine_umol_l or '—' }} µmol/L</div>
               <div class="col-6">
                 <span class="text-muted">Clairance :</span>
                 {% if bilan.insuffisance_renale %}<span class="text-danger fw-bold">{{ bilan.clairance_creatinine }} ml/min !</span>
                 {% else %}{{ bilan.clairance_creatinine or '—' }} ml/min{% endif %}
               </div>
-              <div class="col-6"><span class="text-muted">Hb :</span>
-                {% if bilan.anemie %}<span class="text-warning">{{ bilan.hb_g_dl }} g/dL (anémie)</span>
+            </div>
+            <p class="small text-muted fw-semibold mb-1">NFS (Lzd)</p>
+            <div class="row g-2 small mb-2">
+              <div class="col-4"><span class="text-muted">Hb :</span>
+                {% if bilan.anemie %}<span class="text-warning fw-bold">{{ bilan.hb_g_dl }} g/dL</span>
                 {% else %}{{ bilan.hb_g_dl or '—' }} g/dL{% endif %}
               </div>
-              <div class="col-6"><span class="text-muted">ALAT :</span> {{ bilan.alt_u_l or '—' }} U/L</div>
+              <div class="col-4"><span class="text-muted">Leuco :</span> {{ bilan.leucocytes_g_l or '—' }} G/L</div>
+              <div class="col-4"><span class="text-muted">Plaq :</span> {{ bilan.plaquettes_g_l or '—' }} G/L</div>
+            </div>
+            <p class="small text-muted fw-semibold mb-1">Hépatique &amp; métabolique</p>
+            <div class="row g-2 small mb-2">
+              <div class="col-6"><span class="text-muted">ALAT :</span>
+                {% if bilan.cytolyse_hepatique %}<span class="text-danger fw-bold">{{ bilan.alt_u_l }} U/L !</span>
+                {% else %}{{ bilan.alt_u_l or '—' }} U/L{% endif %}
+              </div>
               <div class="col-6"><span class="text-muted">ASAT :</span> {{ bilan.ast_u_l or '—' }} U/L</div>
               <div class="col-6"><span class="text-muted">Glycémie :</span> {{ bilan.glycemie_mmol_l or '—' }} mmol/L</div>
               <div class="col-6"><span class="text-muted">Kaliémie :</span> {{ bilan.kaliemie_mmol_l or '—' }} mmol/L</div>
+            </div>
+            <p class="small text-muted fw-semibold mb-1">Examens obligatoires M0</p>
+            <div class="row g-2 small">
+              <div class="col-12"><span class="text-muted">LPA 1ère ligne :</span> {{ bilan.lpa_1ere_ligne or '—' }}</div>
+              <div class="col-12"><span class="text-muted">LPA 2ème ligne :</span> {{ bilan.lpa_2eme_ligne or '—' }}</div>
+              <div class="col-6">
+                <i class="fa fa-{% if bilan.rx_thorax_normale %}check text-success{% else %}xmark text-muted{% endif %} me-1"></i>
+                Rx thorax {{ 'normale' if bilan.rx_thorax_normale else 'non faite/anormale' }}
+              </div>
+              <div class="col-6">
+                {% if bilan.test_grossesse %}
+                <span class="badge bg-warning text-dark"><i class="fa fa-triangle-exclamation me-1"></i>Test grossesse positif</span>
+                {% else %}
+                <span class="text-muted">Test grossesse : —</span>
+                {% endif %}
+              </div>
             </div>
           </div>
         </div>
@@ -402,26 +455,49 @@
         <div class="card-panel">
           <div class="panel-header"><i class="fa fa-heart-pulse me-2"></i>Toxicités spécifiques</div>
           <div class="panel-body">
-            <div class="row g-2">
-              <div class="col-6 col-md-3 small">
-                <span class="text-muted">ECG QT :</span>
-                {% if bilan.ecg_alerte %}
-                  <span class="text-danger fw-bold">{{ bilan.ecg_qt_ms }} ms (ALERTE !)</span>
+            <div class="row g-2 small">
+              <div class="col-6 col-md-3">
+                <span class="text-muted d-block">ECG QTc M0</span>
+                {% if bilan.ecg_alerte == 'stop' %}
+                  <span class="text-danger fw-bold">{{ bilan.ecg_qt_ms }} ms — ARRÊT</span>
+                {% elif bilan.ecg_alerte == 'surveillance' %}
+                  <span class="text-warning fw-bold">{{ bilan.ecg_qt_ms }} ms — surveillance</span>
                 {% else %}
                   {{ bilan.ecg_qt_ms or '—' }} ms
                 {% endif %}
               </div>
-              <div class="col-6 col-md-3 small">
+              <div class="col-6 col-md-3">
+                <span class="text-muted d-block">ECG QTc J7</span>
+                {% if bilan.ecg_alerte_j7 == 'stop' %}
+                  <span class="text-danger fw-bold">{{ bilan.ecg_j7_qt_ms }} ms — ARRÊT</span>
+                {% elif bilan.ecg_alerte_j7 == 'surveillance' %}
+                  <span class="text-warning fw-bold">{{ bilan.ecg_j7_qt_ms }} ms — surveillance</span>
+                {% else %}
+                  {{ bilan.ecg_j7_qt_ms or '—' }} ms
+                {% endif %}
+              </div>
+              <div class="col-6 col-md-3">
+                <span class="text-muted d-block">TSH</span>
+                {% if bilan.tsh_alerte %}
+                  <span class="text-warning fw-bold">{{ bilan.tsh_miu_l }} mIU/L — traitement !</span>
+                {% else %}
+                  {{ bilan.tsh_miu_l or '—' }} mIU/L
+                {% endif %}
+              </div>
+              <div class="col-6 col-md-3">
+                <span class="text-muted d-block">Audiogramme</span>
                 <i class="fa fa-{% if bilan.audiogramme_normal %}check text-success{% else %}xmark text-warning{% endif %} me-1"></i>
-                Audiogramme {{ 'normal' if bilan.audiogramme_normal else 'anormal/non fait' }}
+                {{ 'normal' if bilan.audiogramme_normal else 'non fait/anormal' }}
               </div>
-              <div class="col-6 col-md-3 small">
+              <div class="col-6 col-md-3">
+                <span class="text-muted d-block">Acuité visuelle</span>
                 <i class="fa fa-{% if bilan.acuite_visuelle_normale %}check text-success{% else %}xmark text-warning{% endif %} me-1"></i>
-                Acuité visuelle {{ 'normale' if bilan.acuite_visuelle_normale else 'anormale/non faite' }}
+                {{ 'normale' if bilan.acuite_visuelle_normale else 'non faite/anormale' }}
               </div>
-              <div class="col-6 col-md-3 small">
-                <i class="fa fa-{% if bilan.thyroide_normale %}check text-success{% else %}xmark text-warning{% endif %} me-1"></i>
-                Thyroïde {{ 'normale' if bilan.thyroide_normale else 'anormale/non faite' }}
+              <div class="col-6 col-md-3">
+                <span class="text-muted d-block">Thyroïde</span>
+                <i class="fa fa-{% if bilan.thyroide_normale %}check text-success{% else %}circle-dot text-muted{% endif %} me-1"></i>
+                {{ 'normale' if bilan.thyroide_normale else '—' }}
               </div>
             </div>
           </div>
@@ -515,18 +591,52 @@
 
   <!-- TAB NOTES -->
   <div class="tab-pane fade" id="tab-notes">
-    <div class="card-panel">
+    {% if current_user.role in ('coordinateur', 'medecin', 'infirmier') %}
+    <div class="card-panel mb-3">
+      <div class="panel-header"><i class="fa fa-pen me-2"></i>Ajouter une note</div>
       <div class="panel-body">
-        {% if patient.notes_cliniques %}
-        <p class="mb-0" style="white-space:pre-line">{{ patient.notes_cliniques }}</p>
-        {% else %}
-        <p class="text-muted">Aucune note clinique.</p>
-        {% endif %}
-        <a href="{{ url_for('patients.modifier', patient_id=patient.id) }}" class="btn btn-outline-secondary btn-sm mt-3">
-          <i class="fa fa-pen me-1"></i>Éditer les notes
-        </a>
+        <form method="POST" action="{{ url_for('patients.note_ajouter', patient_id=patient.id) }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <textarea name="contenu" class="form-control mb-2" rows="3"
+                    placeholder="Observation clinique, décision thérapeutique, événement important…" required></textarea>
+          <button class="btn btn-primary btn-sm"><i class="fa fa-plus me-1"></i>Ajouter la note</button>
+        </form>
       </div>
     </div>
+    {% endif %}
+
+    {% set notes_list = notes %}
+    {% if notes_list %}
+      {% for note in notes_list %}
+      <div class="card-panel mb-2">
+        <div class="panel-body py-2">
+          <div class="d-flex justify-content-between align-items-start gap-2">
+            <div style="white-space:pre-line">{{ note.contenu }}</div>
+            {% if current_user.role in ('coordinateur', 'medecin') %}
+            <form method="POST"
+                  action="{{ url_for('patients.note_supprimer', patient_id=patient.id, note_id=note.id) }}"
+                  onsubmit="return confirm('Supprimer cette note ?')" class="flex-shrink-0">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button class="btn btn-sm btn-outline-danger"><i class="fa fa-trash"></i></button>
+            </form>
+            {% endif %}
+          </div>
+          <div class="text-muted small mt-2">
+            <i class="fa fa-user me-1"></i>{{ note.auteur.prenom }} {{ note.auteur.nom }}
+            &nbsp;·&nbsp;
+            <i class="fa fa-clock me-1"></i>{{ note.created_at.strftime('%d/%m/%Y à %H:%M') }}
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    {% else %}
+    <div class="card-panel">
+      <div class="panel-body text-muted text-center py-4">
+        <i class="fa fa-notes-medical fa-2x mb-2 d-block opacity-25"></i>
+        Aucune note clinique. Ajoutez la première observation ci-dessus.
+      </div>
+    </div>
+    {% endif %}
   </div>
 
 </div>

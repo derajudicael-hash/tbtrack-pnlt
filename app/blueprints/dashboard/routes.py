@@ -88,6 +88,10 @@ def index():
             if (date.today() - dernier_examen.date_prelevement).days > 30:
                 patients_sans_examen.append(p)
 
+    # ── Alertes cliniques critiques (V0.4) ────────────────────────────────────
+    patients_ecg_urgents = [p for p in actifs if p.alerte_ecg_critique]
+    patients_echec_potentiel = [p for p in actifs if p.alerte_echec_therapeutique]
+
     return render_template('dashboard/index.html',
         total_patients=len(patients),
         nb_actifs=len(actifs),
@@ -106,4 +110,6 @@ def index():
         conversions_data=conversions_data,
         adherence_globale=adherence_globale,
         patients_sans_examen=patients_sans_examen[:5],
+        patients_ecg_urgents=patients_ecg_urgents,
+        patients_echec_potentiel=patients_echec_potentiel,
     )

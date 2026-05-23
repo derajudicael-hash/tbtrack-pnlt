@@ -131,13 +131,19 @@
               <td class="fw-semibold">{{ m.nom }}</td>
               <td class="text-muted small">{{ m.forme }}</td>
               <td class="text-center">
-                <span class="dose-value">
-                  {% if m.unite %}
-                    {{ m.dose }} {{ m.unite }}
-                  {% else %}
-                    {{ m.dose }}
-                  {% endif %}
-                </span>
+                {% if m.dose is string and m.dose.startswith('CI') %}
+                  <span class="badge bg-danger fs-6 px-2 py-1">
+                    <i class="fa fa-ban me-1"></i>{{ m.dose }}
+                  </span>
+                {% elif m.dose is string and 'protocole' in m.dose %}
+                  <span class="badge bg-warning text-dark px-2 py-1">
+                    <i class="fa fa-triangle-exclamation me-1"></i>{{ m.dose }}
+                  </span>
+                {% else %}
+                  <span class="dose-value">
+                    {% if m.unite %}{{ m.dose }} {{ m.unite }}{% else %}{{ m.dose }}{% endif %}
+                  </span>
+                {% endif %}
               </td>
             </tr>
             {% endfor %}

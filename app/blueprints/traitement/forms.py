@@ -21,6 +21,7 @@ MEDICAMENTS_TBMR = [
     'Imipénème-Cilastatine (Imp)',
     'Méropénème (Mpm)',
     'Amikacine (Am)',
+    'Streptomycine (S)',
     'Éthionamide (Eto)',
     'Prothionamide (Pto)',
     'Acide para-aminosalicylique (PAS)',
@@ -48,6 +49,7 @@ GROUPES_MEDICAMENTS = {
         'Imipénème-Cilastatine (Imp)',
         'Méropénème (Mpm)',
         'Amikacine (Am)',
+        'Streptomycine (S)',
         'Éthionamide (Eto)',
         'Prothionamide (Pto)',
         'Acide para-aminosalicylique (PAS)',
@@ -103,26 +105,36 @@ class BilanInitialForm(FlaskForm):
     poids_kg = FloatField('Poids (kg)', validators=[Optional()])
     taille_cm = FloatField('Taille (cm)', validators=[Optional()])
 
+    # Examens obligatoires M0 (guide PNLT 2021 p.24-25)
+    test_grossesse = BooleanField('Test de grossesse positif (femmes en âge de procréer)')
+    rx_thorax_normale = BooleanField('Radiographie thorax normale')
+    lpa_1ere_ligne = StringField('LPA 1ère ligne (résultat)', validators=[Optional(), Length(max=200)])
+    lpa_2eme_ligne = StringField('LPA 2ème ligne (résultat)', validators=[Optional(), Length(max=200)])
+
     # Bilan rénal
     creatinine_umol_l = FloatField('Créatinine (µmol/L)', validators=[Optional()])
-    clairance_creatinine = FloatField('Clairance créatinine (ml/min)', validators=[Optional()])
+    clairance_creatinine = FloatField('Clairance créatinine (ml/min) — Cockcroft-Gault', validators=[Optional()])
 
-    # Hématologie
+    # NFS (critique Lzd)
     hb_g_dl = FloatField('Hémoglobine (g/dL)', validators=[Optional()])
+    leucocytes_g_l = FloatField('Leucocytes (G/L)', validators=[Optional()])
+    plaquettes_g_l = FloatField('Plaquettes (G/L)', validators=[Optional()])
 
     # Bilan hépatique
-    alt_u_l = FloatField('ALAT (U/L)', validators=[Optional()])
-    ast_u_l = FloatField('ASAT (U/L)', validators=[Optional()])
+    alt_u_l = FloatField('ALAT / GPT (U/L)', validators=[Optional()])
+    ast_u_l = FloatField('ASAT / GOT (U/L)', validators=[Optional()])
 
     # Métabolique
     glycemie_mmol_l = FloatField('Glycémie (mmol/L)', validators=[Optional()])
-    kaliemie_mmol_l = FloatField('Kaliémie (mmol/L)', validators=[Optional()])
+    kaliemie_mmol_l = FloatField('Kaliémie K+ (mmol/L)', validators=[Optional()])
 
     # Toxicités spécifiques
     audiogramme_normal = BooleanField('Audiogramme normal (aminoglycosides)')
-    ecg_qt_ms = IntegerField('ECG — intervalle QT (ms)', validators=[Optional()])
+    ecg_qt_ms = IntegerField('ECG M0 — QTc (ms)', validators=[Optional()])
+    ecg_j7_qt_ms = IntegerField('ECG J7 — QTc à 7 jours post-début traitement (ms)', validators=[Optional()])
     acuite_visuelle_normale = BooleanField('Acuité visuelle normale (éthambutol)')
-    thyroide_normale = BooleanField('Thyroïde normale (éthionamide / prothionamide)')
+    thyroide_normale = BooleanField('Thyroïde cliniquement normale (éthionamide / prothionamide)')
+    tsh_miu_l = FloatField('TSH (mIU/L) — seuil alerte : >1.5× norme haute (~6.75)', validators=[Optional()])
 
     notes = TextAreaField('Notes / observations', validators=[Optional()])
     submit = SubmitField('Enregistrer le bilan M0')

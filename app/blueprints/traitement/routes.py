@@ -3,6 +3,7 @@ from datetime import date
 from flask import Blueprint, render_template, redirect, url_for, flash, request, abort
 from flask_login import login_required, current_user
 from ...models import Traitement, Patient, SuiviDOT
+from ...utils.decorators import role_required
 from ...extensions import db
 from .forms import TraitementForm, SuiviDOTForm, BilanInitialForm, GROUPES_MEDICAMENTS
 
@@ -24,6 +25,7 @@ def liste():
 
 @traitement_bp.route('/ajouter/<int:patient_id>', methods=['GET', 'POST'])
 @login_required
+@role_required('coordinateur', 'medecin')
 def ajouter(patient_id):
     patient = Patient.query.get_or_404(patient_id)
     form = TraitementForm()
@@ -64,6 +66,7 @@ def ajouter(patient_id):
 
 @traitement_bp.route('/<int:traitement_id>/modifier', methods=['GET', 'POST'])
 @login_required
+@role_required('coordinateur', 'medecin')
 def modifier(traitement_id):
     traitement = Traitement.query.get_or_404(traitement_id)
     patient = traitement.patient
@@ -102,6 +105,7 @@ def modifier(traitement_id):
 
 @traitement_bp.route('/<int:traitement_id>/supprimer', methods=['POST'])
 @login_required
+@role_required('coordinateur', 'medecin')
 def supprimer(traitement_id):
     traitement = Traitement.query.get_or_404(traitement_id)
     patient_id = traitement.patient_id
@@ -170,6 +174,7 @@ def detail(traitement_id):
 
 @traitement_bp.route('/<int:traitement_id>/dot/ajouter', methods=['GET', 'POST'])
 @login_required
+@role_required('coordinateur', 'medecin', 'infirmier')
 def dot_ajouter(traitement_id):
     traitement = Traitement.query.get_or_404(traitement_id)
     patient = traitement.patient

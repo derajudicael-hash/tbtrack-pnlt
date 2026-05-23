@@ -87,6 +87,10 @@ def saisir():
             dst_moxifloxacine=form.dst_moxifloxacine.data or None,
             dst_bedaquiline=form.dst_bedaquiline.data or None,
             dst_linezolide=form.dst_linezolide.data or None,
+            dst_amikacine=form.dst_amikacine.data or None,
+            dst_kanamycine=form.dst_kanamycine.data or None,
+            dst_capreomycine=form.dst_capreomycine.data or None,
+            dst_ofloxacine=form.dst_ofloxacine.data or None,
             notes=form.notes.data,
         )
         db.session.add(examen)

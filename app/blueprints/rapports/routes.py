@@ -5,6 +5,7 @@ from datetime import date, timedelta
 from flask import Blueprint, render_template, Response, request
 from flask_login import login_required
 from ...models import Patient, EffetSecondaire, Contact, Medicament, MouvementStock
+from ...utils.decorators import role_required
 
 rapports_bp = Blueprint('rapports', __name__, url_prefix='/rapports')
 
@@ -197,14 +198,19 @@ def _build_annuel(year):
     par_resistance = {r: sum(1 for p in patients if p.type_resistance == r) for r in resistances}
     par_resistance['Autre / Non précisé'] = total - sum(par_resistance.values())
 
-    # Par catégorie (nouveau cas vs retraitement)
+    # Par catégorie — toutes les catégories PNLT (guide p.40-41)
     categories = {
-        'nouveau_cas':    'Nouveau cas',
-        'echec_primo':    'Échec primo',
-        'echec_retrait':  'Échec retraitement',
-        'reprise':        'Reprise après PDV',
-        'rechute_primo':  'Rechute primo',
-        'transfert':      'Transféré entrant',
+        'nouveau_cas':    'N — Nouveau cas',
+        'echec_primo':    'E1 — Échec primotraitement',
+        'echec_retrait':  'E2 — Échec retraitement',
+        'reprise':        'RT — Reprise après PDV',
+        'rechute_primo':  'R1 — Rechute primo',
+        'rechute_retrait':'R2 — Rechute retraitement',
+        'transfert':      'TE — Transféré entrant',
+        'echec_tbmr':     'E4 — Échec TB-MR',
+        'reprise_tbmr':   'RT4 — Reprise PDV TB-MR',
+        'rechute_tbmr':   'R4 — Rechute TB-MR',
+        'autres':         'A — Autres',
     }
     par_categorie = {label: sum(1 for p in patients if p.categorie == k)
                      for k, label in categories.items()}
@@ -249,12 +255,14 @@ def _build_annuel(year):
 
 @rapports_bp.route('/')
 @login_required
+@role_required('coordinateur', 'medecin')
 def index():
     return render_template('rapports/index.html', **_build_stats())
 
 
 @rapports_bp.route('/export.csv')
 @login_required
+@role_required('coordinateur', 'medecin')
 def export_csv():
     stats = _build_stats()
     output = io.StringIO()
@@ -291,6 +299,7 @@ def export_csv():
 
 @rapports_bp.route('/depistage')
 @login_required
+@role_required('coordinateur', 'medecin')
 def depistage():
     today = date.today()
     year = request.args.get('annee', today.year, type=int)
@@ -303,6 +312,7 @@ def depistage():
 
 @rapports_bp.route('/depistage/export.csv')
 @login_required
+@role_required('coordinateur', 'medecin')
 def depistage_csv():
     today = date.today()
     year = request.args.get('annee', today.year, type=int)
@@ -349,6 +359,7 @@ def depistage_csv():
 
 @rapports_bp.route('/commande')
 @login_required
+@role_required('coordinateur', 'medecin')
 def commande():
     data = _build_commande()
     return render_template('rapports/commande.html', **data)
@@ -356,6 +367,7 @@ def commande():
 
 @rapports_bp.route('/commande/export.csv')
 @login_required
+@role_required('coordinateur', 'medecin')
 def commande_csv():
     d = _build_commande()
     output = io.StringIO()
@@ -381,6 +393,7 @@ def commande_csv():
 
 @rapports_bp.route('/annuel')
 @login_required
+@role_required('coordinateur', 'medecin')
 def annuel():
     year = request.args.get('annee', date.today().year, type=int)
     data = _build_annuel(year)
@@ -389,6 +402,7 @@ def annuel():
 
 @rapports_bp.route('/annuel/export.csv')
 @login_required
+@role_required('coordinateur', 'medecin')
 def annuel_csv():
     year = request.args.get('annee', date.today().year, type=int)
     d    = _build_annuel(year)

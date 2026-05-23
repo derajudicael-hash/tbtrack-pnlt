@@ -633,11 +633,11 @@ def test_bilan(client, patient_ids):
             ok(f"6-b IMC calculé correctement ({bilan.imc})")
         else:
             bug("6-b IMC", f"IMC={bilan.imc}, attendu ~22.5")
-        # Vérifier ECG normal
+        # Vérifier ECG normal (guide p.27 : seuil surveillance=450ms, seuil arrêt=500ms)
         if not bilan.ecg_alerte:
-            ok("6-c ECG QT=420ms → pas d'alerte (seuil 450ms)")
+            ok("6-c ECG QT=420ms → pas d'alerte (< 450ms, normal)")
         else:
-            bug("6-c ECG alerte", "Alerte déclenchée à 420ms (seuil devrait être 450ms)")
+            bug("6-c ECG alerte", f"Alerte inattendue à 420ms : {bilan.ecg_alerte}")
     else:
         bug("6-a Bilan M0", f"count avant={before}, après={after}")
 
@@ -646,10 +646,22 @@ def test_bilan(client, patient_ids):
     post(client, f'/patients/{pid}/bilan', data_qt)
     with app.app_context():
         bilan2 = BilanInitial.query.filter_by(patient_id=pid).first()
-    if bilan2 and bilan2.ecg_alerte:
-        ok("6-d ECG QT=460ms → alerte déclenchée correctement")
+    if bilan2 and bilan2.ecg_alerte == 'surveillance':
+        ok("6-d ECG QT=460ms → alerte 'surveillance' (450–499ms)")
+    elif bilan2 and bilan2.ecg_alerte == 'stop':
+        ok("6-d ECG QT=460ms → alerte 'stop' (≥500ms, inattendu pour 460ms)")
     else:
         bug("6-d ECG alerte QT", f"ECG QTc={bilan2.ecg_qt_ms if bilan2 else 'None'}, ecg_alerte={bilan2.ecg_alerte if bilan2 else 'None'}")
+
+    # 6-d2 ECG QT=510ms → alerte 'stop' (≥500ms = ARRÊT médicaments — guide p.27)
+    data_qt_stop = {**BASE_BILAN, 'ecg_qt_ms': '510'}
+    post(client, f'/patients/{pid}/bilan', data_qt_stop)
+    with app.app_context():
+        bilan_stop = BilanInitial.query.filter_by(patient_id=pid).first()
+    if bilan_stop and bilan_stop.ecg_alerte == 'stop':
+        ok("6-d2 ECG QT=510ms → alerte 'stop' (ARRÊT médicaments, ≥500ms)")
+    else:
+        bug("6-d2 ECG seuil 500ms", f"ecg_alerte={bilan_stop.ecg_alerte if bilan_stop else 'None'} pour QTc=510ms")
 
     # 6-e Bilan visible dans la fiche patient
     r = get(client, f'/patients/{pid}')

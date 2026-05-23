@@ -61,6 +61,11 @@ class ExamenLaboForm(FlaskForm):
     dst_moxifloxacine = SelectField('Moxifloxacine (Mfx)', choices=RESISTANCE_CHOICES, validators=[Optional()])
     dst_bedaquiline = SelectField('Bedaquiline (Bdq)', choices=RESISTANCE_CHOICES, validators=[Optional()])
     dst_linezolide = SelectField('Linézolide (Lzd)', choices=RESISTANCE_CHOICES, validators=[Optional()])
+    # Aminoglycosides et FQ ancienne génération — requis pour classer XDR/pré-XDR (formulaire PNLT p.70)
+    dst_amikacine = SelectField('Amikacine (Am)', choices=RESISTANCE_CHOICES, validators=[Optional()])
+    dst_kanamycine = SelectField('Kanamycine (Km)', choices=RESISTANCE_CHOICES, validators=[Optional()])
+    dst_capreomycine = SelectField('Capréomycine (Cm)', choices=RESISTANCE_CHOICES, validators=[Optional()])
+    dst_ofloxacine = SelectField('Ofloxacine (Ofx)', choices=RESISTANCE_CHOICES, validators=[Optional()])
 
     notes = TextAreaField('Observations / Notes', validators=[Optional()])
     submit = SubmitField('Enregistrer les résultats')

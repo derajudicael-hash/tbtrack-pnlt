@@ -15,6 +15,15 @@ SCHEMAS = {
         ],
         'note': 'Bdq donnée pendant les 6 premiers mois. Lzd peut remplacer Bdq si intolérance.',
     },
+    'hr_tb': {
+        'label': 'Hr-TB — Résistance isolée à l\'isoniazide',
+        'duree': '6 mois',
+        'phases': [
+            {'phase': 'Phase unique (6 mois)', 'medicaments': ['H', 'Lfx', 'E', 'Z']},
+        ],
+        'note': 'Schéma 6(H)REZ-Lfx selon guide PNLT 2021 p.36. H = Isoniazide dose standard. '
+                'Surveillance mensuelle clinique et bactériologique obligatoire.',
+    },
     'long_adulte': {
         'label': 'Schéma long — Adulte (non éligible au schéma court)',
         'duree': '18 mois',
@@ -78,9 +87,12 @@ DOSES_ENFANT = {
     'Cycloserine':   {'forme': 'gél 125 mg',  'doses': [1, 1, 2, 3, 4],                       'unite': 'gél'},
     'Linezolide':    {'forme': 'sp 20 mg/mL', 'doses': ['4 mL', '6 mL', '8 mL', '11 mL', '14 mL'], 'unite': ''},
     'PAS':           {'forme': 'sachet 4 g',  'doses': ['0.75 g×2', '1 g×2', '2 g×2', '3 g×2', '3.5 g×2'], 'unite': ''},
-    'Clofazimine':   {'forme': 'gél 50 mg',   'doses': ['1/2j', '1/2j', '1/j', '2/j', '2/j'], 'unite': ''},
-    'Delamanide':    {'forme': 'cp 50 mg',    'doses': ['0.5×2', '0.5×2', '1×2', '1×2', '1×2'], 'unite': ''},
-    'Bedaquiline':   {'forme': 'cp 100 mg',   'doses': ['Voir protocole pédiatrique'] * 5,     'unite': ''},
+    # '1 gél / 2 jours' = une gélule tous les deux jours (guide p.20 Tableau III)
+    'Clofazimine':   {'forme': 'gél 50 mg',   'doses': ['1 gél / 2 jours', '1 gél / 2 jours', '1 gél/j', '2 gél/j', '2 gél/j'], 'unite': ''},
+    # Delamanide CI chez enfant <7 kg (guide p.20 Tableau III : "Enfant >2 ans et pesant >7 kg")
+    'Delamanide':    {'forme': 'cp 50 mg',    'doses': ['CI (<7 kg)', '0.5 cp ×2/j', '1 cp ×2/j', '1 cp ×2/j', '1 cp ×2/j'], 'unite': ''},
+    # Bedaquiline : CI <5 ans et <15 kg selon guide p.20 — consulter protocole pédiatrique spécialisé
+    'Bedaquiline':   {'forme': 'cp 100 mg',   'doses': ['CI (<5 ans / <15 kg)', 'CI (<5 ans / <15 kg)', 'Voir protocole pédiatrique', 'Voir protocole pédiatrique', 'Voir protocole pédiatrique'], 'unite': ''},
 }
 
 

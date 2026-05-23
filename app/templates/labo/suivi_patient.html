@@ -15,6 +15,23 @@
 
 {% block content %}
 
+{% set echec_potentiel = examens | selectattr('mois_suivi', 'ge', 6) | selectattr('culture_resultat', 'equalto', 'positif') | list %}
+{% if echec_potentiel %}
+<div class="alert alert-danger d-flex align-items-start gap-3 mb-4">
+  <i class="fa fa-virus fa-lg mt-1"></i>
+  <div>
+    <strong>ÉCHEC THÉRAPEUTIQUE POTENTIEL</strong> —
+    Culture positive à
+    {% for e in echec_potentiel %}M{{ e.mois_suivi }}{% if not loop.last %}, {% endif %}{% endfor %}
+    (≥ M6)
+    <div class="small mt-1 text-danger-emphasis">
+      Révision du schéma thérapeutique requise · Guide PNLT 2021 p.31 ·
+      Contacter le médecin référent et le comité TB-MR.
+    </div>
+  </div>
+</div>
+{% endif %}
+
 <!-- Timeline bactériologique -->
 <div class="card-panel mb-4">
   <div class="panel-header"><i class="fa fa-timeline me-2"></i>Courbe de conversion bactériologique</div>

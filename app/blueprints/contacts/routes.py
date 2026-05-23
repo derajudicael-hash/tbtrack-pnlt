@@ -61,6 +61,13 @@ def ajouter():
                            retour_patient_id=patient_source_id_param)
 
 
+@contacts_bp.route('/<int:contact_id>')
+@login_required
+def fiche(contact_id):
+    contact = Contact.query.get_or_404(contact_id)
+    return render_template('contacts/fiche.html', contact=contact, today=date.today())
+
+
 @contacts_bp.route('/<int:contact_id>/modifier', methods=['GET', 'POST'])
 @login_required
 def modifier(contact_id):

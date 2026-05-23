@@ -35,9 +35,11 @@
     <a href="{{ url_for('patients.liste') }}" class="nav-item {% if request.blueprint == 'patients' %}active{% endif %}">
       <i class="fa fa-users"></i><span>Registre patients</span>
     </a>
+    {% if current_user.role in ['coordinateur', 'medecin', 'infirmier'] %}
     <a href="{{ url_for('patients.ajouter') }}" class="nav-item">
       <i class="fa fa-user-plus"></i><span>Nouveau patient</span>
     </a>
+    {% endif %}
 
     <div class="nav-section-label">CLINIQUE</div>
     <a href="{{ url_for('dosage.calculateur') }}" class="nav-item {% if request.blueprint == 'dosage' %}active{% endif %}">
@@ -70,9 +72,11 @@
     <a href="{{ url_for('stock.inventaire') }}" class="nav-item {% if request.blueprint == 'stock' %}active{% endif %}">
       <i class="fa fa-boxes-stacked"></i><span>Stock médicaments</span>
     </a>
+    {% if current_user.role in ['coordinateur', 'medecin'] %}
     <a href="{{ url_for('rapports.index') }}" class="nav-item {% if request.blueprint == 'rapports' %}active{% endif %}">
       <i class="fa fa-chart-bar"></i><span>Rapports PNLT</span>
     </a>
+    {% endif %}
     {% if current_user.role == 'coordinateur' %}
     <a href="{{ url_for('admin.utilisateurs') }}" class="nav-item {% if request.blueprint == 'admin' %}active{% endif %}">
       <i class="fa fa-users-gear"></i><span>Administration</span>
@@ -117,12 +121,30 @@
         </form>
         <div id="searchDropdown" class="search-dropdown d-none"></div>
       </div>
-      <span class="badge-version ms-2">v0.2</span>
+      <!-- Bouton loupe mobile uniquement -->
+      <button class="mobile-search-btn" onclick="toggleMobileSearch()" title="Rechercher">
+        <i class="fa fa-magnifying-glass"></i>
+      </button>
+      <span class="badge-version ms-2">v0.3</span>
       <a href="{{ url_for('auth.logout') }}" class="topbar-logout-btn" title="Déconnexion">
         <i class="fa fa-right-from-bracket"></i>
       </a>
     </div>
   </header>
+
+  <!-- Barre de recherche mobile plein écran -->
+  <div class="mobile-search-overlay" id="mobileSearchOverlay">
+    <form action="{{ url_for('search.recherche') }}" method="get" class="mobile-search-form" autocomplete="off">
+      <button type="button" onclick="toggleMobileSearch()" class="mobile-search-close">
+        <i class="fa fa-arrow-left"></i>
+      </button>
+      <input type="text" name="q" class="mobile-search-input" placeholder="Rechercher un patient…"
+             autofocus value="{{ request.args.get('q', '') }}">
+      <button type="submit" class="mobile-search-submit">
+        <i class="fa fa-magnifying-glass"></i>
+      </button>
+    </form>
+  </div>
 
   <div class="content-area">
     {% with messages = get_flashed_messages(with_categories=true) %}
@@ -175,6 +197,13 @@ function toggleSidebar() {
   } else {
     sidebar.classList.toggle('collapsed');
     wrapper.classList.toggle('expanded');
+  }
+}
+function toggleMobileSearch() {
+  const overlay = document.getElementById('mobileSearchOverlay');
+  overlay.classList.toggle('active');
+  if (overlay.classList.contains('active')) {
+    overlay.querySelector('.mobile-search-input').focus();
   }
 }
 function closeSidebar() {

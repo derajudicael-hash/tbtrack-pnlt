@@ -4,9 +4,11 @@
 {% block page_title %}Stock de médicaments de 2ème ligne{% endblock %}
 {% block page_subtitle %}Suivi de l'inventaire — Alerte automatique si stock ≤ seuil{% endblock %}
 {% block page_actions %}
+  {% if current_user.role == 'coordinateur' %}
   <a href="{{ url_for('stock.ajouter') }}" class="btn btn-success">
     <i class="fa fa-plus me-1"></i> Nouveau médicament
   </a>
+  {% endif %}
 {% endblock %}
 
 {% block content %}
@@ -70,11 +72,12 @@
             <td><span class="badge bg-{{ badge_col }}">{{ badge_txt }}</span></td>
             <td class="text-end">
               <div class="d-flex gap-1 justify-content-end">
-                <a href="{{ url_for('stock.mouvement', med_id=m.id) }}" class="btn btn-sm btn-primary" title="Enregistrer un mouvement">
-                  <i class="fa fa-right-left"></i>
-                </a>
                 <a href="{{ url_for('stock.historique', med_id=m.id) }}" class="btn btn-sm btn-outline-secondary" title="Historique">
                   <i class="fa fa-clock-rotate-left"></i>
+                </a>
+                {% if current_user.role == 'coordinateur' %}
+                <a href="{{ url_for('stock.mouvement', med_id=m.id) }}" class="btn btn-sm btn-primary" title="Enregistrer un mouvement">
+                  <i class="fa fa-right-left"></i>
                 </a>
                 <a href="{{ url_for('stock.modifier', med_id=m.id) }}" class="btn btn-sm btn-outline-warning" title="Modifier">
                   <i class="fa fa-pen"></i>
@@ -86,6 +89,7 @@
                     <i class="fa fa-trash"></i>
                   </button>
                 </form>
+                {% endif %}
               </div>
             </td>
           </tr>

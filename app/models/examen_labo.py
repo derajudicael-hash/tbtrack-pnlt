@@ -28,7 +28,7 @@ class ExamenLabo(db.Model):
     culture_resultat = db.Column(db.String(50))   # positif | negatif | contamine | en_attente
     culture_milieu = db.Column(db.String(50))     # LJ | MGIT | LJ+MGIT
 
-    # DST / Antibiogramme
+    # DST / Antibiogramme (formulaire officiel PNLT p.70)
     dst_effectue = db.Column(db.Boolean, default=False)
     dst_isoniazide = db.Column(db.String(20))
     dst_rifampicine = db.Column(db.String(20))
@@ -38,6 +38,11 @@ class ExamenLabo(db.Model):
     dst_moxifloxacine = db.Column(db.String(20))
     dst_bedaquiline = db.Column(db.String(20))
     dst_linezolide = db.Column(db.String(20))
+    # Aminoglycosides injectables et FQ ancienne génération — requis pour classification XDR/pré-XDR
+    dst_amikacine = db.Column(db.String(20))
+    dst_kanamycine = db.Column(db.String(20))
+    dst_capreomycine = db.Column(db.String(20))
+    dst_ofloxacine = db.Column(db.String(20))
 
     notes = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -91,6 +96,10 @@ class ExamenLabo(db.Model):
             'Mfx': self.dst_moxifloxacine,
             'Bdq': self.dst_bedaquiline,
             'Lzd': self.dst_linezolide,
+            'Am (Amikacine)': self.dst_amikacine,
+            'Km (Kanamycine)': self.dst_kanamycine,
+            'Cm (Capréomycine)': self.dst_capreomycine,
+            'Ofx (Ofloxacine)': self.dst_ofloxacine,
         }
         return {k: v for k, v in fields.items() if v}
 
