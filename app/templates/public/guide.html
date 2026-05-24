@@ -1,0 +1,1141 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Guide complet TBTrack v1.0 — PNLT Madagascar</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* ═══════════════════════════════════════════
+       SCREEN — affichage normal
+    ═══════════════════════════════════════════ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:          #101C30;
+      --bg-surface:  rgba(255,255,255,0.05);
+      --border:      rgba(255,255,255,0.08);
+      --border-hi:   rgba(255,255,255,0.13);
+      --text-1:      #F0F6FF;
+      --text-2:      #B0C4D8;
+      --text-3:      #6B839A;
+      --accent:      #3B82F6;
+      --accent-dark: #2563EB;
+      --accent-glow: rgba(59,130,246,0.22);
+      --warn:        #F59E0B;
+      --danger:      #EF4444;
+      --success:     #10B981;
+      --font-serif:  'Instrument Serif', Georgia, serif;
+      --font-sans:   'Inter', system-ui, sans-serif;
+      --radius:      8px;
+      --radius-lg:   14px;
+    }
+
+    html { font-size: 16px; scroll-behavior: smooth; }
+
+    body {
+      background-color: var(--bg);
+      background-image:
+        radial-gradient(ellipse 110% 55% at 55% -8%, rgba(59,130,246,0.25) 0%, rgba(99,102,241,0.08) 40%, transparent 68%),
+        radial-gradient(ellipse 65% 45% at -5% 100%, rgba(37,99,235,0.15) 0%, transparent 55%);
+      background-attachment: fixed;
+      color: var(--text-1);
+      font-family: var(--font-sans);
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    a { color: inherit; text-decoration: none; }
+
+    /* ── Barre d'actions fixe (screen seulement) ── */
+    .action-bar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 200;
+      height: 58px;
+      background: rgba(16,28,48,0.82);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 28px;
+      gap: 12px;
+    }
+
+    .action-bar-logo {
+      display: flex; align-items: center; gap: 9px;
+      font-size: 14.5px; font-weight: 600; color: var(--text-1);
+      margin-right: auto;
+    }
+    .action-bar-logo-mark {
+      width: 26px; height: 26px; border-radius: 7px;
+      background: linear-gradient(135deg,#3B82F6 0%,#6366F1 100%);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .action-bar-badge {
+      font-size: 11px; font-weight: 600; padding: 2px 8px;
+      border-radius: 100px; background: rgba(59,130,246,0.15);
+      color: #60a5fa; letter-spacing: 0.03em;
+    }
+
+    .btn-back {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 6px 13px; font-size: 13px; font-weight: 500;
+      color: var(--text-2); border: 1px solid var(--border-hi);
+      border-radius: var(--radius); transition: all 0.15s;
+    }
+    .btn-back:hover { color: var(--text-1); background: rgba(255,255,255,0.04); }
+
+    .btn-print {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 7px 16px; font-size: 13.5px; font-weight: 600;
+      color: #fff; background: var(--accent);
+      border: none; border-radius: var(--radius); cursor: pointer;
+      transition: background 0.15s, box-shadow 0.2s;
+    }
+    .btn-print:hover { background: var(--accent-dark); box-shadow: 0 0 24px var(--accent-glow); }
+
+    .btn-print svg, .btn-back svg { width: 15px; height: 15px; flex-shrink: 0; }
+
+    /* ── Contenu principal ── */
+    .guide-wrap {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 90px 40px 80px;
+    }
+
+    /* ── En-tête du guide ── */
+    .guide-cover {
+      text-align: center;
+      padding: 60px 0 56px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 56px;
+    }
+    .guide-cover-logo {
+      width: 64px; height: 64px; border-radius: 16px;
+      background: linear-gradient(135deg,#3B82F6 0%,#6366F1 100%);
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 20px;
+    }
+    .guide-cover-logo svg { width: 36px; height: 36px; }
+    .guide-cover-kicker {
+      font-size: 11px; font-weight: 600; letter-spacing: 0.13em;
+      text-transform: uppercase; color: var(--accent); margin-bottom: 14px;
+    }
+    .guide-cover-title {
+      font-family: var(--font-serif); font-size: clamp(32px,4vw,52px);
+      font-weight: 400; line-height: 1.1; letter-spacing: -0.025em;
+      color: var(--text-1); margin-bottom: 16px;
+    }
+    .guide-cover-sub {
+      font-size: 15px; color: var(--text-2); max-width: 540px;
+      margin: 0 auto 28px; line-height: 1.7;
+    }
+    .guide-cover-meta {
+      display: inline-flex; align-items: center; gap: 20px;
+      font-size: 12px; color: var(--text-3);
+    }
+    .guide-cover-meta span { display: flex; align-items: center; gap: 5px; }
+
+    /* ── Table des matières ── */
+    .toc {
+      background: var(--bg-surface); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); padding: 28px 32px; margin-bottom: 56px;
+    }
+    .toc-title {
+      font-size: 11px; font-weight: 600; letter-spacing: 0.12em;
+      text-transform: uppercase; color: var(--text-3); margin-bottom: 18px;
+    }
+    .toc-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 6px 32px;
+    }
+    .toc-item {
+      display: flex; align-items: center; gap: 10px;
+      font-size: 13.5px; color: var(--text-2); padding: 5px 0;
+      border-bottom: 1px solid var(--border); transition: color 0.14s;
+    }
+    .toc-item:hover { color: var(--accent); }
+    .toc-num {
+      font-size: 11px; font-weight: 600; color: var(--text-3);
+      min-width: 20px; font-variant-numeric: tabular-nums;
+    }
+
+    /* ── Sections ── */
+    .section { margin-bottom: 64px; scroll-margin-top: 80px; }
+
+    .section-kicker {
+      font-size: 10.5px; font-weight: 600; letter-spacing: 0.13em;
+      text-transform: uppercase; color: var(--accent); margin-bottom: 10px;
+    }
+    .section-title {
+      font-family: var(--font-serif); font-size: clamp(24px,2.5vw,36px);
+      font-weight: 400; line-height: 1.15; letter-spacing: -0.02em;
+      color: var(--text-1); margin-bottom: 14px;
+    }
+    .section-lead {
+      font-size: 15px; color: var(--text-2); line-height: 1.75; margin-bottom: 28px;
+    }
+
+    h3.sh3 {
+      font-size: 16px; font-weight: 600; color: var(--text-1);
+      margin: 28px 0 10px; padding-top: 4px;
+    }
+    p.sp { font-size: 14px; color: var(--text-2); line-height: 1.8; margin-bottom: 14px; }
+
+    hr.sec-hr { border: none; border-top: 1px solid var(--border); margin: 60px 0; }
+
+    /* ── Alertes ── */
+    .alert {
+      border-radius: var(--radius); padding: 14px 18px;
+      margin: 18px 0; font-size: 13.5px;
+      display: flex; gap: 12px; align-items: flex-start;
+    }
+    .alert-icon { flex-shrink: 0; margin-top: 2px; }
+    .alert-info  { background: rgba(59,130,246,0.08); border: 1px solid rgba(59,130,246,0.20); border-left: 3px solid var(--accent); }
+    .alert-warn  { background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.22); border-left: 3px solid var(--warn); }
+    .alert-danger{ background: rgba(239,68,68,0.08);  border: 1px solid rgba(239,68,68,0.20);  border-left: 3px solid var(--danger); }
+    .alert-body  { color: var(--text-2); line-height: 1.65; }
+    .alert-body strong { color: var(--text-1); }
+
+    /* ── Tables ── */
+    .gtable { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 13.5px; }
+    .gtable th {
+      font-size: 10.5px; font-weight: 600; letter-spacing: 0.08em;
+      text-transform: uppercase; color: var(--text-3);
+      padding: 9px 12px; border-bottom: 1px solid var(--border); text-align: left;
+    }
+    .gtable td {
+      color: var(--text-2); padding: 11px 12px;
+      border-bottom: 1px solid var(--border); vertical-align: top;
+    }
+    .gtable td:first-child { color: var(--text-1); font-weight: 500; }
+    .gtable tr:last-child td { border-bottom: none; }
+    .gtable .check { color: var(--success); font-size: 13px; }
+    .gtable .cross  { color: var(--danger);  font-size: 13px; }
+
+    /* ── Cards rôles ── */
+    .role-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 20px 0; }
+    .role-card {
+      background: var(--bg-surface); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); padding: 20px;
+    }
+    .role-card-head {
+      font-size: 14px; font-weight: 600; color: var(--text-1);
+      margin-bottom: 10px; display: flex; align-items: center; gap: 8px;
+    }
+    .rbadge {
+      font-size: 10px; font-weight: 600; padding: 2px 8px;
+      border-radius: 100px; letter-spacing: 0.04em;
+    }
+    .rbadge-purple { background: rgba(124,92,246,0.15); color: #a78bfa; }
+    .rbadge-blue   { background: rgba(59,130,246,0.15);  color: #60a5fa; }
+    .rbadge-teal   { background: rgba(6,214,160,0.15);   color: #34d399; }
+    .rbadge-pink   { background: rgba(232,121,160,0.15); color: #f472b6; }
+    .role-list { list-style: none; }
+    .role-list li {
+      font-size: 13px; color: var(--text-2); padding: 5px 0;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: flex-start; gap: 8px;
+    }
+    .role-list li:last-child { border-bottom: none; }
+    .role-list li::before { content: '→'; color: var(--accent); font-size: 12px; margin-top: 2px; flex-shrink: 0; }
+
+    /* ── Étapes ── */
+    .steps { margin: 20px 0; }
+    .step  { display: flex; gap: 16px; margin-bottom: 18px; }
+    .step-num {
+      width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0;
+      background: rgba(59,130,246,0.12); border: 1px solid rgba(59,130,246,0.28);
+      color: var(--accent); font-size: 12px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .step-title { font-size: 14px; font-weight: 600; color: var(--text-1); margin-bottom: 3px; }
+    .step-desc  { font-size: 13.5px; color: var(--text-2); line-height: 1.65; }
+
+    /* ── Badges module ── */
+    .module-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin: 20px 0; }
+    .module-card {
+      background: var(--bg-surface); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); padding: 18px 16px;
+    }
+    .module-icon { font-size: 24px; margin-bottom: 10px; }
+    .module-name { font-size: 13px; font-weight: 600; color: var(--text-1); margin-bottom: 4px; }
+    .module-desc { font-size: 12px; color: var(--text-3); line-height: 1.6; }
+
+    /* ── Schémas thérapeutiques ── */
+    .schema-row { display: flex; gap: 14px; margin: 16px 0; }
+    .schema-card {
+      flex: 1; background: var(--bg-surface); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); padding: 20px;
+    }
+    .schema-tag {
+      display: inline-block; font-size: 10.5px; font-weight: 600;
+      padding: 2px 10px; border-radius: 100px; margin-bottom: 10px;
+      letter-spacing: 0.04em;
+    }
+    .tag-short { background: rgba(6,214,160,0.12); color: #34d399; }
+    .tag-long  { background: rgba(59,130,246,0.12); color: #60a5fa; }
+    .schema-name { font-size: 15px; font-weight: 600; color: var(--text-1); margin-bottom: 6px; }
+    .schema-dur  { font-size: 12px; color: var(--text-3); margin-bottom: 14px; }
+    .phase-label { font-size: 11px; font-weight: 600; color: var(--accent); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.06em; }
+    .med-chips   { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 10px; }
+    .med-chip {
+      font-size: 11.5px; padding: 3px 9px; border-radius: 6px;
+      background: rgba(255,255,255,0.07); color: var(--text-2); border: 1px solid var(--border);
+    }
+
+    /* ── Footer ── */
+    .guide-footer {
+      border-top: 1px solid var(--border); padding: 28px 0; margin-top: 40px;
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 12px;
+    }
+    .guide-footer-copy { font-size: 12px; color: var(--text-3); }
+    .guide-footer-links { display: flex; gap: 18px; }
+    .guide-footer-links a { font-size: 12px; color: var(--text-3); transition: color 0.14s; }
+    .guide-footer-links a:hover { color: var(--text-2); }
+
+    /* ═══════════════════════════════════════════
+       PRINT — impression / export PDF
+    ═══════════════════════════════════════════ */
+    @media print {
+      /* Masquer tout ce qui ne doit pas être imprimé */
+      .action-bar, .toc-item, .guide-footer-links { display: none !important; }
+
+      /* Reset couleurs pour papier blanc */
+      * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+      html, body {
+        background: #fff !important;
+        color: #1a1a2e !important;
+        font-size: 11pt;
+        line-height: 1.6;
+      }
+
+      body {
+        background-image: none !important;
+        background-attachment: unset !important;
+      }
+
+      .guide-wrap { padding: 0 !important; max-width: 100% !important; }
+
+      /* ── Couverture ── */
+      .guide-cover {
+        border-bottom: 2px solid #1e3a6e;
+        margin-bottom: 32pt;
+        padding: 40pt 0 32pt;
+        page-break-after: avoid;
+      }
+      .guide-cover-logo {
+        background: linear-gradient(135deg,#3B82F6 0%,#6366F1 100%) !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      .guide-cover-kicker { color: #2563EB !important; }
+      .guide-cover-title  { color: #0f172a !important; font-size: 30pt; }
+      .guide-cover-sub    { color: #334155 !important; }
+      .guide-cover-meta   { color: #64748b !important; }
+
+      /* ── Table des matières ── */
+      .toc {
+        background: #f8fafc !important;
+        border: 1px solid #e2e8f0 !important;
+        page-break-after: always;
+      }
+      .toc-title { color: #64748b !important; }
+      .toc-item  { color: #334155 !important; border-color: #e2e8f0 !important; }
+      .toc-num   { color: #94a3b8 !important; }
+
+      /* ── Textes ── */
+      .section-kicker { color: #2563EB !important; }
+      .section-title  { color: #0f172a !important; font-size: 20pt; }
+      .section-lead   { color: #334155 !important; }
+      h3.sh3  { color: #0f172a !important; font-size: 13pt; }
+      p.sp    { color: #334155 !important; }
+
+      /* ── Séparateurs ── */
+      hr.sec-hr { border-color: #e2e8f0 !important; margin: 32pt 0; }
+
+      /* ── Tables ── */
+      .gtable th { color: #64748b !important; border-color: #e2e8f0 !important; }
+      .gtable td { color: #334155 !important; border-color: #e2e8f0 !important; }
+      .gtable td:first-child { color: #0f172a !important; }
+
+      /* ── Alertes ── */
+      .alert-info   { background: #eff6ff !important; border-color: #bfdbfe !important; border-left-color: #3B82F6 !important; }
+      .alert-warn   { background: #fffbeb !important; border-color: #fde68a !important; border-left-color: #F59E0B !important; }
+      .alert-danger { background: #fef2f2 !important; border-color: #fecaca !important; border-left-color: #EF4444 !important; }
+      .alert-body   { color: #334155 !important; }
+      .alert-body strong { color: #0f172a !important; }
+
+      /* ── Rôles ── */
+      .role-card { background: #f8fafc !important; border-color: #e2e8f0 !important; }
+      .role-card-head { color: #0f172a !important; }
+      .role-list li { color: #334155 !important; border-color: #e2e8f0 !important; }
+      .role-list li::before { color: #2563EB !important; }
+      .rbadge-purple { background: #f3f0ff !important; color: #7c3aed !important; }
+      .rbadge-blue   { background: #eff6ff !important; color: #2563EB !important; }
+      .rbadge-teal   { background: #ecfdf5 !important; color: #059669 !important; }
+      .rbadge-pink   { background: #fdf2f8 !important; color: #db2777 !important; }
+
+      /* ── Étapes ── */
+      .step-num { background: #eff6ff !important; border-color: #bfdbfe !important; color: #2563EB !important; }
+      .step-title { color: #0f172a !important; }
+      .step-desc  { color: #334155 !important; }
+
+      /* ── Schémas ── */
+      .schema-card { background: #f8fafc !important; border-color: #e2e8f0 !important; }
+      .schema-name { color: #0f172a !important; }
+      .schema-dur  { color: #64748b !important; }
+      .phase-label { color: #2563EB !important; }
+      .med-chip    { background: #f1f5f9 !important; color: #334155 !important; border-color: #e2e8f0 !important; }
+      .tag-short   { background: #ecfdf5 !important; color: #059669 !important; }
+      .tag-long    { background: #eff6ff !important; color: #2563EB !important; }
+
+      /* ── Modules ── */
+      .module-card { background: #f8fafc !important; border-color: #e2e8f0 !important; }
+      .module-name { color: #0f172a !important; }
+      .module-desc { color: #64748b !important; }
+
+      /* ── Sauts de page ── */
+      .section { page-break-inside: avoid; }
+      hr.sec-hr { page-break-after: avoid; }
+      h3.sh3    { page-break-after: avoid; }
+      .role-grid, .schema-row, .module-grid { page-break-inside: avoid; }
+
+      /* ── En-tête/pied de page ── */
+      @page {
+        margin: 22mm 18mm 22mm 18mm;
+        size: A4;
+      }
+      @page :first { margin-top: 15mm; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Barre d'actions (masquée à l'impression) -->
+  <div class="action-bar">
+    <div class="action-bar-logo">
+      <div class="action-bar-logo-mark">
+        <svg width="16" height="16" viewBox="0 0 100 100" fill="white" xmlns="http://www.w3.org/2000/svg">
+          <path fill-rule="evenodd" d="M50 8 L86 21 L86 52 C86 76 68 88 50 94 C32 88 14 76 14 52 L14 21 Z M43 30 L43 43 L30 43 L30 57 L43 57 L43 70 L57 70 L57 57 L70 57 L70 43 L57 43 L57 30 Z"/>
+        </svg>
+      </div>
+      TBTrack
+      <span class="action-bar-badge">Guide v1.0</span>
+    </div>
+    <a href="/documentation" class="btn-back">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8">
+        <path d="M13 16l-5-6 5-6" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      Retour
+    </a>
+    <button class="btn-print" onclick="window.print()">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8">
+        <path d="M5 7V4a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v3M5 13H3a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-2M5 13v3a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1v-3H5z" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      Imprimer / Enregistrer PDF
+    </button>
+  </div>
+
+  <div class="guide-wrap">
+
+    <!-- ── Couverture ── -->
+    <div class="guide-cover">
+      <div class="guide-cover-logo">
+        <svg width="36" height="36" viewBox="0 0 100 100" fill="white" xmlns="http://www.w3.org/2000/svg">
+          <path fill-rule="evenodd" d="M50 8 L86 21 L86 52 C86 76 68 88 50 94 C32 88 14 76 14 52 L14 21 Z M43 30 L43 43 L30 43 L30 57 L43 57 L43 70 L57 70 L57 57 L70 57 L70 43 L57 43 L57 30 Z"/>
+        </svg>
+      </div>
+      <p class="guide-cover-kicker">Programme National de Lutte contre la Tuberculose — Madagascar</p>
+      <h1 class="guide-cover-title">TBTrack<br>Guide d'utilisation complet</h1>
+      <p class="guide-cover-sub">
+        Manuel officiel de la plateforme numérique de suivi des patients TB Multi-Résistante
+        dans les CRPC et CDT de Madagascar. Protocole PNLT 2021.
+      </p>
+      <div class="guide-cover-meta">
+        <span>📄 Version 1.0</span>
+        <span>🗓 2025</span>
+        <span>🇲🇬 PNLT Madagascar</span>
+      </div>
+    </div>
+
+    <!-- ── Table des matières ── -->
+    <div class="toc">
+      <p class="toc-title">Table des matières</p>
+      <div class="toc-grid">
+        <a href="#presentation"  class="toc-item"><span class="toc-num">01</span> Présentation de TBTrack</a>
+        <a href="#securite"      class="toc-item"><span class="toc-num">06</span> Sécurité des données</a>
+        <a href="#roles"         class="toc-item"><span class="toc-num">02</span> Rôles et contrôle d'accès</a>
+        <a href="#traitement"    class="toc-item"><span class="toc-num">07</span> Suivi traitements & DOT</a>
+        <a href="#connexion"     class="toc-item"><span class="toc-num">03</span> Connexion & création de compte</a>
+        <a href="#effets"        class="toc-item"><span class="toc-num">08</span> Effets secondaires & alertes</a>
+        <a href="#patients"      class="toc-item"><span class="toc-num">04</span> Registre patients</a>
+        <a href="#contacts"      class="toc-item"><span class="toc-num">09</span> Registre des contacts</a>
+        <a href="#dosage"        class="toc-item"><span class="toc-num">05</span> Calculateur de dosage</a>
+        <a href="#rapports"      class="toc-item"><span class="toc-num">10</span> Rapports PNLT & stock</a>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════
+         01 — Présentation
+    ══════════════════════════════════════ -->
+    <div class="section" id="presentation">
+      <p class="section-kicker">01 — Introduction</p>
+      <h2 class="section-title">Présentation de TBTrack</h2>
+      <p class="section-lead">
+        TBTrack est la plateforme numérique officielle du Programme National de Lutte contre
+        la Tuberculose (PNLT) de Madagascar. Elle centralise le suivi clinique, bactériologique
+        et thérapeutique des patients TB Multi-Résistante (TB-MDR, RR-TB, pre-XDR, XDR) dans
+        l'ensemble des centres de prise en charge du pays.
+      </p>
+
+      <div class="alert alert-info">
+        <div class="alert-icon">ℹ️</div>
+        <div class="alert-body">
+          <strong>Version actuelle :</strong> TBTrack v1.0 — Protocole PNLT Madagascar 2021.
+          Toute décision thérapeutique doit être validée par un médecin habilité avant administration.
+        </div>
+      </div>
+
+      <h3 class="sh3">Modules disponibles</h3>
+      <div class="module-grid">
+        <div class="module-card">
+          <div class="module-icon">🗂️</div>
+          <div class="module-name">Registre patients</div>
+          <div class="module-desc">Dossiers TB-MDR complets, recherche instantanée</div>
+        </div>
+        <div class="module-card">
+          <div class="module-icon">💊</div>
+          <div class="module-name">Calculateur dosage</div>
+          <div class="module-desc">Doses PNLT 2021 par poids — adulte & pédiatrique</div>
+        </div>
+        <div class="module-card">
+          <div class="module-icon">📋</div>
+          <div class="module-name">Suivi traitements</div>
+          <div class="module-desc">DOT quotidien, adhérence, suivi pondéral mensuel</div>
+        </div>
+        <div class="module-card">
+          <div class="module-icon">⚠️</div>
+          <div class="module-name">Effets secondaires</div>
+          <div class="module-desc">Saisie, alerte QTc, pharmacovigilance</div>
+        </div>
+        <div class="module-card">
+          <div class="module-icon">🔬</div>
+          <div class="module-name">Bactériologie</div>
+          <div class="module-desc">Frottis, culture, DST — M0 à M24</div>
+        </div>
+        <div class="module-card">
+          <div class="module-icon">👥</div>
+          <div class="module-name">Contacts</div>
+          <div class="module-desc">Traçage des contacts sur 24 mois</div>
+        </div>
+        <div class="module-card">
+          <div class="module-icon">📦</div>
+          <div class="module-name">Stock médicaments</div>
+          <div class="module-desc">Inventaire en temps réel, alertes rupture</div>
+        </div>
+        <div class="module-card">
+          <div class="module-icon">📊</div>
+          <div class="module-name">Rapports PNLT</div>
+          <div class="module-desc">Rapports trimestriels automatisés, export CSV</div>
+        </div>
+        <div class="module-card">
+          <div class="module-icon">⚙️</div>
+          <div class="module-name">Administration</div>
+          <div class="module-desc">Gestion des comptes, activation utilisateurs</div>
+        </div>
+      </div>
+
+      <table class="gtable">
+        <thead><tr><th>Module</th><th>Rôles autorisés</th><th>Accès lecture</th><th>Accès écriture</th></tr></thead>
+        <tbody>
+          <tr><td>Registre patients</td><td>Médecin, Coordinateur, Infirmier</td><td class="check">✓ Tous</td><td class="check">✓ Médecin, Coord., Infirmier</td></tr>
+          <tr><td>Calculateur dosage</td><td>Tous les rôles</td><td class="check">✓ Tous</td><td>— (lecture seule)</td></tr>
+          <tr><td>Suivi traitements / DOT</td><td>Médecin, Coordinateur, Infirmier</td><td class="check">✓ Tous</td><td class="check">✓ Médecin, Infirmier, Coord.</td></tr>
+          <tr><td>Effets secondaires</td><td>Médecin, Infirmier, Coordinateur</td><td class="check">✓ Tous</td><td class="check">✓ Médecin, Infirmier</td></tr>
+          <tr><td>Bactériologie labo</td><td>Laborantin, Médecin, Coordinateur</td><td class="check">✓ Tous</td><td class="check">✓ Laborantin, Médecin</td></tr>
+          <tr><td>Contacts</td><td>Tous les rôles</td><td class="check">✓ Tous</td><td class="check">✓ Médecin, Infirmier, Coord.</td></tr>
+          <tr><td>Stock médicaments</td><td>Tous les rôles</td><td class="check">✓ Tous</td><td class="check">✓ Coordinateur</td></tr>
+          <tr><td>Rapports PNLT</td><td>Médecin, Coordinateur</td><td class="check">✓ Médecin, Coord.</td><td class="check">✓ Coordinateur</td></tr>
+          <tr><td>Administration</td><td>Coordinateur uniquement</td><td class="check">✓ Coordinateur</td><td class="check">✓ Coordinateur</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <hr class="sec-hr">
+
+    <!-- ══════════════════════════════════════
+         02 — Rôles
+    ══════════════════════════════════════ -->
+    <div class="section" id="roles">
+      <p class="section-kicker">02 — Contrôle d'accès</p>
+      <h2 class="section-title">Rôles et accès</h2>
+      <p class="section-lead">
+        TBTrack applique un contrôle d'accès basé sur le rôle (RBAC).
+        Chaque compte est associé à un rôle unique, défini à l'inscription et activé par le coordinateur.
+        Aucune action sensible n'est possible sans le rôle approprié.
+      </p>
+
+      <div class="role-grid">
+        <div class="role-card">
+          <div class="role-card-head">🩺 Médecin <span class="rbadge rbadge-purple">medecin</span></div>
+          <ul class="role-list">
+            <li>Créer, modifier et archiver les dossiers patients</li>
+            <li>Saisir le bilan initial M0 (ECG, biologie, poids)</li>
+            <li>Recevoir les alertes QTc ≥ 500 ms en temps réel</li>
+            <li>Valider toutes les décisions thérapeutiques</li>
+            <li>Accéder aux rapports cohorte et bilans</li>
+            <li>Enregistrer et modifier les traitements</li>
+          </ul>
+        </div>
+        <div class="role-card">
+          <div class="role-card-head">📊 Coordinateur <span class="rbadge rbadge-blue">coordinateur</span></div>
+          <ul class="role-list">
+            <li>Accès complet à tous les modules de la plateforme</li>
+            <li>Activer et désactiver les comptes utilisateurs</li>
+            <li>Gérer le stock médicaments de tous les centres</li>
+            <li>Générer et exporter les rapports trimestriels PNLT</li>
+            <li>Superviser l'ensemble de la cohorte TB-MDR</li>
+            <li>Supprimer les dossiers en cas d'erreur</li>
+          </ul>
+        </div>
+        <div class="role-card">
+          <div class="role-card-head">💉 Infirmier(e) <span class="rbadge rbadge-teal">infirmier</span></div>
+          <ul class="role-list">
+            <li>Enregistrer les prises DOT quotidiennes</li>
+            <li>Déclarer les effets secondaires observés</li>
+            <li>Saisir le poids et paramètres vitaux mensuels</li>
+            <li>Consulter la liste des contacts à relancer</li>
+            <li>Lire les dossiers patients (pas de modification)</li>
+          </ul>
+        </div>
+        <div class="role-card">
+          <div class="role-card-head">🔬 Laborantin(e) <span class="rbadge rbadge-pink">laborantin</span></div>
+          <ul class="role-list">
+            <li>Saisir les résultats de frottis et culture</li>
+            <li>Enregistrer les tests DST (Drug Susceptibility)</li>
+            <li>Suivre la courbe de conversion bactériologique</li>
+            <li>Détecter les signaux d'échec M6+ automatiquement</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="alert alert-warn">
+        <div class="alert-icon">⚠️</div>
+        <div class="alert-body">
+          <strong>Activation obligatoire :</strong> Après inscription, tout compte est inactif par défaut.
+          Le coordinateur PNLT du centre doit l'activer via <em>Administration → Utilisateurs</em>
+          avant que l'utilisateur puisse se connecter.
+        </div>
+      </div>
+    </div>
+
+    <hr class="sec-hr">
+
+    <!-- ══════════════════════════════════════
+         03 — Connexion
+    ══════════════════════════════════════ -->
+    <div class="section" id="connexion">
+      <p class="section-kicker">03 — Authentification</p>
+      <h2 class="section-title">Connexion & création de compte</h2>
+
+      <h3 class="sh3">Créer un compte utilisateur</h3>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <div class="step-title">Accéder à l'inscription</div>
+            <div class="step-desc">Cliquez sur "Créer un compte" depuis la page d'accueil ou la page de connexion. L'URL est <code>/auth/register</code>.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <div class="step-title">Remplir le formulaire</div>
+            <div class="step-desc">Saisir votre adresse e-mail professionnelle, prénom, nom de famille, rôle métier (médecin / coordinateur / infirmier / laborantin) et le nom de votre centre (CRPC ou CDT).</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <div class="step-title">Attendre l'activation par le coordinateur</div>
+            <div class="step-desc">Votre compte est créé mais inactif. Le coordinateur PNLT de votre centre le voit dans <em>Administration → Utilisateurs en attente</em> et doit cliquer sur "Activer".</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <div class="step-title">Se connecter</div>
+            <div class="step-desc">Une fois activé, connectez-vous avec votre e-mail et mot de passe. Cochez "Se souvenir de moi" uniquement sur un poste de travail dédié et sécurisé.</div>
+          </div>
+        </div>
+      </div>
+
+      <h3 class="sh3">Mot de passe oublié</h3>
+      <p class="sp">Contactez le coordinateur PNLT de votre centre. Il peut réinitialiser votre mot de passe depuis le panneau Administration.</p>
+
+      <div class="alert alert-info">
+        <div class="alert-icon">ℹ️</div>
+        <div class="alert-body">
+          <strong>Sécurité :</strong> Ne partagez jamais vos identifiants de connexion. Chaque action
+          dans TBTrack est tracée avec votre identité. Déconnectez-vous après chaque session sur un poste partagé.
+        </div>
+      </div>
+    </div>
+
+    <hr class="sec-hr">
+
+    <!-- ══════════════════════════════════════
+         04 — Patients
+    ══════════════════════════════════════ -->
+    <div class="section" id="patients">
+      <p class="section-kicker">04 — Dossiers cliniques</p>
+      <h2 class="section-title">Registre patients</h2>
+      <p class="section-lead">
+        Le registre centralise tous les patients TB-MDR / RR-TB / pre-XDR / XDR suivis dans votre centre.
+        Chaque dossier contient les informations démographiques, le type de résistance, le schéma
+        thérapeutique et l'historique clinique complet.
+      </p>
+
+      <h3 class="sh3">Créer un nouveau patient</h3>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <div class="step-title">Ouvrir le formulaire</div>
+            <div class="step-desc">Menu <strong>Patients → Nouveau patient</strong> (rôle médecin, coordinateur ou infirmier requis).</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <div class="step-title">Renseigner les champs obligatoires</div>
+            <div class="step-desc">Nom, prénom, date de naissance, sexe, type de résistance (RR-TB / TB-MR / pre-XDR / XDR), catégorie PNLT, schéma thérapeutique et date de début de traitement.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <div class="step-title">Enregistrer le dossier</div>
+            <div class="step-desc">Un code unique TB-MR-XXXX est généré automatiquement par le système. Il ne peut pas être modifié après création.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <div class="step-title">Compléter le bilan M0</div>
+            <div class="step-desc">Depuis la fiche patient, accédez à <strong>Bilan initial M0</strong> pour saisir le bilan biologique, ECG, audiogramme et poids de référence.</div>
+          </div>
+        </div>
+      </div>
+
+      <h3 class="sh3">Statuts de traitement</h3>
+      <table class="gtable">
+        <thead><tr><th>Statut</th><th>Définition PNLT</th></tr></thead>
+        <tbody>
+          <tr><td>En cours</td><td>Patient sous traitement actif</td></tr>
+          <tr><td>Guéri</td><td>Cultures négatives confirmées + traitement terminé</td></tr>
+          <tr><td>Traitement terminé</td><td>Traitement complété sans preuve bactériologique finale</td></tr>
+          <tr><td>Perdu de vue</td><td>Interruption de traitement ≥ 2 mois consécutifs</td></tr>
+          <tr><td>Échec thérapeutique</td><td>Culture positive à M6 ou plus / changement de schéma requis</td></tr>
+          <tr><td>Décédé</td><td>Décès avant ou pendant le traitement</td></tr>
+          <tr><td>Transféré</td><td>Transféré vers un autre centre avec dossier transmis</td></tr>
+          <tr><td>Non évalué</td><td>Résultat de traitement non documenté</td></tr>
+        </tbody>
+      </table>
+
+      <h3 class="sh3">Recherche rapide</h3>
+      <p class="sp">
+        La barre de recherche en haut du registre permet de trouver un patient par son nom, prénom
+        ou numéro de registre (TB-MR-XXXX). La recherche s'effectue dès 2 caractères saisis.
+        Des filtres par statut et type de résistance sont disponibles.
+      </p>
+
+      <div class="alert alert-info">
+        <div class="alert-icon">🔒</div>
+        <div class="alert-body">
+          <strong>Confidentialité :</strong> Les données patients sont strictement réservées au personnel
+          médical autorisé. Ne partagez jamais un dossier patient en dehors du circuit médical officiel.
+        </div>
+      </div>
+    </div>
+
+    <hr class="sec-hr">
+
+    <!-- ══════════════════════════════════════
+         05 — Dosage
+    ══════════════════════════════════════ -->
+    <div class="section" id="dosage">
+      <p class="section-kicker">05 — Pharmacologie</p>
+      <h2 class="section-title">Calculateur de dosage</h2>
+      <p class="section-lead">
+        Le calculateur applique le protocole de dosage PNLT Madagascar 2021 (Tableaux II et III)
+        pour les schémas court (9–11 mois) et long (18–20 mois). Les doses sont calculées
+        automatiquement selon le poids corporel actuel du patient, en adulte et en pédiatrique.
+      </p>
+
+      <h3 class="sh3">Schémas thérapeutiques disponibles</h3>
+      <div class="schema-row">
+        <div class="schema-card">
+          <span class="schema-tag tag-short">Schéma court</span>
+          <div class="schema-name">BPaLM / BPaL</div>
+          <div class="schema-dur">9–11 mois</div>
+          <div class="phase-label">Phase intensive (4–6 mois)</div>
+          <div class="med-chips">
+            <span class="med-chip">Bdq</span><span class="med-chip">Pa</span>
+            <span class="med-chip">Lzd</span><span class="med-chip">Mfx</span>
+          </div>
+          <div class="phase-label">Phase continuation</div>
+          <div class="med-chips">
+            <span class="med-chip">Bdq</span><span class="med-chip">Pa</span>
+            <span class="med-chip">Lzd</span>
+          </div>
+        </div>
+        <div class="schema-card">
+          <span class="schema-tag tag-long">Schéma long</span>
+          <div class="schema-name">Schéma PNLT long</div>
+          <div class="schema-dur">18–20 mois</div>
+          <div class="phase-label">Phase intensive (6–8 mois)</div>
+          <div class="med-chips">
+            <span class="med-chip">Bdq</span><span class="med-chip">Lzd</span>
+            <span class="med-chip">Cfz</span><span class="med-chip">Cs</span><span class="med-chip">Z</span>
+          </div>
+          <div class="phase-label">Phase continuation (12 mois)</div>
+          <div class="med-chips">
+            <span class="med-chip">Lzd</span><span class="med-chip">Cfz</span>
+            <span class="med-chip">Cs</span><span class="med-chip">Z</span>
+          </div>
+        </div>
+      </div>
+
+      <h3 class="sh3">Utilisation du calculateur</h3>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <div class="step-title">Sélectionner le groupe d'âge</div>
+            <div class="step-desc">Adulte (≥ 15 ans / ≥ 30 kg) ou Enfant (< 15 ans / < 30 kg). Les plages de dosage pédiatriques sont distinctes du tableau adulte.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <div class="step-title">Entrer le poids actuel</div>
+            <div class="step-desc">Saisir le poids corporel actuel en kilogrammes. Le système sélectionne automatiquement la tranche pondérale correspondante dans le Tableau II ou III du guide PNLT.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <div class="step-title">Choisir le schéma thérapeutique</div>
+            <div class="step-desc">Sélectionner le schéma court ou long selon la décision médicale.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <div class="step-title">Lire les doses journalières</div>
+            <div class="step-desc">Les doses par médicament s'affichent avec leur unité. Les médicaments contre-indiqués (CI) apparaissent en rouge. Les médicaments à protocole spécial sont signalés en orange.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="alert alert-danger">
+        <div class="alert-icon">🚨</div>
+        <div class="alert-body">
+          <strong>Sécurité critique :</strong> Si le poids du patient est hors des plages du tableau PNLT,
+          le calculateur affiche une erreur bloquante et n'indique aucune dose. Ne jamais extrapoler.
+          Consulter le médecin référent TB-MDR.
+        </div>
+      </div>
+
+      <div class="alert alert-warn">
+        <div class="alert-icon">⚠️</div>
+        <div class="alert-body">
+          <strong>Aide à la décision uniquement :</strong> Les doses affichées doivent être confirmées
+          par le médecin responsable avant toute administration. Le calculateur ne remplace pas le jugement clinique.
+        </div>
+      </div>
+    </div>
+
+    <hr class="sec-hr">
+
+    <!-- ══════════════════════════════════════
+         06 — Sécurité
+    ══════════════════════════════════════ -->
+    <div class="section" id="securite">
+      <p class="section-kicker">06 — Protection des données</p>
+      <h2 class="section-title">Sécurité des données</h2>
+      <p class="section-lead">
+        TBTrack est conçu pour protéger les données de santé sensibles selon les meilleures
+        pratiques de sécurité informatique médicale.
+      </p>
+
+      <table class="gtable">
+        <thead><tr><th>Mesure de sécurité</th><th>Détail</th></tr></thead>
+        <tbody>
+          <tr><td>HTTPS obligatoire</td><td>Toutes les communications sont chiffrées en transit (TLS 1.2+)</td></tr>
+          <tr><td>Authentification</td><td>Mots de passe hachés (bcrypt), session sécurisée avec token CSRF</td></tr>
+          <tr><td>Contrôle d'accès RBAC</td><td>Chaque route vérifie le rôle avant d'autoriser l'accès</td></tr>
+          <tr><td>Activation manuelle</td><td>Tout nouveau compte est inactif jusqu'à validation coordinateur</td></tr>
+          <tr><td>Cookies sécurisés</td><td>HttpOnly, Secure, SameSite=Lax — inaccessibles depuis JavaScript</td></tr>
+          <tr><td>Audit trail</td><td>Les actions de création/modification sont horodatées par utilisateur</td></tr>
+        </tbody>
+      </table>
+
+      <div class="alert alert-warn">
+        <div class="alert-icon">⚠️</div>
+        <div class="alert-body">
+          <strong>Règles d'usage :</strong> (1) Ne jamais partager vos identifiants. (2) Se déconnecter
+          après chaque session sur poste partagé. (3) Signaler immédiatement toute activité suspecte
+          au coordinateur PNLT. (4) Ne pas accéder à TBTrack depuis un réseau Wi-Fi non sécurisé.
+        </div>
+      </div>
+    </div>
+
+    <hr class="sec-hr">
+
+    <!-- ══════════════════════════════════════
+         07 — Traitement DOT
+    ══════════════════════════════════════ -->
+    <div class="section" id="traitement">
+      <p class="section-kicker">07 — Observance thérapeutique</p>
+      <h2 class="section-title">Suivi des traitements & DOT</h2>
+      <p class="section-lead">
+        Le Directly Observed Therapy (DOT) est la méthode de référence PNLT pour garantir
+        l'observance thérapeutique. TBTrack enregistre chaque prise quotidienne et calcule
+        le taux d'adhérence en temps réel.
+      </p>
+
+      <h3 class="sh3">Enregistrer une prise DOT</h3>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <div class="step-title">Ouvrir la fiche traitement</div>
+            <div class="step-desc">Depuis la fiche patient, onglet <strong>Traitement</strong>, puis bouton "Saisir DOT aujourd'hui".</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <div class="step-title">Confirmer la prise</div>
+            <div class="step-desc">Sélectionner "Prise confirmée" (patient a pris tous ses médicaments devant l'observateur) ou "Prise non confirmée" avec le motif d'omission.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <div class="step-title">Enregistrer</div>
+            <div class="step-desc">Le taux d'adhérence sur 30 jours glissants est recalculé immédiatement. Une alerte rouge apparaît si le taux descend sous 80 %.</div>
+          </div>
+        </div>
+      </div>
+
+      <h3 class="sh3">Suivi pondéral mensuel</h3>
+      <p class="sp">
+        Le poids est saisi chaque mois pour chaque patient actif. La courbe d'évolution pondérale
+        est générée automatiquement dans la fiche patient. Une perte de poids supérieure à 5 % en
+        un mois doit être signalée au médecin référent.
+      </p>
+
+      <table class="gtable">
+        <thead><tr><th>Paramètre suivi</th><th>Fréquence</th><th>Alerte automatique</th></tr></thead>
+        <tbody>
+          <tr><td>Prise DOT</td><td>Quotidienne</td><td>Adhérence &lt; 80 % sur 30 jours</td></tr>
+          <tr><td>Poids corporel</td><td>Mensuelle (M0 à M18+)</td><td>Perte &gt; 5 % / mois</td></tr>
+          <tr><td>Tension artérielle</td><td>Mensuelle</td><td>Selon seuils cliniques</td></tr>
+          <tr><td>Kaliémie</td><td>M0, M2, M4, M6 puis trimestriel</td><td>K+ &lt; 3,5 mmol/L</td></tr>
+          <tr><td>Créatinine</td><td>M0, M2, M6, M12</td><td>Augmentation &gt; 1,5× valeur M0</td></tr>
+          <tr><td>Bilan hépatique (GPT/GOT)</td><td>M0, M2, M6</td><td>GPT &gt; 3× normale</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <hr class="sec-hr">
+
+    <!-- ══════════════════════════════════════
+         08 — Effets secondaires
+    ══════════════════════════════════════ -->
+    <div class="section" id="effets">
+      <p class="section-kicker">08 — Pharmacovigilance</p>
+      <h2 class="section-title">Effets secondaires & alertes cliniques</h2>
+      <p class="section-lead">
+        Tout effet secondaire observé doit être saisi dans TBTrack dans les 24 heures suivant
+        son observation. Les effets graves déclenchent une alerte immédiate visible par le médecin
+        et le coordinateur depuis le tableau de bord.
+      </p>
+
+      <h3 class="sh3">Alertes critiques automatiques</h3>
+      <table class="gtable">
+        <thead><tr><th>Paramètre</th><th>Seuil d'alerte</th><th>Action requise</th></tr></thead>
+        <tbody>
+          <tr><td>Intervalle QTc (ECG)</td><td>≥ 500 ms</td><td>Contacter médecin immédiatement — arrêt possible Bdq/Cfz/Mfx</td></tr>
+          <tr><td>Kaliémie</td><td>&lt; 3,0 mmol/L (sévère)</td><td>Supplémentation K+ et avis médical urgent</td></tr>
+          <tr><td>Neuropathie périphérique</td><td>Grade 3 ou 4</td><td>Réduction ou arrêt Lzd — avis médical</td></tr>
+          <tr><td>Myélosuppression</td><td>Leucocytes &lt; 2,0 G/L</td><td>Arrêt Lzd et bilan hématologique urgent</td></tr>
+          <tr><td>Hépatotoxicité</td><td>GPT &gt; 3× valeur normale</td><td>Bilan hépatique complet, avis médical</td></tr>
+        </tbody>
+      </table>
+
+      <div class="alert alert-danger">
+        <div class="alert-icon">🚨</div>
+        <div class="alert-body">
+          <strong>QTc ≥ 500 ms :</strong> C'est une urgence médicale. Appeler le médecin immédiatement.
+          Ne pas attendre la prochaine consultation. L'arrêt du médicament incriminé (Bédaquiline,
+          Clofazimine ou Moxifloxacine) peut être nécessaire dans l'heure.
+        </div>
+      </div>
+
+      <h3 class="sh3">Saisir un effet secondaire</h3>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <div class="step-title">Accéder au module</div>
+            <div class="step-desc">Menu <strong>Effets secondaires → Déclarer un effet</strong> ou depuis la fiche patient, onglet "Effets secondaires".</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <div class="step-title">Renseigner l'effet</div>
+            <div class="step-desc">Sélectionner le type d'effet, la sévérité (léger / modéré / sévère / grave), le ou les médicaments suspects et la date d'apparition.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <div class="step-title">Enregistrer</div>
+            <div class="step-desc">Si la sévérité est "sévère" ou "grave", une notification apparaît sur le tableau de bord de tous les médecins et coordinateurs du centre.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <hr class="sec-hr">
+
+    <!-- ══════════════════════════════════════
+         09 — Contacts
+    ══════════════════════════════════════ -->
+    <div class="section" id="contacts">
+      <p class="section-kicker">09 — Traçage</p>
+      <h2 class="section-title">Registre des contacts</h2>
+      <p class="section-lead">
+        Le traçage des contacts est une composante essentielle du contrôle de la TB-MDR.
+        Pour chaque patient source, les contacts proches sont enregistrés et suivis sur 24 mois.
+        TBTrack génère automatiquement le calendrier de visites et alerte 7 jours avant chaque rendez-vous.
+      </p>
+
+      <h3 class="sh3">Types de contacts enregistrés</h3>
+      <table class="gtable">
+        <thead><tr><th>Type</th><th>Définition</th><th>Priorité de suivi</th></tr></thead>
+        <tbody>
+          <tr><td>Foyer (cohabitant)</td><td>Personne vivant sous le même toit que le patient</td><td>Haute — dépistage immédiat</td></tr>
+          <tr><td>Famille proche</td><td>Membres de la famille en contact fréquent (&gt; 4h/j)</td><td>Haute</td></tr>
+          <tr><td>Travail / école</td><td>Collègues ou camarades en contact régulier</td><td>Modérée</td></tr>
+          <tr><td>Autre</td><td>Contact occasionnel documenté</td><td>Modérée à faible</td></tr>
+        </tbody>
+      </table>
+
+      <h3 class="sh3">Examens de dépistage</h3>
+      <p class="sp">Pour chaque contact, le module enregistre : GeneXpert MTB/RIF, radiographie thoracique,
+      résultat TB confirmé ou infirmé, et décision de Traitement Préventif à l'Isoniazide (IPT).</p>
+
+      <div class="alert alert-info">
+        <div class="alert-icon">ℹ️</div>
+        <div class="alert-body">
+          <strong>IPT (Traitement Préventif à l'Isoniazide) :</strong> TBTrack indique automatiquement
+          si un contact est éligible à l'IPT selon les critères PNLT et trace l'acceptation ou le refus.
+        </div>
+      </div>
+    </div>
+
+    <hr class="sec-hr">
+
+    <!-- ══════════════════════════════════════
+         10 — Rapports & Stock
+    ══════════════════════════════════════ -->
+    <div class="section" id="rapports">
+      <p class="section-kicker">10 — Reporting & logistique</p>
+      <h2 class="section-title">Rapports PNLT & gestion du stock</h2>
+      <p class="section-lead">
+        Le module Rapports génère automatiquement les formulaires trimestriels et annuels
+        conformes aux exigences du PNLT Madagascar. Toutes les données sont consolidées
+        depuis les dossiers actifs et exportables en CSV.
+      </p>
+
+      <h3 class="sh3">Rapports disponibles</h3>
+      <table class="gtable">
+        <thead><tr><th>Rapport</th><th>Période</th><th>Contenu</th><th>Accès</th></tr></thead>
+        <tbody>
+          <tr><td>Cohorte de traitement</td><td>Trimestriel</td><td>Résultats PNLT (guéri, PDV, échec, décédé…)</td><td>Médecin, Coord.</td></tr>
+          <tr><td>Dépistage contacts</td><td>Trimestriel</td><td>GeneXpert, radio, IPT par trimestre</td><td>Tous</td></tr>
+          <tr><td>Commande médicaments</td><td>Trimestriel</td><td>Stock actuel vs besoin T+1</td><td>Coordinateur</td></tr>
+          <tr><td>Résultats annuels</td><td>Annuel</td><td>Taux de succès, VIH, résistances par catégorie</td><td>Médecin, Coord.</td></tr>
+        </tbody>
+      </table>
+
+      <h3 class="sh3">Exporter un rapport</h3>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <div class="step-title">Accéder au module Rapports</div>
+            <div class="step-desc">Menu principal → <strong>Rapports</strong>. Sélectionner le type de rapport et la période (trimestre / année).</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <div class="step-title">Consulter les données</div>
+            <div class="step-desc">Le rapport s'affiche à l'écran avec les indicateurs calculés automatiquement depuis les dossiers du centre.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <div class="step-title">Exporter en CSV</div>
+            <div class="step-desc">Cliquer sur "Exporter CSV". Le fichier est compatible Excel et LibreOffice Calc. Il peut être transmis directement au PNLT central.</div>
+          </div>
+        </div>
+      </div>
+
+      <h3 class="sh3">Gestion du stock médicaments</h3>
+      <p class="sp">
+        Le module Stock permet de suivre les quantités disponibles pour chaque médicament anti-TB
+        par centre. Chaque entrée (livraison) et sortie (dispensation patient) est enregistrée
+        avec la date et la source. Une alerte automatique apparaît quand le stock passe sous
+        le seuil de sécurité (< 30 jours de traitement).
+      </p>
+
+      <div class="alert alert-warn">
+        <div class="alert-icon">⚠️</div>
+        <div class="alert-body">
+          <strong>Rupture de stock :</strong> Si un médicament passe à zéro unité, une alerte "RUPTURE"
+          apparaît en rouge dans le tableau de bord de tous les coordinateurs. Déclencher immédiatement
+          une demande d'approvisionnement d'urgence auprès du PNLT central.
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Footer ── -->
+    <div class="guide-footer">
+      <p class="guide-footer-copy">© 2025 TBTrack — Programme National de Lutte contre la Tuberculose, Madagascar. Guide d'utilisation v1.0.</p>
+      <nav class="guide-footer-links">
+        <a href="/">Accueil</a>
+        <a href="/documentation">Documentation</a>
+        <a href="/aide">Aide</a>
+        <a href="/auth/login">Connexion</a>
+      </nav>
+    </div>
+
+  </div><!-- /guide-wrap -->
+
+</body>
+</html>

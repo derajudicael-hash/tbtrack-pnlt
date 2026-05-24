@@ -28,3 +28,8 @@ def documentation():
 @public_bp.route('/aide')
 def aide():
     return render_template('public/aide.html')
+
+
+@public_bp.route('/guide')
+def guide():
+    return render_template('public/guide.html')
