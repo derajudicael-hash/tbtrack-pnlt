@@ -1,0 +1,1165 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="TBTrack — Application clinicienne de suivi TB-MDR pour médecins, coordinateurs, infirmiers et laborantins.">
+  <title>TBTrack — Suivi TB‑MDR. Zéro perte de vue.</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    /* ═══════════════════════════════════════════════════════════
+       RESET
+    ═══════════════════════════════════════════════════════════ */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       DESIGN TOKENS
+    ═══════════════════════════════════════════════════════════ */
+    :root {
+      --bg:           #0d0d0d;
+      --bg-surface:   #111111;
+      --bg-raised:    #171717;
+      --border:       rgba(255, 255, 255, 0.07);
+      --border-hi:    rgba(255, 255, 255, 0.13);
+      --text-1:       #f2f2f2;
+      --text-2:       #888888;
+      --text-3:       #4d4d4d;
+      --accent:       #7c5cf6;
+      --accent-dark:  #5b3fd4;
+      --accent-glow:  rgba(124, 92, 246, 0.22);
+      --accent-dim:   rgba(124, 92, 246, 0.09);
+      --blue:         #3b82f6;
+      --teal:         #06d6a0;
+      --pink:         #e879a0;
+
+      --font-serif: 'Instrument Serif', 'Georgia', 'Times New Roman', serif;
+      --font-sans:  'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+
+      --radius:    8px;
+      --radius-lg: 14px;
+      --ease:      cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       BASE
+    ═══════════════════════════════════════════════════════════ */
+    html {
+      font-size: 16px;
+      scroll-behavior: smooth;
+    }
+
+    body {
+      background-color: var(--bg);
+      background-image:
+        radial-gradient(ellipse 70% 35% at 65% 0%,   rgba(124, 92, 246, 0.08) 0%, transparent 65%),
+        radial-gradient(ellipse 45% 25% at 15% 100%, rgba(59, 130, 246, 0.05) 0%, transparent 60%);
+      color: var(--text-1);
+      font-family: var(--font-sans);
+      font-weight: 400;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      overflow-x: hidden;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    :focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 3px;
+      border-radius: 4px;
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       LAYOUT UTIL
+    ═══════════════════════════════════════════════════════════ */
+    .wrap {
+      max-width: 1160px;
+      margin: 0 auto;
+      padding: 0 28px;
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       NAVBAR
+    ═══════════════════════════════════════════════════════════ */
+    .navbar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 200;
+      height: 58px;
+      background: rgba(13, 13, 13, 0.72);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav-inner {
+      display: flex;
+      align-items: center;
+      height: 100%;
+      max-width: 1160px;
+      margin: 0 auto;
+      padding: 0 28px;
+      gap: 6px;
+    }
+
+    /* Logo */
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      font-size: 14.5px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      color: var(--text-1);
+      flex-shrink: 0;
+      margin-right: 20px;
+    }
+
+    .nav-logo-mark {
+      width: 26px;
+      height: 26px;
+      border-radius: 7px;
+      background: linear-gradient(135deg, var(--accent) 0%, var(--pink) 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .nav-logo-mark svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    /* Nav links */
+    .nav-links {
+      display: flex;
+      align-items: center;
+      flex: 1;
+      gap: 2px;
+    }
+
+    .nav-link {
+      padding: 5px 11px;
+      font-size: 13.5px;
+      font-weight: 400;
+      color: var(--text-2);
+      border-radius: 6px;
+      transition: color 0.15s ease, background 0.15s ease;
+      white-space: nowrap;
+    }
+
+    .nav-link:hover {
+      color: var(--text-1);
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    /* Nav actions */
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .btn-outline {
+      display: inline-flex;
+      align-items: center;
+      padding: 6px 15px;
+      font-size: 13.5px;
+      font-weight: 500;
+      color: var(--text-1);
+      border: 1px solid var(--border-hi);
+      border-radius: var(--radius);
+      transition: border-color 0.15s, background 0.15s, color 0.15s;
+      white-space: nowrap;
+    }
+
+    .btn-outline:hover {
+      border-color: rgba(255,255,255,0.22);
+      background: rgba(255,255,255,0.04);
+    }
+
+    .btn-filled {
+      display: inline-flex;
+      align-items: center;
+      padding: 6px 15px;
+      font-size: 13.5px;
+      font-weight: 500;
+      color: #ffffff;
+      background: var(--accent);
+      border: 1px solid transparent;
+      border-radius: var(--radius);
+      transition: background 0.15s, box-shadow 0.2s, transform 0.12s;
+      white-space: nowrap;
+    }
+
+    .btn-filled:hover {
+      background: var(--accent-dark);
+      box-shadow: 0 0 28px var(--accent-glow);
+      transform: translateY(-1px);
+    }
+
+    /* Hamburger */
+    .nav-burger {
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      gap: 5px;
+      width: 34px;
+      height: 34px;
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      cursor: pointer;
+      padding: 6px;
+      margin-left: auto;
+    }
+
+    .nav-burger span {
+      display: block;
+      width: 100%;
+      height: 1.5px;
+      background: var(--text-2);
+      border-radius: 2px;
+      transition: background 0.15s;
+    }
+
+    .nav-burger:hover span { background: var(--text-1); }
+
+    /* Mobile drawer */
+    .mobile-drawer {
+      display: none;
+      position: fixed;
+      top: 58px;
+      left: 0; right: 0;
+      background: rgba(11, 11, 11, 0.96);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      padding: 8px 28px 24px;
+      z-index: 190;
+    }
+
+    .mobile-drawer.open { display: block; }
+
+    .mobile-drawer .drawer-link {
+      display: block;
+      padding: 13px 0;
+      font-size: 15px;
+      color: var(--text-2);
+      border-bottom: 1px solid var(--border);
+      transition: color 0.15s;
+    }
+
+    .mobile-drawer .drawer-link:hover { color: var(--text-1); }
+
+    .drawer-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .drawer-actions .btn-outline,
+    .drawer-actions .btn-filled {
+      flex: 1;
+      justify-content: center;
+      padding: 10px 0;
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       HERO
+    ═══════════════════════════════════════════════════════════ */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      padding: 100px 0 80px;
+      position: relative;
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 48px;
+      align-items: center;
+      width: 100%;
+      max-width: 1160px;
+      margin: 0 auto;
+      padding: 0 28px;
+    }
+
+    .hero-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-3);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      padding: 4px 13px;
+      margin-bottom: 26px;
+    }
+
+    .hero-dot {
+      width: 6px;
+      height: 6px;
+      background: var(--accent);
+      border-radius: 50%;
+      animation: pulse-dot 2.2s ease-in-out infinite;
+      flex-shrink: 0;
+    }
+
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: 0.35; transform: scale(0.7); }
+    }
+
+    .hero h1 {
+      font-family: var(--font-serif);
+      font-size: clamp(36px, 4.8vw, 62px);
+      font-weight: 400;
+      line-height: 1.08;
+      letter-spacing: -0.025em;
+      color: var(--text-1);
+      margin-bottom: 22px;
+    }
+
+    .hero h1 em {
+      font-style: italic;
+      color: rgba(242, 242, 242, 0.48);
+    }
+
+    .hero-sub {
+      font-size: 16.5px;
+      line-height: 1.68;
+      color: var(--text-2);
+      max-width: 420px;
+      margin-bottom: 38px;
+    }
+
+    .hero-cta {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .btn-hero {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 11px 22px;
+      font-size: 14px;
+      font-weight: 500;
+      border-radius: var(--radius);
+      transition: all 0.18s var(--ease);
+    }
+
+    .btn-hero-primary {
+      color: #fff;
+      background: var(--accent);
+      border: 1px solid transparent;
+    }
+
+    .btn-hero-primary:hover {
+      background: var(--accent-dark);
+      box-shadow: 0 0 40px var(--accent-glow);
+      transform: translateY(-1px);
+    }
+
+    .btn-hero-ghost {
+      color: var(--text-2);
+      background: transparent;
+      border: 1px solid var(--border-hi);
+    }
+
+    .btn-hero-ghost:hover {
+      color: var(--text-1);
+      border-color: rgba(255,255,255,0.2);
+      background: rgba(255,255,255,0.04);
+    }
+
+    /* Arrow icon */
+    .btn-arrow {
+      width: 14px;
+      height: 14px;
+      transition: transform 0.18s var(--ease);
+    }
+
+    .btn-hero-primary:hover .btn-arrow { transform: translateX(3px); }
+
+    /* 3D container */
+    .hero-visual {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .blob-glow {
+      position: absolute;
+      width: 64%;
+      height: 64%;
+      background: radial-gradient(ellipse,
+        rgba(124, 92, 246, 0.32) 0%,
+        rgba(232, 121, 160, 0.12) 45%,
+        transparent 70%
+      );
+      border-radius: 50%;
+      filter: blur(48px);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    #blob-canvas {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 500px;
+      aspect-ratio: 1 / 1;
+      display: block;
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       DIVIDER
+    ═══════════════════════════════════════════════════════════ */
+    hr.divider {
+      border: none;
+      border-top: 1px solid var(--border);
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       SHARED SECTION STYLES
+    ═══════════════════════════════════════════════════════════ */
+    .section {
+      padding: 96px 0;
+    }
+
+    .section-kicker {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 14px;
+    }
+
+    .section-heading {
+      font-family: var(--font-serif);
+      font-size: clamp(26px, 3vw, 40px);
+      font-weight: 400;
+      line-height: 1.18;
+      letter-spacing: -0.022em;
+      color: var(--text-1);
+      margin-bottom: 14px;
+    }
+
+    .section-caption {
+      font-size: 15.5px;
+      line-height: 1.68;
+      color: var(--text-2);
+      max-width: 460px;
+      margin-bottom: 56px;
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       ROLES
+    ═══════════════════════════════════════════════════════════ */
+    .roles-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+    }
+
+    .role-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 28px 22px;
+      cursor: default;
+      transition: border-color 0.2s, background 0.2s, transform 0.2s var(--ease);
+    }
+
+    .role-card:hover {
+      border-color: var(--border-hi);
+      background: var(--bg-raised);
+      transform: translateY(-3px);
+    }
+
+    .role-icon-wrap {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 18px;
+      font-size: 17px;
+    }
+
+    .ri-purple { background: rgba(124, 92, 246, 0.12); }
+    .ri-blue   { background: rgba(59,  130, 246, 0.12); }
+    .ri-teal   { background: rgba(6,   214, 160, 0.12); }
+    .ri-pink   { background: rgba(232, 121, 160, 0.12); }
+
+    .role-title {
+      font-size: 14.5px;
+      font-weight: 600;
+      color: var(--text-1);
+      margin-bottom: 6px;
+    }
+
+    .role-desc {
+      font-size: 12.5px;
+      line-height: 1.65;
+      color: var(--text-3);
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       FEATURES GRID — Linear-style ruled table
+    ═══════════════════════════════════════════════════════════ */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      background: var(--border);
+      gap: 1px;
+    }
+
+    .feat-cell {
+      background: var(--bg-surface);
+      padding: 30px 26px;
+      transition: background 0.18s;
+    }
+
+    .feat-cell:hover { background: var(--bg-raised); }
+
+    .feat-icon {
+      display: block;
+      font-size: 19px;
+      margin-bottom: 14px;
+      line-height: 1;
+    }
+
+    .feat-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-1);
+      margin-bottom: 7px;
+    }
+
+    .feat-desc {
+      font-size: 12.5px;
+      line-height: 1.65;
+      color: var(--text-3);
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       STAT STRIP
+    ═══════════════════════════════════════════════════════════ */
+    .stat-strip {
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-surface);
+      padding: 44px 0;
+    }
+
+    .stat-inner {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      max-width: 1160px;
+      margin: 0 auto;
+      padding: 0 28px;
+    }
+
+    .stat-cell {
+      text-align: center;
+      padding: 0 20px;
+      border-right: 1px solid var(--border);
+    }
+
+    .stat-cell:last-child { border-right: none; }
+
+    .stat-val {
+      font-family: var(--font-serif);
+      font-size: 42px;
+      font-weight: 400;
+      color: var(--text-1);
+      line-height: 1;
+      margin-bottom: 7px;
+    }
+
+    .stat-label {
+      font-size: 12.5px;
+      color: var(--text-3);
+      letter-spacing: 0.01em;
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       FOOTER
+    ═══════════════════════════════════════════════════════════ */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 28px 0;
+    }
+
+    .footer-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .footer-copy {
+      font-size: 12.5px;
+      color: var(--text-3);
+    }
+
+    .footer-links {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+    }
+
+    .footer-link {
+      font-size: 12.5px;
+      color: var(--text-3);
+      transition: color 0.14s;
+    }
+
+    .footer-link:hover { color: var(--text-2); }
+
+    /* ═══════════════════════════════════════════════════════════
+       SCROLL ANIMATIONS
+    ═══════════════════════════════════════════════════════════ */
+    .fade-in {
+      opacity: 0;
+      transform: translateY(18px);
+      transition: opacity 0.55s var(--ease), transform 0.55s var(--ease);
+    }
+
+    .fade-in.in-view {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .delay-1 { transition-delay: 0.08s; }
+    .delay-2 { transition-delay: 0.16s; }
+    .delay-3 { transition-delay: 0.24s; }
+    .delay-4 { transition-delay: 0.32s; }
+
+    /* ═══════════════════════════════════════════════════════════
+       RESPONSIVE
+    ═══════════════════════════════════════════════════════════ */
+    @media (max-width: 940px) {
+      .hero-grid {
+        grid-template-columns: 1fr;
+        text-align: center;
+      }
+
+      .hero-eyebrow, .hero-cta { justify-content: center; }
+
+      .hero-sub { margin-left: auto; margin-right: auto; }
+
+      .hero-visual {
+        order: -1;
+        max-width: 360px;
+        margin: 0 auto;
+      }
+
+      #blob-canvas { max-width: 320px; }
+
+      .roles-grid { grid-template-columns: repeat(2, 1fr); }
+
+      .features-grid { grid-template-columns: repeat(2, 1fr); }
+
+      .stat-inner { grid-template-columns: 1fr; gap: 0; }
+
+      .stat-cell {
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+        padding: 24px 0;
+      }
+
+      .stat-cell:last-child { border-bottom: none; }
+    }
+
+    @media (max-width: 620px) {
+      .nav-links, .nav-actions { display: none; }
+      .nav-burger { display: flex; }
+
+      .roles-grid    { grid-template-columns: 1fr; }
+      .features-grid { grid-template-columns: 1fr; }
+
+      .footer-inner { flex-direction: column; text-align: center; }
+
+      .footer-links { flex-wrap: wrap; justify-content: center; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       NAVBAR
+  ═══════════════════════════════════════════════════════════ -->
+  <nav class="navbar" role="navigation" aria-label="Navigation principale">
+    <div class="nav-inner">
+
+      <a href="#" class="nav-logo" aria-label="TBTrack — Accueil">
+        <div class="nav-logo-mark" aria-hidden="true">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M4 2C2.9 2 2 2.9 2 4v2c0 2.2 1.8 4 4 4h.2A4 4 0 0 0 10 6V4c0-1.1-.9-2-2-2H4zm3 8.9V12" stroke="#fff" stroke-width="1.4" stroke-linecap="round"/>
+            <path d="M7 7V2" stroke="#fff" stroke-width="1.4" stroke-linecap="round"/>
+          </svg>
+        </div>
+        TBTrack
+      </a>
+
+      <div class="nav-links">
+        <a href="#fonctionnalites" class="nav-link">Fonctionnalités</a>
+        <a href="#roles"           class="nav-link">Rôles</a>
+        <a href="#"                class="nav-link">Documentation</a>
+        <a href="#"                class="nav-link">À propos</a>
+        <a href="#"                class="nav-link">Aide</a>
+      </div>
+
+      <div class="nav-actions">
+        <a href="/auth/login"    class="btn-outline">Se connecter</a>
+        <a href="/auth/register" class="btn-filled">Créer un compte</a>
+      </div>
+
+      <button class="nav-burger" id="js-burger" aria-label="Ouvrir le menu" aria-expanded="false" aria-controls="js-drawer">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Mobile drawer -->
+  <div class="mobile-drawer" id="js-drawer" role="dialog" aria-label="Menu mobile">
+    <a href="#fonctionnalites" class="drawer-link">Fonctionnalités</a>
+    <a href="#roles"           class="drawer-link">Rôles</a>
+    <a href="#"                class="drawer-link">Documentation</a>
+    <a href="#"                class="drawer-link">À propos</a>
+    <a href="#"                class="drawer-link">Aide</a>
+    <div class="drawer-actions">
+      <a href="/auth/login"    class="btn-outline">Se connecter</a>
+      <a href="/auth/register" class="btn-filled">Créer un compte</a>
+    </div>
+  </div>
+
+
+  <!-- ═══════════════════════════════════════════════════════════
+       HERO
+  ═══════════════════════════════════════════════════════════ -->
+  <section class="hero" aria-label="Présentation">
+    <div class="hero-grid">
+
+      <!-- Text -->
+      <div class="hero-text">
+        <div class="hero-eyebrow fade-in">
+          <span class="hero-dot" aria-hidden="true"></span>
+          Programme National de Lutte — Madagascar
+        </div>
+
+        <h1 class="fade-in delay-1">
+          TBTrack —<br>
+          Suivi TB‑MDR.<br>
+          <em>Zéro perte de vue.</em>
+        </h1>
+
+        <p class="hero-sub fade-in delay-2">
+          Application clinicienne pour médecins, coordinateurs,
+          infirmiers et laborantins. Dosage, bactériologie, DOT,
+          alertes ECG — tout centralisé.
+        </p>
+
+        <div class="hero-cta fade-in delay-3">
+          <a href="/auth/login" class="btn-hero btn-hero-primary">
+            Se connecter
+            <svg class="btn-arrow" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M2.5 7h9m-4-4 4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </a>
+          <a href="/auth/register" class="btn-hero btn-hero-ghost">
+            Créer un compte
+          </a>
+        </div>
+      </div>
+
+      <!-- 3D Object -->
+      <div class="hero-visual fade-in delay-2">
+        <div class="blob-glow" aria-hidden="true"></div>
+        <canvas id="blob-canvas" aria-label="Visualisation 3D TBTrack" role="img"></canvas>
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- ═══════════════════════════════════════════════════════════
+       STAT STRIP
+  ═══════════════════════════════════════════════════════════ -->
+  <div class="stat-strip">
+    <div class="stat-inner">
+      <div class="stat-cell fade-in">
+        <div class="stat-val">4</div>
+        <div class="stat-label">Rôles métier intégrés</div>
+      </div>
+      <div class="stat-cell fade-in delay-1">
+        <div class="stat-val">M0–M24</div>
+        <div class="stat-label">Suivi bactériologique continu</div>
+      </div>
+      <div class="stat-cell fade-in delay-2">
+        <div class="stat-val">&lt; 24 h</div>
+        <div class="stat-label">Délai d'alerte effets secondaires</div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ═══════════════════════════════════════════════════════════
+       ROLES
+  ═══════════════════════════════════════════════════════════ -->
+  <section class="section" id="roles" aria-labelledby="roles-heading">
+    <div class="wrap">
+      <p class="section-kicker fade-in">Accès par rôle</p>
+      <h2 class="section-heading fade-in delay-1" id="roles-heading">
+        Conçu pour chaque<br>professionnel de terrain.
+      </h2>
+      <p class="section-caption fade-in delay-2">
+        Une seule plateforme. Quatre interfaces métier distinctes.
+        Chaque praticien accède exactement aux outils dont il a besoin.
+      </p>
+
+      <div class="roles-grid">
+
+        <div class="role-card fade-in">
+          <div class="role-icon-wrap ri-purple" aria-hidden="true">🩺</div>
+          <div class="role-title">Médecin</div>
+          <div class="role-desc">Fiches patient · Bilan M0 · Alertes ECG QTc · Décisions thérapeutiques · Notes cliniques</div>
+        </div>
+
+        <div class="role-card fade-in delay-1">
+          <div class="role-icon-wrap ri-blue" aria-hidden="true">📊</div>
+          <div class="role-title">Coordinateur PNLT</div>
+          <div class="role-desc">Supervision globale · Rapports cohorte · Stocks médicaments · Administration des accès</div>
+        </div>
+
+        <div class="role-card fade-in delay-2">
+          <div class="role-icon-wrap ri-teal" aria-hidden="true">💉</div>
+          <div class="role-title">Infirmier(e)</div>
+          <div class="role-desc">DOT quotidien · Taux d'adhérence · Effets secondaires · Suivi pondéral mensuel</div>
+        </div>
+
+        <div class="role-card fade-in delay-3">
+          <div class="role-icon-wrap ri-pink" aria-hidden="true">🔬</div>
+          <div class="role-title">Laborantin(e)</div>
+          <div class="role-desc">Examens bactériologiques · Frottis · Culture · DST · Courbes de conversion</div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ═══════════════════════════════════════════════════════════
+       FEATURES
+  ═══════════════════════════════════════════════════════════ -->
+  <hr class="divider">
+
+  <section class="section" id="fonctionnalites" aria-labelledby="feat-heading">
+    <div class="wrap">
+      <p class="section-kicker fade-in">Fonctionnalités</p>
+      <h2 class="section-heading fade-in delay-1" id="feat-heading">
+        Chaque outil,<br>à sa place exacte.
+      </h2>
+      <p class="section-caption fade-in delay-2">
+        De la première consultation jusqu'au rapport trimestriel PNLT —
+        chaque étape du parcours TB-MDR est couverte.
+      </p>
+
+      <div class="features-grid fade-in delay-1">
+
+        <div class="feat-cell">
+          <span class="feat-icon" aria-hidden="true">⚡</span>
+          <div class="feat-title">Calculateur de dosage PNLT 2021</div>
+          <div class="feat-desc">Calcul automatique des doses par poids corporel, schéma court ou long, avec alertes de seuil.</div>
+        </div>
+
+        <div class="feat-cell">
+          <span class="feat-icon" aria-hidden="true">🫀</span>
+          <div class="feat-title">Alertes ECG temps réel</div>
+          <div class="feat-desc">Détection automatique QTc ≥ 500 ms — arrêt immédiat signalé au médecin responsable.</div>
+        </div>
+
+        <div class="feat-cell">
+          <span class="feat-icon" aria-hidden="true">📋</span>
+          <div class="feat-title">DOT supervisé numérique</div>
+          <div class="feat-desc">Enregistrement quotidien des prises, calcul du taux d'adhérence et alerte en cas d'absence.</div>
+        </div>
+
+        <div class="feat-cell">
+          <span class="feat-icon" aria-hidden="true">🧫</span>
+          <div class="feat-title">Suivi bactériologique M0–M24</div>
+          <div class="feat-desc">Frottis, culture et DST mois par mois, avec courbes de conversion et détection d'échec M6+.</div>
+        </div>
+
+        <div class="feat-cell">
+          <span class="feat-icon" aria-hidden="true">👨‍👩‍👧</span>
+          <div class="feat-title">Contacts sur 24 mois</div>
+          <div class="feat-desc">Registre des contacts de chaque patient, planning de visites et alerte avant échéance.</div>
+        </div>
+
+        <div class="feat-cell">
+          <span class="feat-icon" aria-hidden="true">📈</span>
+          <div class="feat-title">Rapports cohorte automatisés</div>
+          <div class="feat-desc">Rapports trimestriels conformes aux standards PNLT Madagascar, générés en un clic.</div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ═══════════════════════════════════════════════════════════
+       FOOTER
+  ═══════════════════════════════════════════════════════════ -->
+  <hr class="divider">
+
+  <footer>
+    <div class="wrap footer-inner">
+      <p class="footer-copy">
+        © 2025 TBTrack — Programme National de Lutte contre la Tuberculose, Madagascar.
+      </p>
+      <nav class="footer-links" aria-label="Liens du pied de page">
+        <a href="/auth/login"    class="footer-link">Connexion</a>
+        <a href="/auth/register" class="footer-link">Inscription</a>
+        <a href="#"         class="footer-link">Documentation</a>
+        <a href="#"         class="footer-link">Aide</a>
+      </nav>
+    </div>
+  </footer>
+
+
+  <!-- Three.js -->
+  <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+
+  <script>
+    /* ═══════════════════════════════════════════════════════════
+       3D BLOB — Stripe-style rotating organic sphere
+       IcosahedronGeometry × Custom ShaderMaterial
+    ═══════════════════════════════════════════════════════════ */
+    (function () {
+      'use strict';
+
+      const canvas = document.getElementById('blob-canvas');
+      if (!canvas || !window.THREE) return;
+
+      /* — Scene setup — */
+      const scene  = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(48, 1, 0.1, 100);
+      camera.position.z = 2.85;
+
+      const renderer = new THREE.WebGLRenderer({
+        canvas:    canvas,
+        alpha:     true,
+        antialias: true,
+      });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.setClearColor(0x000000, 0);
+
+      function resize() {
+        const s = Math.min(canvas.parentElement.offsetWidth, 500);
+        renderer.setSize(s, s);
+      }
+      resize();
+      window.addEventListener('resize', resize, { passive: true });
+
+      /* — Geometry — */
+      const geo = new THREE.IcosahedronGeometry(1, 5);
+
+      /* — Vertex shader — */
+      const vertSrc = /* glsl */`
+        uniform float uTime;
+        varying vec3  vNormal;
+        varying vec3  vLocalPos;
+
+        void main() {
+          vNormal   = normalize(normalMatrix * normal);
+          vLocalPos = position;
+
+          float t = uTime * 0.38;
+
+          // Overlapping sine-wave displacement — organic morphing
+          float d  = sin(position.x * 3.10 + t * 1.20) * cos(position.y * 2.70 + t * 0.85) * 0.090;
+                d += cos(position.y * 3.80 + t * 0.65) * sin(position.z * 2.30 + t * 1.10) * 0.072;
+                d += sin(position.z * 2.50 + t * 0.92) * cos(position.x * 3.40 + t * 0.55) * 0.058;
+                d += cos(position.x * 1.80 + t * 1.55) * sin(position.y * 2.10 + t * 0.42) * 0.044;
+                d += sin(position.y * 4.20 + t * 0.78) * cos(position.z * 1.60 + t * 1.35) * 0.030;
+
+          vec3 displaced = position + normal * d;
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(displaced, 1.0);
+        }
+      `;
+
+      /* — Fragment shader — */
+      const fragSrc = /* glsl */`
+        uniform float uTime;
+        varying vec3  vNormal;
+        varying vec3  vLocalPos;
+
+        void main() {
+          // Color stops — purple / electric-blue / teal / rose
+          vec3 cPurple = vec3(0.478, 0.220, 0.980);
+          vec3 cBlue   = vec3(0.165, 0.490, 0.980);
+          vec3 cTeal   = vec3(0.040, 0.840, 0.760);
+          vec3 cRose   = vec3(0.920, 0.300, 0.640);
+          vec3 cViolet = vec3(0.620, 0.240, 0.960);
+
+          float t = uTime * 0.20;
+
+          // Normal-driven gradient axes
+          float ny = vNormal.y * 0.5 + 0.5;
+          float nx = vNormal.x * 0.5 + 0.5;
+          float nz = vNormal.z * 0.5 + 0.5;
+
+          // Slow time-varying bands
+          float b1 = sin(t + vLocalPos.y * 2.1) * 0.5 + 0.5;
+          float b2 = cos(t * 0.72 + vLocalPos.x * 1.6) * 0.5 + 0.5;
+          float b3 = sin(t * 1.10 + vLocalPos.z * 1.3) * 0.5 + 0.5;
+
+          vec3 col = mix(cPurple, cBlue,   ny);
+          col = mix(col, cTeal,   nx  * 0.45);
+          col = mix(col, cRose,   nz  * 0.35);
+          col = mix(col, cViolet, b1  * 0.28);
+          col = mix(col, cBlue,   b2  * 0.18);
+          col = mix(col, cTeal,   b3  * 0.12);
+
+          // Rim light — brightens silhouette edge
+          vec3  viewDir = vec3(0.0, 0.0, 1.0);
+          float rim     = 1.0 - max(0.0, dot(vNormal, viewDir));
+          rim = pow(rim, 1.9);
+          col = mix(col, vec3(0.88, 0.76, 1.00), rim * 0.52);
+
+          // Diffuse shading
+          vec3  lightDir = normalize(vec3(0.55, 0.80, 0.50));
+          float diff     = dot(vNormal, lightDir) * 0.30 + 0.70;
+          col *= diff;
+
+          // Specular highlight
+          vec3  halfVec = normalize(lightDir + viewDir);
+          float spec    = pow(max(0.0, dot(vNormal, halfVec)), 38.0) * 0.38;
+          col += vec3(0.90, 0.84, 1.00) * spec;
+
+          gl_FragColor = vec4(col, 0.96);
+        }
+      `;
+
+      /* — Material — */
+      const mat = new THREE.ShaderMaterial({
+        vertexShader:   vertSrc,
+        fragmentShader: fragSrc,
+        uniforms: { uTime: { value: 0 } },
+        transparent: true,
+      });
+
+      const blob = new THREE.Mesh(geo, mat);
+      scene.add(blob);
+
+      /* — Mouse parallax (subtle) — */
+      let mx = 0, my = 0;
+      window.addEventListener('mousemove', function (e) {
+        mx = (e.clientX / window.innerWidth  - 0.5) * 2;
+        my = (e.clientY / window.innerHeight - 0.5) * 2;
+      }, { passive: true });
+
+      /* — Render loop — */
+      var clock = 0;
+      (function tick() {
+        requestAnimationFrame(tick);
+        clock += 0.0075;
+
+        mat.uniforms.uTime.value = clock;
+
+        blob.rotation.y += 0.0032 + mx * 0.0006;
+        blob.rotation.x += 0.0010 + my * 0.0004;
+
+        renderer.render(scene, camera);
+      })();
+    })();
+
+
+    /* ═══════════════════════════════════════════════════════════
+       SCROLL FADE-IN — IntersectionObserver
+    ═══════════════════════════════════════════════════════════ */
+    (function () {
+      'use strict';
+
+      // Hero elements: fire on load
+      requestAnimationFrame(function () {
+        document.querySelectorAll('.hero .fade-in').forEach(function (el) {
+          el.classList.add('in-view');
+        });
+      });
+
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (e) {
+          if (e.isIntersecting) {
+            e.target.classList.add('in-view');
+            io.unobserve(e.target);
+          }
+        });
+      }, { threshold: 0.10 });
+
+      document.querySelectorAll('.fade-in').forEach(function (el) {
+        if (!el.closest('.hero')) io.observe(el);
+      });
+    })();
+
+
+    /* ═══════════════════════════════════════════════════════════
+       HAMBURGER
+    ═══════════════════════════════════════════════════════════ */
+    (function () {
+      'use strict';
+
+      var btn    = document.getElementById('js-burger');
+      var drawer = document.getElementById('js-drawer');
+      if (!btn || !drawer) return;
+
+      btn.addEventListener('click', function () {
+        var open = drawer.classList.toggle('open');
+        btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+      });
+
+      // Close on drawer link click
+      drawer.querySelectorAll('a').forEach(function (link) {
+        link.addEventListener('click', function () {
+          drawer.classList.remove('open');
+          btn.setAttribute('aria-expanded', 'false');
+        });
+      });
+    })();
+  </script>
+
+</body>
+</html>

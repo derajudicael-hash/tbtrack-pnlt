@@ -4,9 +4,11 @@
 {% block page_title %}Registre des patients{% endblock %}
 {% block page_subtitle %}Tous les patients TB-MR / RR-TB / XDR enregistrés{% endblock %}
 {% block page_actions %}
+  {% if current_user.role in ['coordinateur', 'medecin', 'infirmier'] %}
   <a href="{{ url_for('patients.ajouter') }}" class="btn btn-primary">
     <i class="fa fa-user-plus me-2"></i>Nouveau patient
   </a>
+  {% endif %}
 {% endblock %}
 
 {% block content %}
@@ -144,14 +146,13 @@
   </div>
 </div>
 
+{% endblock %}
+
 {% block scripts %}
 <script>
-// Initialise les popovers "nom complet" au clic
 document.querySelectorAll('[data-bs-toggle="popover"]').forEach(function(el) {
   new bootstrap.Popover(el, { trigger: 'click', html: false, sanitize: false });
 });
-
-// Fermer le popover ouvert si on clique ailleurs
 document.addEventListener('click', function(e) {
   if (!e.target.closest('[data-bs-toggle="popover"]')) {
     document.querySelectorAll('[data-bs-toggle="popover"]').forEach(function(el) {
@@ -162,4 +163,3 @@ document.addEventListener('click', function(e) {
 });
 </script>
 {% endblock scripts %}
-{% endblock %}
