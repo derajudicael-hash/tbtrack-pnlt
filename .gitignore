@@ -42,3 +42,7 @@ migrations/versions/__pycache__/
 # Fichiers de test temporaires
 audit_v2.py
 upgrade_v02.py
+cleanup_test_data.py
+gen_guide.py
+qa_check.py
+test_v10_logic.py
