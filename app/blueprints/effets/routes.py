@@ -12,9 +12,25 @@ effets_bp = Blueprint('effets', __name__, url_prefix='/effets')
 @effets_bp.route('/')
 @login_required
 def liste():
-    effets = EffetSecondaire.query.order_by(EffetSecondaire.date_declaration.desc()).all()
+    q      = request.args.get('q', '').strip()
+    filtre = request.args.get('filtre', '')
+
+    query = EffetSecondaire.query
+    if q:
+        query = query.join(Patient).filter(
+            Patient.nom.ilike(f'%{q}%') |
+            Patient.prenom.ilike(f'%{q}%') |
+            Patient.code_patient.ilike(f'%{q}%') |
+            EffetSecondaire.symptome.ilike(f'%{q}%') |
+            EffetSecondaire.medicament_incrimine.ilike(f'%{q}%')
+        )
+    effets  = query.order_by(EffetSecondaire.date_declaration.desc()).all()
     alertes = [e for e in effets if e.alerte_active]
-    return render_template('effets/liste.html', effets=effets, alertes=alertes)
+    severes = [e for e in effets if e.severite == 'severe']
+
+    return render_template('effets/liste.html',
+        effets=effets, alertes=alertes, severes=severes,
+        q=q, filtre=filtre)
 
 
 @effets_bp.route('/declarer', methods=['GET', 'POST'])

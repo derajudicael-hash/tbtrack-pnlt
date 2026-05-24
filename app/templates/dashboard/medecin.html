@@ -1,0 +1,203 @@
+{% extends 'base.html' %}
+{% block title %}Tableau de bord — Médecin{% endblock %}
+{% block breadcrumb %}<i class="fa fa-stethoscope me-1"></i> Tableau de bord Médecin{% endblock %}
+{% block page_title %}Tableau de bord Médecin{% endblock %}
+{% block page_subtitle %}Alertes cliniques · Décisions thérapeutiques · CRPC Mahajanga{% endblock %}
+
+{% block content %}
+
+<!-- KPI CARDS CLIQUABLES -->
+<div class="row g-4 mb-4">
+  <div class="col-6 col-xl-3">
+    <a href="{{ url_for('patients.liste', statut='en_cours') }}" class="kpi-card-link">
+      <div class="kpi-card kpi-primary">
+        <div class="kpi-icon"><i class="fa fa-users"></i></div>
+        <div class="kpi-body">
+          <div class="kpi-value">{{ nb_actifs }}</div>
+          <div class="kpi-label">Patients en traitement</div>
+          <div class="kpi-sub">TB-MR / RR-TB actifs</div>
+        </div>
+      </div>
+    </a>
+  </div>
+  <div class="col-6 col-xl-3">
+    <a href="{{ url_for('patients.liste', statut='en_cours') }}" class="kpi-card-link">
+      <div class="kpi-card kpi-danger {% if nb_ecg_urgents > 0 %}kpi-pulse{% endif %}">
+        <div class="kpi-icon"><i class="fa fa-heart-pulse"></i></div>
+        <div class="kpi-body">
+          <div class="kpi-value">{{ nb_ecg_urgents }}</div>
+          <div class="kpi-label">ECG critiques</div>
+          <div class="kpi-sub">QTc ≥ 500 ms — ARRÊT</div>
+        </div>
+      </div>
+    </a>
+  </div>
+  <div class="col-6 col-xl-3">
+    <a href="{{ url_for('effets.liste', filtre='severe_actif') }}" class="kpi-card-link">
+      <div class="kpi-card kpi-warning {% if nb_alertes_effets > 0 %}kpi-pulse{% endif %}">
+        <div class="kpi-icon"><i class="fa fa-triangle-exclamation"></i></div>
+        <div class="kpi-body">
+          <div class="kpi-value">{{ nb_alertes_effets }}</div>
+          <div class="kpi-label">Effets sévères actifs</div>
+          <div class="kpi-sub">Non notifiés CRPC</div>
+        </div>
+      </div>
+    </a>
+  </div>
+  <div class="col-6 col-xl-3">
+    <a href="{{ url_for('labo.index') }}" class="kpi-card-link">
+      <div class="kpi-card kpi-info">
+        <div class="kpi-icon"><i class="fa fa-flask"></i></div>
+        <div class="kpi-body">
+          <div class="kpi-value">{{ nb_sans_examen }}</div>
+          <div class="kpi-label">Sans examen labo</div>
+          <div class="kpi-sub">Retard &gt; 30 jours</div>
+        </div>
+      </div>
+    </a>
+  </div>
+</div>
+
+<!-- ALERTES CRITIQUES ECG + ÉCHEC -->
+{% if patients_ecg or patients_echec %}
+<div class="row g-4 mb-4">
+  {% if patients_ecg %}
+  <div class="col-12 col-lg-6">
+    <div class="card-panel" style="border-left: 4px solid var(--danger)">
+      <div class="panel-header text-danger">
+        <span><i class="fa fa-circle-stop me-2"></i>ALERTE ECG — QTc ≥ 500 ms ({{ patients_ecg | length }})</span>
+        <span class="badge bg-danger">ARRÊT MÉDICAMENTS</span>
+      </div>
+      <div class="panel-body p-0">
+        <table class="table table-hover mb-0">
+          <tbody>
+            {% for p in patients_ecg %}
+            <tr class="table-danger">
+              <td><a href="{{ url_for('patients.fiche', patient_id=p.id) }}" class="fw-bold">{{ p.code_patient }}</a></td>
+              <td>{{ p.nom }} {{ p.prenom }}</td>
+              <td class="text-end">
+                <a href="{{ url_for('patients.bilan', patient_id=p.id) }}" class="btn btn-sm btn-danger">
+                  <i class="fa fa-heart-pulse me-1"></i>ECG
+                </a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        <div class="p-2 small text-muted"><i class="fa fa-book-open me-1"></i>Arrêt immédiat : Bdq, Dlm, Mfx — Guide PNLT p.27</div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+  {% if patients_echec %}
+  <div class="col-12 col-lg-6">
+    <div class="card-panel" style="border-left: 4px solid #dc2626">
+      <div class="panel-header text-danger">
+        <span><i class="fa fa-virus me-2"></i>ÉCHEC THÉRAPEUTIQUE ({{ patients_echec | length }})</span>
+        <span class="badge bg-danger">Culture+ ≥ M6</span>
+      </div>
+      <div class="panel-body p-0">
+        <table class="table table-hover mb-0">
+          <tbody>
+            {% for p in patients_echec %}
+            <tr class="table-danger">
+              <td><a href="{{ url_for('patients.fiche', patient_id=p.id) }}" class="fw-bold">{{ p.code_patient }}</a></td>
+              <td>{{ p.nom }} {{ p.prenom }}</td>
+              <td class="text-end">
+                <a href="{{ url_for('labo.suivi_patient', patient_id=p.id) }}" class="btn btn-sm btn-danger">
+                  <i class="fa fa-microscope me-1"></i>Labo
+                </a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        <div class="p-2 small text-muted"><i class="fa fa-book-open me-1"></i>Révision du schéma — Guide PNLT p.31</div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endif %}
+
+<!-- CHARTS -->
+<div class="row g-4">
+  <div class="col-12 col-lg-7">
+    <div class="card-panel">
+      <div class="panel-header">
+        <span><i class="fa fa-chart-line me-2 text-success"></i>Conversions bactériologiques M0–M6</span>
+      </div>
+      <div class="panel-body" style="height:240px;">
+        <canvas id="chartConversions"></canvas>
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-lg-5">
+    <div class="card-panel">
+      <div class="panel-header">
+        <span><i class="fa fa-chart-pie me-2"></i>Statuts patients</span>
+      </div>
+      <div class="panel-body" style="height:240px; display:flex; align-items:center; justify-content:center;">
+        <canvas id="chartStatuts"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ACTIONS RAPIDES -->
+<div class="card-panel mt-4">
+  <div class="panel-header"><span><i class="fa fa-bolt me-2 text-warning"></i>Actions rapides</span></div>
+  <div class="panel-body">
+    <div class="row g-3">
+      <div class="col-6 col-md-3">
+        <a href="{{ url_for('patients.liste') }}" class="action-shortcut">
+          <i class="fa fa-users"></i><span>Registre</span>
+        </a>
+      </div>
+      <div class="col-6 col-md-3">
+        <a href="{{ url_for('dosage.calculateur') }}" class="action-shortcut">
+          <i class="fa fa-calculator"></i><span>Dosage</span>
+        </a>
+      </div>
+      <div class="col-6 col-md-3">
+        <a href="{{ url_for('effets.declarer') }}" class="action-shortcut">
+          <i class="fa fa-triangle-exclamation"></i><span>Déclarer effet</span>
+        </a>
+      </div>
+      <div class="col-6 col-md-3">
+        <a href="{{ url_for('labo.index') }}" class="action-shortcut">
+          <i class="fa fa-microscope"></i><span>Laboratoire</span>
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+const convL = {{ conversions_labels | tojson }};
+const convD = {{ conversions_data | tojson }};
+const statuts = {{ statuts_labels | tojson }};
+const statData = {{ statuts_data | tojson }};
+
+new Chart(document.getElementById('chartConversions'), {
+  type: 'line',
+  data: { labels: convL, datasets: [{ label: 'Cultures négatives', data: convD,
+    borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,.15)',
+    tension: 0.3, fill: true, pointRadius: 5 }] },
+  options: { responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+});
+new Chart(document.getElementById('chartStatuts'), {
+  type: 'doughnut',
+  data: { labels: statuts, datasets: [{ data: statData,
+    backgroundColor: ['#3b82f6','#10b981','#f59e0b','#ef4444','#374151'],
+    borderWidth: 2, borderColor: 'rgba(255,255,255,.1)' }] },
+  options: { responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 }, color: '#B0C4D8' } } } }
+});
+</script>
+{% endblock %}

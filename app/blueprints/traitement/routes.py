@@ -13,14 +13,36 @@ traitement_bp = Blueprint('traitement', __name__, url_prefix='/traitement')
 @traitement_bp.route('/')
 @login_required
 def liste():
-    traitements = Traitement.query.join(Patient).order_by(Traitement.date_debut.desc()).all()
-    # Nombre de prises DOT saisies aujourd'hui
-    nb_dot_aujourd_hui = SuiviDOT.query.filter(
-        SuiviDOT.date_observation == date.today()
-    ).count()
+    q      = request.args.get('q', '').strip()
+    filtre = request.args.get('filtre', '')
+    today  = date.today()
+
+    query = Traitement.query.join(Patient)
+    if q:
+        query = query.filter(
+            Patient.nom.ilike(f'%{q}%') |
+            Patient.prenom.ilike(f'%{q}%') |
+            Patient.code_patient.ilike(f'%{q}%')
+        )
+    traitements = query.order_by(Traitement.date_debut.desc()).all()
+
+    # DOT saisis aujourd'hui
+    dots_ids = {d.patient_id for d in SuiviDOT.query.filter_by(date_observation=today).all()}
+    nb_dot_aujourd_hui = len(dots_ids)
+
+    # Traitements actifs sans DOT aujourd'hui
+    dot_manquants = [
+        t for t in traitements
+        if t.statut_traitement == 'actif'
+        and t.patient.statut == 'en_cours'
+        and t.patient.id not in dots_ids
+    ]
+
     return render_template('traitement/liste.html',
-                           traitements=traitements,
-                           nb_dot_aujourd_hui=nb_dot_aujourd_hui)
+        traitements=traitements,
+        dot_manquants=dot_manquants,
+        nb_dot_aujourd_hui=nb_dot_aujourd_hui,
+        q=q, filtre=filtre)
 
 
 @traitement_bp.route('/ajouter/<int:patient_id>', methods=['GET', 'POST'])

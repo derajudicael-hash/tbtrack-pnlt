@@ -7,7 +7,11 @@
   <!-- ── PANNEAU GAUCHE ───────────────────────────────────────────── -->
   <div class="auth-left">
     <div class="auth-brand">
-      <i class="fa fa-lungs fa-3x mb-3"></i>
+      <div class="auth-logo-mark mb-3" aria-hidden="true">
+      <svg width="58" height="58" viewBox="0 0 100 100" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+        <path fill-rule="evenodd" d="M50 8 L86 21 L86 52 C86 76 68 88 50 94 C32 88 14 76 14 52 L14 21 Z M43 30 L43 43 L30 43 L30 57 L43 57 L43 70 L57 70 L57 57 L70 57 L70 43 L57 43 L57 30 Z"/>
+      </svg>
+    </div>
       <h1>TBTrack</h1>
       <p class="auth-tagline">Plateforme nationale de gestion<br>de la Tuberculose Multi-Résistante</p>
     </div>
@@ -21,8 +25,21 @@
     </div>
 
     <div class="auth-demo-info">
-      <small>Compte démo :</small><br>
-      <code>medecin@crpc.mg</code> / <code>tbtrack2025</code>
+      {% set role_s = session.get('role_selectionne') %}
+      {% set demo_map = {
+          'coordinateur': ('coordinateur@pnlt.mg', 'Coordinateur PNLT'),
+          'medecin':      ('medecin@crpc.mg',      'Médecin'),
+          'infirmier':    ('infirmier@cdt.mg',     'Infirmier(e)'),
+          'laborantin':   ('labo@crpc.mg',         'Laborantin(e)')
+      } %}
+      {% if role_s and role_s in demo_map %}
+        <small>Compte démo <strong>{{ demo_map[role_s][1] }}</strong> :</small><br>
+        <code>{{ demo_map[role_s][0] }}</code> / <code>tbtrack2025</code>
+      {% else %}
+        <small>Comptes démo (mot de passe : <code>tbtrack2025</code>) :</small><br>
+        <code>coordinateur@pnlt.mg</code><br>
+        <code>medecin@crpc.mg</code>
+      {% endif %}
     </div>
   </div>
 
@@ -34,6 +51,30 @@
         <h2>Connexion</h2>
         <p class="text-muted">Accédez à votre espace CRPC / CDT</p>
       </div>
+
+      {% set role_sel = session.get('role_selectionne') %}
+      {% if role_sel %}
+      {% set role_meta = {
+          'medecin':      ('fa-stethoscope', 'Médecin'),
+          'coordinateur': ('fa-chart-pie',   'Coordinateur PNLT'),
+          'infirmier':    ('fa-syringe',     'Infirmier(e)'),
+          'laborantin':   ('fa-flask',       'Laborantin(e)')
+      } %}
+      <div class="role-chip-banner">
+        <div class="role-chip-left">
+          <div class="role-chip-icon">
+            <i class="fa {{ role_meta[role_sel][0] }}"></i>
+          </div>
+          <div>
+            <div class="role-chip-label">Vous vous connectez en tant que</div>
+            <div class="role-chip-name">{{ role_meta[role_sel][1] }}</div>
+          </div>
+        </div>
+        <a href="{{ url_for('public.landing') }}" class="role-chip-back">
+          <i class="fa fa-arrow-left"></i> Changer
+        </a>
+      </div>
+      {% endif %}
 
       {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}{% for cat, msg in messages %}

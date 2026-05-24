@@ -17,176 +17,168 @@
 <div class="row g-3 mb-4">
   <div class="col-6 col-md-3">
     <div class="kpi-card">
-      <div class="kpi-icon" style="background:rgba(59,130,246,.15);color:#3b82f6">
-        <i class="fa fa-users"></i>
-      </div>
+      <div class="kpi-icon" style="background:rgba(59,130,246,.15);color:#3b82f6"><i class="fa fa-users"></i></div>
       <div class="kpi-value">{{ stats.patients_actifs }}</div>
       <div class="kpi-label">Patients actifs</div>
     </div>
   </div>
   <div class="col-6 col-md-3">
     <div class="kpi-card">
-      <div class="kpi-icon" style="background:rgba(139,92,246,.15);color:#8b5cf6">
-        <i class="fa fa-vial"></i>
-      </div>
+      <div class="kpi-icon" style="background:rgba(139,92,246,.15);color:#8b5cf6"><i class="fa fa-vial"></i></div>
       <div class="kpi-value">{{ stats.total_examens }}</div>
       <div class="kpi-label">Examens enregistrés</div>
     </div>
   </div>
   <div class="col-6 col-md-3">
     <div class="kpi-card">
-      <div class="kpi-icon" style="background:rgba(16,185,129,.15);color:#10b981">
-        <i class="fa fa-circle-check"></i>
-      </div>
+      <div class="kpi-icon" style="background:rgba(16,185,129,.15);color:#10b981"><i class="fa fa-circle-check"></i></div>
       <div class="kpi-value">{{ stats.conversions }}</div>
       <div class="kpi-label">Conversions confirmées</div>
     </div>
   </div>
   <div class="col-6 col-md-3">
     <div class="kpi-card">
-      <div class="kpi-icon" style="background:rgba(245,158,11,.15);color:#f59e0b">
-        <i class="fa fa-hourglass-half"></i>
-      </div>
+      <div class="kpi-icon" style="background:rgba(245,158,11,.15);color:#f59e0b"><i class="fa fa-hourglass-half"></i></div>
       <div class="kpi-value">{{ stats.en_attente }}</div>
       <div class="kpi-label">Résultats en attente</div>
     </div>
   </div>
 </div>
 
-<!-- Filtres -->
-<div class="card-panel mb-4">
-  <div class="panel-body">
-    <form method="GET" class="row g-2 align-items-end">
-      <div class="col-12 col-md-6">
-        <label class="form-label small text-muted">Rechercher un patient</label>
-        <input type="text" name="q" value="{{ q }}" class="form-control"
-               placeholder="Nom, prénom ou code patient...">
-      </div>
-      <div class="col-6 col-md-3">
-        <label class="form-label small text-muted">Mois de suivi</label>
-        <select name="mois" class="form-select">
-          <option value="">Tous les mois</option>
-          {% for m in range(0, 25) %}
-          <option value="{{ m }}" {{ 'selected' if mois == m|string }}>M{{ m }}</option>
-          {% endfor %}
-        </select>
-      </div>
-      <div class="col-6 col-md-3">
-        <button type="submit" class="btn btn-outline-primary w-100">
-          <i class="fa fa-filter me-1"></i>Filtrer
-        </button>
-      </div>
-    </form>
-  </div>
+<!-- BARRE OUTILS : Recherche + Toggle liste -->
+<div class="liste-toolbar mb-4">
+  <form method="GET" class="search-box" autocomplete="off">
+    <i class="fa fa-magnifying-glass"></i>
+    <input type="text" name="q" value="{{ q }}" placeholder="Patient, nom, code…">
+    {% if mois %}<input type="hidden" name="mois" value="{{ mois }}">{% endif %}
+  </form>
+
+  <!-- Filtre mois -->
+  <form method="GET" class="d-flex align-items-center gap-2 flex-shrink-0">
+    {% if q %}<input type="hidden" name="q" value="{{ q }}">{% endif %}
+    <select name="mois" class="form-select form-select-sm" style="width:auto;background:var(--glass-bg);border-color:var(--glass-border);color:var(--text-1);" onchange="this.form.submit()">
+      <option value="">Tous les mois</option>
+      {% for m in range(0, 25) %}
+      <option value="{{ m }}" {{ 'selected' if mois == m|string }}>M{{ m }}</option>
+      {% endfor %}
+    </select>
+  </form>
+
+  <button class="btn-toggle-list" id="btnToggle" onclick="toggleListe()">
+    <i class="fa fa-microscope" id="iconToggle"></i>
+    <span id="labelToggle">Voir les examens</span>
+    <span class="badge-count">{{ examens | length }}</span>
+  </button>
 </div>
 
-<!-- Tableau des examens -->
-<div class="card-panel">
-  <div class="panel-header">
-    <i class="fa fa-microscope me-2"></i>Résultats d'examens
-    <span class="badge bg-secondary ms-2">{{ examens | length }}</span>
-  </div>
-  <div class="panel-body p-0">
-    {% if examens %}
-    <div class="table-responsive">
-      <table class="table table-hover mb-0">
-        <thead class="table-head">
-          <tr>
-            <th>Patient</th>
-            <th>Mois</th>
-            <th>Date prélèv.</th>
-            <th>GeneXpert</th>
-            <th>Frottis</th>
-            <th>Culture</th>
-            <th>DST</th>
-            <th>Réalisé par</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for e in examens %}
-          <tr>
-            <td>
-              <a href="{{ url_for('patients.fiche', patient_id=e.patient.id) }}" class="fw-bold text-decoration-none">
-                {{ e.patient.code_patient }}
-              </a>
-              <div class="small text-muted">{{ e.patient.nom }} {{ e.patient.prenom }}</div>
-            </td>
-            <td>
-              <span class="badge bg-primary">M{{ e.mois_suivi }}</span>
-            </td>
-            <td class="small">{{ e.date_prelevement.strftime('%d/%m/%Y') }}</td>
-            <td>
-              {% if e.genexpert_effectue %}
-                {% if e.genexpert_resultat == 'positif' %}
-                  <span class="badge bg-danger">MTB+</span>
-                  {% if e.genexpert_resistance_rif == 'detected' %}
-                    <span class="badge bg-danger ms-1">RIF-R</span>
-                  {% elif e.genexpert_resistance_rif == 'not_detected' %}
-                    <span class="badge bg-success ms-1">RIF-S</span>
-                  {% endif %}
-                {% elif e.genexpert_resultat == 'negatif' %}
-                  <span class="badge bg-success">MTB-</span>
-                {% else %}
-                  <span class="badge bg-secondary">Indét.</span>
-                {% endif %}
-              {% else %}
-                <span class="text-muted small">—</span>
-              {% endif %}
-            </td>
-            <td>
-              {% if e.frottis_effectue %}
-                {% if e.frottis_resultat == 'positif' %}
-                  <span class="badge bg-warning text-dark">BAAR+ {{ e.frottis_quantite or '' }}</span>
-                {% elif e.frottis_resultat == 'negatif' %}
-                  <span class="badge bg-success">BAAR-</span>
-                {% else %}
-                  <span class="badge bg-secondary">—</span>
-                {% endif %}
-              {% else %}
-                <span class="text-muted small">—</span>
-              {% endif %}
-            </td>
-            <td>
-              {% if e.culture_effectuee %}
-                <span class="badge bg-{{ e.conversion_badge }}">{{ e.conversion_label }}</span>
-                {% if e.culture_milieu %}
-                  <div class="small text-muted">{{ e.culture_milieu }}</div>
-                {% endif %}
-              {% else %}
-                <span class="text-muted small">—</span>
-              {% endif %}
-            </td>
-            <td>
-              {% if e.dst_effectue %}
-                <span class="badge bg-info text-dark"><i class="fa fa-check me-1"></i>Oui</span>
-              {% else %}
-                <span class="text-muted small">—</span>
-              {% endif %}
-            </td>
-            <td class="small text-muted">{{ e.laborantin.full_name }}</td>
-            <td>
-              <a href="{{ url_for('labo.detail', examen_id=e.id) }}" class="btn btn-sm btn-outline-secondary">
-                <i class="fa fa-eye"></i>
-              </a>
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+<!-- LISTE DES EXAMENS (masquée par défaut) -->
+<div id="liste-complete" style="display:none">
+  <div class="card-panel">
+    <div class="panel-header">
+      <span><i class="fa fa-microscope me-2"></i>Résultats d'examens</span>
+      <span class="badge bg-secondary">{{ examens | length }}</span>
     </div>
-    {% else %}
-    <div class="text-center text-muted py-5">
-      <i class="fa fa-microscope fa-3x d-block mb-3 opacity-25"></i>
-      <p>Aucun résultat d'examen enregistré.</p>
-      {% if current_user.role in ['laborantin', 'coordinateur', 'medecin'] %}
-      <a href="{{ url_for('labo.saisir') }}" class="btn btn-primary btn-sm">
-        <i class="fa fa-flask me-1"></i>Saisir le premier résultat
-      </a>
+    <div class="panel-body p-0">
+      {% if examens %}
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="table-head">
+            <tr>
+              <th>Patient</th><th>Mois</th><th>Date prélèv.</th>
+              <th>GeneXpert</th><th>Frottis</th><th>Culture</th><th>DST</th>
+              <th>Réalisé par</th><th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for e in examens %}
+            <tr>
+              <td>
+                <a href="{{ url_for('patients.fiche', patient_id=e.patient.id) }}" class="fw-bold text-decoration-none">
+                  {{ e.patient.code_patient }}
+                </a>
+                <div class="small text-muted">{{ e.patient.nom }} {{ e.patient.prenom }}</div>
+              </td>
+              <td><span class="badge bg-primary">M{{ e.mois_suivi }}</span></td>
+              <td class="small text-muted">{{ e.date_prelevement.strftime('%d/%m/%Y') }}</td>
+              <td>
+                {% if e.genexpert_effectue %}
+                  {% if e.genexpert_resultat == 'positif' %}
+                    <span class="badge bg-danger">MTB+</span>
+                    {% if e.genexpert_resistance_rif == 'detected' %}
+                      <span class="badge bg-danger ms-1">RIF-R</span>
+                    {% elif e.genexpert_resistance_rif == 'not_detected' %}
+                      <span class="badge bg-success ms-1">RIF-S</span>
+                    {% endif %}
+                  {% elif e.genexpert_resultat == 'negatif' %}
+                    <span class="badge bg-success">MTB-</span>
+                  {% else %}
+                    <span class="badge bg-secondary">Indét.</span>
+                  {% endif %}
+                {% else %}<span class="text-muted small">—</span>{% endif %}
+              </td>
+              <td>
+                {% if e.frottis_effectue %}
+                  {% if e.frottis_resultat == 'positif' %}
+                    <span class="badge bg-warning">BAAR+ {{ e.frottis_quantite or '' }}</span>
+                  {% elif e.frottis_resultat == 'negatif' %}
+                    <span class="badge bg-success">BAAR-</span>
+                  {% else %}
+                    <span class="badge bg-secondary">—</span>
+                  {% endif %}
+                {% else %}<span class="text-muted small">—</span>{% endif %}
+              </td>
+              <td>
+                {% if e.culture_effectuee %}
+                  <span class="badge bg-{{ e.conversion_badge }}">{{ e.conversion_label }}</span>
+                  {% if e.culture_milieu %}<div class="small text-muted">{{ e.culture_milieu }}</div>{% endif %}
+                {% else %}<span class="text-muted small">—</span>{% endif %}
+              </td>
+              <td>
+                {% if e.dst_effectue %}
+                  <span class="badge bg-info"><i class="fa fa-check me-1"></i>Oui</span>
+                {% else %}<span class="text-muted small">—</span>{% endif %}
+              </td>
+              <td class="small text-muted">{{ e.laborantin.full_name }}</td>
+              <td>
+                <a href="{{ url_for('labo.detail', examen_id=e.id) }}" class="btn btn-sm btn-outline-secondary">
+                  <i class="fa fa-eye"></i>
+                </a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="text-center text-muted py-5">
+        <i class="fa fa-microscope fa-3x d-block mb-3 opacity-25"></i>
+        <p>Aucun résultat d'examen {% if q %}pour "{{ q }}"{% endif %}.</p>
+        {% if current_user.role in ['laborantin', 'coordinateur', 'medecin'] %}
+        <a href="{{ url_for('labo.saisir') }}" class="btn btn-primary btn-sm">
+          <i class="fa fa-flask me-1"></i>Saisir le premier résultat
+        </a>
+        {% endif %}
+      </div>
       {% endif %}
     </div>
-    {% endif %}
   </div>
 </div>
 
+{% endblock %}
+
+{% block scripts %}
+<script>
+function toggleListe() {
+  var el   = document.getElementById('liste-complete');
+  var icon = document.getElementById('iconToggle');
+  var lbl  = document.getElementById('labelToggle');
+  var open = el.style.display !== 'none';
+  el.style.display = open ? 'none' : 'block';
+  lbl.textContent  = open ? 'Voir les examens' : 'Masquer la liste';
+  icon.className   = open ? 'fa fa-microscope' : 'fa fa-eye-slash';
+}
+{% if q or mois %}
+document.addEventListener('DOMContentLoaded', toggleListe);
+{% endif %}
+</script>
 {% endblock %}

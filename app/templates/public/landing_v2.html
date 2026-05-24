@@ -24,19 +24,29 @@
        DESIGN TOKENS
     ═══════════════════════════════════════════════════════════ */
     :root {
-      --bg:           #0d0d0d;
-      --bg-surface:   #111111;
-      --bg-raised:    #171717;
+      /* ── Fonds — identiques à tbtrack.css ── */
+      --bg:           #101C30;
+      --bg-surface:   rgba(255, 255, 255, 0.05);
+      --bg-raised:    rgba(255, 255, 255, 0.08);
+
+      /* ── Bordures ── */
       --border:       rgba(255, 255, 255, 0.07);
-      --border-hi:    rgba(255, 255, 255, 0.13);
-      --text-1:       #f2f2f2;
-      --text-2:       #888888;
-      --text-3:       #4d4d4d;
-      --accent:       #7c5cf6;
-      --accent-dark:  #5b3fd4;
-      --accent-glow:  rgba(124, 92, 246, 0.22);
-      --accent-dim:   rgba(124, 92, 246, 0.09);
-      --blue:         #3b82f6;
+      --border-hi:    rgba(255, 255, 255, 0.12);
+
+      /* ── Texte — identiques à tbtrack.css ── */
+      --text-1:       #F0F6FF;
+      --text-2:       #B0C4D8;
+      --text-3:       #6B839A;
+
+      /* ── Accent bleu électrique (identique app) ── */
+      --accent:       #3B82F6;
+      --accent-dark:  #2563EB;
+      --accent-glow:  rgba(59, 130, 246, 0.24);
+      --accent-dim:   rgba(59, 130, 246, 0.10);
+
+      /* ── Couleurs secondaires ── */
+      --blue:         #3B82F6;
+      --purple:       #7c5cf6;
       --teal:         #06d6a0;
       --pink:         #e879a0;
 
@@ -58,9 +68,19 @@
 
     body {
       background-color: var(--bg);
+      /* Même dégradé que tbtrack.css — navy + bleu électrique */
       background-image:
-        radial-gradient(ellipse 70% 35% at 65% 0%,   rgba(124, 92, 246, 0.08) 0%, transparent 65%),
-        radial-gradient(ellipse 45% 25% at 15% 100%, rgba(59, 130, 246, 0.05) 0%, transparent 60%);
+        radial-gradient(ellipse 110% 55% at 55% -8%,
+          rgba(59, 130, 246, 0.28) 0%,
+          rgba(99, 102, 241, 0.10) 40%,
+          transparent 68%),
+        radial-gradient(ellipse 65% 45% at -5% 100%,
+          rgba(37, 99, 235, 0.18) 0%,
+          transparent 55%),
+        radial-gradient(ellipse 40% 30% at 105% 60%,
+          rgba(99, 102, 241, 0.10) 0%,
+          transparent 50%);
+      background-attachment: fixed;
       color: var(--text-1);
       font-family: var(--font-sans);
       font-weight: 400;
@@ -98,7 +118,7 @@
       top: 0; left: 0; right: 0;
       z-index: 200;
       height: 58px;
-      background: rgba(13, 13, 13, 0.72);
+      background: rgba(16, 28, 48, 0.78);
       backdrop-filter: blur(18px);
       -webkit-backdrop-filter: blur(18px);
       border-bottom: 1px solid var(--border);
@@ -131,7 +151,7 @@
       width: 26px;
       height: 26px;
       border-radius: 7px;
-      background: linear-gradient(135deg, var(--accent) 0%, var(--pink) 100%);
+      background: linear-gradient(135deg, #3B82F6 0%, #6366F1 100%);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -245,7 +265,7 @@
       position: fixed;
       top: 58px;
       left: 0; right: 0;
-      background: rgba(11, 11, 11, 0.96);
+      background: rgba(10, 18, 36, 0.97);
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
       border-bottom: 1px solid var(--border);
@@ -309,11 +329,12 @@
       font-weight: 500;
       letter-spacing: 0.1em;
       text-transform: uppercase;
-      color: var(--text-3);
-      border: 1px solid var(--border);
+      color: var(--text-2);
+      border: 1px solid var(--border-hi);
       border-radius: 100px;
       padding: 4px 13px;
       margin-bottom: 26px;
+      background: rgba(255, 255, 255, 0.04);
     }
 
     .hero-dot {
@@ -342,7 +363,7 @@
 
     .hero h1 em {
       font-style: italic;
-      color: rgba(242, 242, 242, 0.48);
+      color: rgba(176, 196, 216, 0.75);
     }
 
     .hero-sub {
@@ -414,15 +435,15 @@
 
     .blob-glow {
       position: absolute;
-      width: 64%;
-      height: 64%;
+      width: 70%;
+      height: 70%;
       background: radial-gradient(ellipse,
-        rgba(124, 92, 246, 0.32) 0%,
-        rgba(232, 121, 160, 0.12) 45%,
+        rgba(59, 130, 246, 0.30) 0%,
+        rgba(99, 102, 241, 0.16) 45%,
         transparent 70%
       );
       border-radius: 50%;
-      filter: blur(48px);
+      filter: blur(52px);
       pointer-events: none;
       z-index: 0;
     }
@@ -488,18 +509,21 @@
     }
 
     .role-card {
-      background: var(--bg-surface);
+      background: rgba(255, 255, 255, 0.04);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
       border: 1px solid var(--border);
       border-radius: var(--radius-lg);
       padding: 28px 22px;
       cursor: default;
-      transition: border-color 0.2s, background 0.2s, transform 0.2s var(--ease);
+      transition: border-color 0.2s, background 0.2s, transform 0.2s var(--ease), box-shadow 0.2s;
     }
 
     .role-card:hover {
       border-color: var(--border-hi);
-      background: var(--bg-raised);
+      background: rgba(255, 255, 255, 0.07);
       transform: translateY(-3px);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.30);
     }
 
     .role-icon-wrap {
@@ -528,7 +552,7 @@
     .role-desc {
       font-size: 12.5px;
       line-height: 1.65;
-      color: var(--text-3);
+      color: var(--text-2);
     }
 
     /* ═══════════════════════════════════════════════════════════
@@ -540,17 +564,17 @@
       border: 1px solid var(--border);
       border-radius: var(--radius-lg);
       overflow: hidden;
-      background: var(--border);
+      background: rgba(255, 255, 255, 0.06);
       gap: 1px;
     }
 
     .feat-cell {
-      background: var(--bg-surface);
+      background: rgba(255, 255, 255, 0.03);
       padding: 30px 26px;
       transition: background 0.18s;
     }
 
-    .feat-cell:hover { background: var(--bg-raised); }
+    .feat-cell:hover { background: rgba(255, 255, 255, 0.07); }
 
     .feat-icon {
       display: block;
@@ -569,7 +593,7 @@
     .feat-desc {
       font-size: 12.5px;
       line-height: 1.65;
-      color: var(--text-3);
+      color: var(--text-2);
     }
 
     /* ═══════════════════════════════════════════════════════════
@@ -578,7 +602,9 @@
     .stat-strip {
       border-top: 1px solid var(--border);
       border-bottom: 1px solid var(--border);
-      background: var(--bg-surface);
+      background: rgba(255, 255, 255, 0.03);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
       padding: 44px 0;
     }
 
@@ -609,7 +635,7 @@
 
     .stat-label {
       font-size: 12.5px;
-      color: var(--text-3);
+      color: var(--text-2);
       letter-spacing: 0.01em;
     }
 
@@ -726,9 +752,8 @@
 
       <a href="#" class="nav-logo" aria-label="TBTrack — Accueil">
         <div class="nav-logo-mark" aria-hidden="true">
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M4 2C2.9 2 2 2.9 2 4v2c0 2.2 1.8 4 4 4h.2A4 4 0 0 0 10 6V4c0-1.1-.9-2-2-2H4zm3 8.9V12" stroke="#fff" stroke-width="1.4" stroke-linecap="round"/>
-            <path d="M7 7V2" stroke="#fff" stroke-width="1.4" stroke-linecap="round"/>
+          <svg width="16" height="16" viewBox="0 0 100 100" fill="white" xmlns="http://www.w3.org/2000/svg">
+            <path fill-rule="evenodd" d="M50 8 L86 21 L86 52 C86 76 68 88 50 94 C32 88 14 76 14 52 L14 21 Z M43 30 L43 43 L30 43 L30 57 L43 57 L43 70 L57 70 L57 57 L70 57 L70 43 L57 43 L57 30 Z"/>
           </svg>
         </div>
         TBTrack
@@ -965,144 +990,148 @@
 
   <script>
     /* ═══════════════════════════════════════════════════════════
-       3D BLOB — Stripe-style rotating organic sphere
-       IcosahedronGeometry × Custom ShaderMaterial
+       3D LOGO — Bouclier médical TBTrack
+       Shield + raised cross  ×  ExtrudeGeometry  ×  ShaderMaterial
     ═══════════════════════════════════════════════════════════ */
     (function () {
       'use strict';
 
-      const canvas = document.getElementById('blob-canvas');
+      var canvas = document.getElementById('blob-canvas');
       if (!canvas || !window.THREE) return;
 
-      /* — Scene setup — */
-      const scene  = new THREE.Scene();
-      const camera = new THREE.PerspectiveCamera(48, 1, 0.1, 100);
-      camera.position.z = 2.85;
+      /* — Scène — */
+      var scene    = new THREE.Scene();
+      var camera   = new THREE.PerspectiveCamera(42, 1, 0.1, 100);
+      camera.position.set(0, 0, 3.6);
 
-      const renderer = new THREE.WebGLRenderer({
-        canvas:    canvas,
-        alpha:     true,
-        antialias: true,
-      });
+      var renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: true });
       renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
       renderer.setClearColor(0x000000, 0);
 
       function resize() {
-        const s = Math.min(canvas.parentElement.offsetWidth, 500);
+        var s = Math.min(canvas.parentElement.offsetWidth, 500);
         renderer.setSize(s, s);
       }
       resize();
       window.addEventListener('resize', resize, { passive: true });
 
-      /* — Geometry — */
-      const geo = new THREE.IcosahedronGeometry(1, 5);
+      /* — Helpers SVG→3D (viewBox 100×100, pivot 50/51, scale 0.025) — */
+      var sc = 0.025;
+      function sx(x) { return (x - 50) * sc; }
+      function sy(y) { return -(y - 51) * sc; }
 
-      /* — Vertex shader — */
-      const vertSrc = /* glsl */`
-        uniform float uTime;
-        varying vec3  vNormal;
-        varying vec3  vLocalPos;
+      /* ── Bouclier avec trou en forme de croix ── */
+      var shieldShape = new THREE.Shape();
+      shieldShape.moveTo(sx(50), sy(8));
+      shieldShape.lineTo(sx(86), sy(21));
+      shieldShape.lineTo(sx(86), sy(52));
+      shieldShape.bezierCurveTo(sx(86), sy(76), sx(68), sy(88), sx(50), sy(94));
+      shieldShape.bezierCurveTo(sx(32), sy(88), sx(14), sy(76), sx(14), sy(52));
+      shieldShape.lineTo(sx(14), sy(21));
 
-        void main() {
-          vNormal   = normalize(normalMatrix * normal);
-          vLocalPos = position;
+      /* Trou croix (path sens inverse → evenodd) */
+      var crossHole = new THREE.Path();
+      crossHole.moveTo(sx(43), sy(30));
+      crossHole.lineTo(sx(43), sy(43));
+      crossHole.lineTo(sx(30), sy(43));
+      crossHole.lineTo(sx(30), sy(57));
+      crossHole.lineTo(sx(43), sy(57));
+      crossHole.lineTo(sx(43), sy(70));
+      crossHole.lineTo(sx(57), sy(70));
+      crossHole.lineTo(sx(57), sy(57));
+      crossHole.lineTo(sx(70), sy(57));
+      crossHole.lineTo(sx(70), sy(43));
+      crossHole.lineTo(sx(57), sy(43));
+      crossHole.lineTo(sx(57), sy(30));
+      shieldShape.holes.push(crossHole);
 
-          float t = uTime * 0.38;
+      /* ── Croix solide (légèrement plus profonde → relief) ── */
+      var crossShape = new THREE.Shape();
+      crossShape.moveTo(sx(43), sy(30));
+      crossShape.lineTo(sx(57), sy(30));
+      crossShape.lineTo(sx(57), sy(43));
+      crossShape.lineTo(sx(70), sy(43));
+      crossShape.lineTo(sx(70), sy(57));
+      crossShape.lineTo(sx(57), sy(57));
+      crossShape.lineTo(sx(57), sy(70));
+      crossShape.lineTo(sx(43), sy(70));
+      crossShape.lineTo(sx(43), sy(57));
+      crossShape.lineTo(sx(30), sy(57));
+      crossShape.lineTo(sx(30), sy(43));
+      crossShape.lineTo(sx(43), sy(43));
 
-          // Overlapping sine-wave displacement — organic morphing
-          float d  = sin(position.x * 3.10 + t * 1.20) * cos(position.y * 2.70 + t * 0.85) * 0.090;
-                d += cos(position.y * 3.80 + t * 0.65) * sin(position.z * 2.30 + t * 1.10) * 0.072;
-                d += sin(position.z * 2.50 + t * 0.92) * cos(position.x * 3.40 + t * 0.55) * 0.058;
-                d += cos(position.x * 1.80 + t * 1.55) * sin(position.y * 2.10 + t * 0.42) * 0.044;
-                d += sin(position.y * 4.20 + t * 0.78) * cos(position.z * 1.60 + t * 1.35) * 0.030;
+      /* — Extrusion — */
+      var cfgShield = { depth: 0.22, bevelEnabled: true, bevelThickness: 0.04, bevelSize: 0.035, bevelSegments: 6 };
+      var cfgCross  = { depth: 0.38, bevelEnabled: true, bevelThickness: 0.03, bevelSize: 0.025, bevelSegments: 5 };
 
-          vec3 displaced = position + normal * d;
-          gl_Position = projectionMatrix * modelViewMatrix * vec4(displaced, 1.0);
-        }
-      `;
+      var geoShield = new THREE.ExtrudeGeometry(shieldShape, cfgShield);
+      var geoCross  = new THREE.ExtrudeGeometry(crossShape,  cfgCross);
 
-      /* — Fragment shader — */
-      const fragSrc = /* glsl */`
-        uniform float uTime;
-        varying vec3  vNormal;
-        varying vec3  vLocalPos;
+      /* Centrage Z */
+      geoShield.translate(0, 0, -cfgShield.depth / 2);
+      geoCross.translate(0,  0, -cfgCross.depth  / 2);
 
-        void main() {
-          // Color stops — purple / electric-blue / teal / rose
-          vec3 cPurple = vec3(0.478, 0.220, 0.980);
-          vec3 cBlue   = vec3(0.165, 0.490, 0.980);
-          vec3 cTeal   = vec3(0.040, 0.840, 0.760);
-          vec3 cRose   = vec3(0.920, 0.300, 0.640);
-          vec3 cViolet = vec3(0.620, 0.240, 0.960);
+      /* — Shader commun : dégradé violet, rim lavande, spec, fill bleu — */
+      var vert = [
+        'varying vec3 vN;',
+        'varying vec3 vP;',
+        'void main(){',
+        '  vN = normalize(normalMatrix * normal);',
+        '  vP = position;',
+        '  gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0);',
+        '}'
+      ].join('\n');
 
-          float t = uTime * 0.20;
+      var frag = [
+        'varying vec3 vN;',
+        'varying vec3 vP;',
+        'void main(){',
+        /* Gradient vertical bas→haut : violet profond → violet accent → lavande */
+        '  float t  = clamp((vP.y + 1.075)/2.15, 0.0, 1.0);',
+        '  vec3 col = mix(vec3(0.18,0.04,0.55), vec3(0.48,0.36,0.97), t);',
+        '  col = mix(col, vec3(0.67,0.59,1.00), t*t*0.52);',
+        /* Rim light (liseré lumineux sur les arêtes) */
+        '  float rim = pow(1.0 - max(0.0, dot(vN, vec3(0.0,0.0,1.0))), 2.2);',
+        '  col = mix(col, vec3(0.82,0.72,1.00), rim*0.62);',
+        /* Lumière principale (haut-droite-avant) */
+        '  vec3 ld = normalize(vec3(0.55,1.0,1.2));',
+        '  col *= dot(vN,ld)*0.36+0.64;',
+        /* Specular blanc-violet */
+        '  vec3 hv = normalize(ld + vec3(0.0,0.0,1.0));',
+        '  col += vec3(0.90,0.85,1.00)*pow(max(0.0,dot(vN,hv)),58.0)*0.55;',
+        /* Fill bleu froid (bas-gauche) */
+        '  col += vec3(0.20,0.40,0.90)*max(0.0,dot(vN,normalize(vec3(-0.7,-0.5,0.4))))*0.20;',
+        '  gl_FragColor = vec4(col,1.0);',
+        '}'
+      ].join('\n');
 
-          // Normal-driven gradient axes
-          float ny = vNormal.y * 0.5 + 0.5;
-          float nx = vNormal.x * 0.5 + 0.5;
-          float nz = vNormal.z * 0.5 + 0.5;
+      var mat = new THREE.ShaderMaterial({ vertexShader: vert, fragmentShader: frag });
 
-          // Slow time-varying bands
-          float b1 = sin(t + vLocalPos.y * 2.1) * 0.5 + 0.5;
-          float b2 = cos(t * 0.72 + vLocalPos.x * 1.6) * 0.5 + 0.5;
-          float b3 = sin(t * 1.10 + vLocalPos.z * 1.3) * 0.5 + 0.5;
+      /* — Groupe — */
+      var group = new THREE.Group();
+      group.add(new THREE.Mesh(geoShield, mat));
+      group.add(new THREE.Mesh(geoCross,  mat));
+      scene.add(group);
 
-          vec3 col = mix(cPurple, cBlue,   ny);
-          col = mix(col, cTeal,   nx  * 0.45);
-          col = mix(col, cRose,   nz  * 0.35);
-          col = mix(col, cViolet, b1  * 0.28);
-          col = mix(col, cBlue,   b2  * 0.18);
-          col = mix(col, cTeal,   b3  * 0.12);
-
-          // Rim light — brightens silhouette edge
-          vec3  viewDir = vec3(0.0, 0.0, 1.0);
-          float rim     = 1.0 - max(0.0, dot(vNormal, viewDir));
-          rim = pow(rim, 1.9);
-          col = mix(col, vec3(0.88, 0.76, 1.00), rim * 0.52);
-
-          // Diffuse shading
-          vec3  lightDir = normalize(vec3(0.55, 0.80, 0.50));
-          float diff     = dot(vNormal, lightDir) * 0.30 + 0.70;
-          col *= diff;
-
-          // Specular highlight
-          vec3  halfVec = normalize(lightDir + viewDir);
-          float spec    = pow(max(0.0, dot(vNormal, halfVec)), 38.0) * 0.38;
-          col += vec3(0.90, 0.84, 1.00) * spec;
-
-          gl_FragColor = vec4(col, 0.96);
-        }
-      `;
-
-      /* — Material — */
-      const mat = new THREE.ShaderMaterial({
-        vertexShader:   vertSrc,
-        fragmentShader: fragSrc,
-        uniforms: { uTime: { value: 0 } },
-        transparent: true,
-      });
-
-      const blob = new THREE.Mesh(geo, mat);
-      scene.add(blob);
-
-      /* — Mouse parallax (subtle) — */
-      let mx = 0, my = 0;
-      window.addEventListener('mousemove', function (e) {
+      /* — Souris — */
+      var mx = 0, my = 0;
+      window.addEventListener('mousemove', function(e) {
         mx = (e.clientX / window.innerWidth  - 0.5) * 2;
         my = (e.clientY / window.innerHeight - 0.5) * 2;
       }, { passive: true });
 
-      /* — Render loop — */
+      /* — Boucle — */
       var clock = 0;
       (function tick() {
         requestAnimationFrame(tick);
-        clock += 0.0075;
-
-        mat.uniforms.uTime.value = clock;
-
-        blob.rotation.y += 0.0032 + mx * 0.0006;
-        blob.rotation.x += 0.0010 + my * 0.0004;
-
+        clock += 0.012;
+        /* Rotation continue + légère respiration */
+        group.rotation.y += 0.008;
+        group.rotation.x += (my * 0.28 - group.rotation.x) * 0.05;
+        group.rotation.z += (-mx * 0.09 - group.rotation.z) * 0.05;
+        group.position.y  = Math.sin(clock * 0.70) * 0.05;
+        var pulse = 1.0 + Math.sin(clock * 1.10) * 0.012;
+        group.scale.setScalar(pulse);
         renderer.render(scene, camera);
       })();
     })();

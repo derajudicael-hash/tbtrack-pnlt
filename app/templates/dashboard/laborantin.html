@@ -1,0 +1,145 @@
+{% extends 'base.html' %}
+{% block title %}Tableau de bord — Laborantin(e){% endblock %}
+{% block breadcrumb %}<i class="fa fa-flask me-1"></i> Tableau de bord Laborantin{% endblock %}
+{% block page_title %}Tableau de bord Laborantin(e){% endblock %}
+{% block page_subtitle %}Examens bactériologiques · Frottis · Culture · DST{% endblock %}
+
+{% block content %}
+
+<!-- KPI CLIQUABLES -->
+<div class="row g-4 mb-4">
+  <div class="col-6 col-xl-3">
+    <a href="{{ url_for('patients.liste', statut='en_cours') }}" class="kpi-card-link">
+      <div class="kpi-card kpi-primary">
+        <div class="kpi-icon"><i class="fa fa-users"></i></div>
+        <div class="kpi-body">
+          <div class="kpi-value">{{ nb_actifs }}</div>
+          <div class="kpi-label">Patients actifs</div>
+          <div class="kpi-sub">En cours de traitement</div>
+        </div>
+      </div>
+    </a>
+  </div>
+  <div class="col-6 col-xl-3">
+    <a href="{{ url_for('labo.index') }}" class="kpi-card-link">
+      <div class="kpi-card kpi-info">
+        <div class="kpi-icon"><i class="fa fa-vials"></i></div>
+        <div class="kpi-body">
+          <div class="kpi-value">{{ examens_mois }}</div>
+          <div class="kpi-label">Examens ce mois</div>
+          <div class="kpi-sub">Prélèvements saisis</div>
+        </div>
+      </div>
+    </a>
+  </div>
+  <div class="col-6 col-xl-3">
+    <a href="{{ url_for('labo.index') }}" class="kpi-card-link">
+      <div class="kpi-card kpi-danger {% if cultures_pos > 0 %}kpi-pulse{% endif %}">
+        <div class="kpi-icon"><i class="fa fa-bacterium"></i></div>
+        <div class="kpi-body">
+          <div class="kpi-value">{{ cultures_pos }}</div>
+          <div class="kpi-label">Cultures positives</div>
+          <div class="kpi-sub">Total enregistrées</div>
+        </div>
+      </div>
+    </a>
+  </div>
+  <div class="col-6 col-xl-3">
+    <a href="{{ url_for('labo.index') }}" class="kpi-card-link">
+      <div class="kpi-card kpi-warning {% if nb_en_attente > 0 %}kpi-pulse{% endif %}">
+        <div class="kpi-icon"><i class="fa fa-clock"></i></div>
+        <div class="kpi-body">
+          <div class="kpi-value">{{ nb_en_attente }}</div>
+          <div class="kpi-label">Examens en retard</div>
+          <div class="kpi-sub">Dernier &gt; 30 jours</div>
+        </div>
+      </div>
+    </a>
+  </div>
+</div>
+
+<!-- PATIENTS EN ATTENTE D'EXAMEN -->
+{% if patients_en_attente %}
+<div class="card-panel mb-4" style="border-left: 4px solid var(--warning)">
+  <div class="panel-header" style="color:var(--warning)">
+    <span><i class="fa fa-triangle-exclamation me-2"></i>Patients sans examen depuis &gt; 30 jours ({{ patients_en_attente | length }})</span>
+    <a href="{{ url_for('labo.saisir') }}" class="btn btn-sm btn-outline-warning">
+      <i class="fa fa-flask me-1"></i>Saisir résultat
+    </a>
+  </div>
+  <div class="panel-body p-0">
+    <table class="table table-hover mb-0">
+      <tbody>
+        {% for p in patients_en_attente %}
+        <tr>
+          <td><a href="{{ url_for('patients.fiche', patient_id=p.id) }}" class="fw-semibold text-decoration-none">{{ p.code_patient }}</a></td>
+          <td>{{ p.nom }} {{ p.prenom }}</td>
+          <td>{% if p.type_resistance %}<span class="badge-resistance badge-{{ p.type_resistance | lower | replace('-','') }}">{{ p.type_resistance }}</span>{% endif %}</td>
+          <td class="text-end">
+            <a href="{{ url_for('labo.saisir') }}?patient_id={{ p.id }}" class="btn btn-sm btn-outline-warning">
+              <i class="fa fa-flask me-1"></i>Saisir
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+<!-- CHART CONVERSIONS -->
+<div class="card-panel mb-4">
+  <div class="panel-header">
+    <span><i class="fa fa-chart-line me-2 text-success"></i>Conversions bactériologiques M0–M6</span>
+  </div>
+  <div class="panel-body" style="height:220px;">
+    <canvas id="chartConversions"></canvas>
+  </div>
+</div>
+
+<!-- ACTIONS RAPIDES -->
+<div class="card-panel">
+  <div class="panel-header"><span><i class="fa fa-bolt me-2 text-warning"></i>Actions rapides</span></div>
+  <div class="panel-body">
+    <div class="row g-3">
+      <div class="col-6 col-md-3">
+        <a href="{{ url_for('labo.saisir') }}" class="action-shortcut">
+          <i class="fa fa-flask-vial"></i><span>Saisir résultat</span>
+        </a>
+      </div>
+      <div class="col-6 col-md-3">
+        <a href="{{ url_for('labo.index') }}" class="action-shortcut">
+          <i class="fa fa-microscope"></i><span>Tous les examens</span>
+        </a>
+      </div>
+      <div class="col-6 col-md-3">
+        <a href="{{ url_for('patients.liste') }}" class="action-shortcut">
+          <i class="fa fa-users"></i><span>Patients</span>
+        </a>
+      </div>
+      <div class="col-6 col-md-3">
+        <a href="{{ url_for('dosage.calculateur') }}" class="action-shortcut">
+          <i class="fa fa-calculator"></i><span>Calculateur</span>
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+new Chart(document.getElementById('chartConversions'), {
+  type: 'line',
+  data: { labels: {{ conversions_labels | tojson }},
+    datasets: [{ label: 'Cultures négatives', data: {{ conversions_data | tojson }},
+      borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,.15)',
+      tension: 0.3, fill: true, pointRadius: 5 }] },
+  options: { responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+});
+</script>
+{% endblock %}

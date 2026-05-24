@@ -2,7 +2,7 @@
 {% block title %}Contacts{% endblock %}
 {% block breadcrumb %}<a href="{{ url_for('dashboard.index') }}">Accueil</a> / Contacts{% endblock %}
 {% block page_title %}Suivi des contacts{% endblock %}
-{% block page_subtitle %}Contacts proches des cas TB-MR/RR — Suivi clinique obligatoire sur 2 ans (Guide PNLT §VI.4){% endblock %}
+{% block page_subtitle %}Contacts proches des cas TB-MR/RR — Suivi clinique 2 ans obligatoire (Guide PNLT §VI.4){% endblock %}
 {% block page_actions %}
   <a href="{{ url_for('contacts.ajouter') }}" class="btn btn-primary">
     <i class="fa fa-plus me-2"></i>Ajouter un contact
@@ -10,69 +10,160 @@
 {% endblock %}
 
 {% block content %}
-<div class="card-panel">
-  <div class="panel-body p-0">
-    <div class="table-responsive">
-      <table class="table table-hover align-middle mb-0">
-        <thead class="table-head">
-          <tr>
-            <th>Contact</th>
-            <th>Patient source</th>
-            <th>Relation</th>
-            <th>Téléphone</th>
-            <th>Statut</th>
-            <th>Progression suivi</th>
-            <th>Prochaine visite</th>
-            <th>Jours restants</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for c in contacts %}
-          <tr class="{% if c.statut == 'tb_mr_confirmee' %}table-danger{% endif %}">
-            <td>
-              <a href="{{ url_for('contacts.fiche', contact_id=c.id) }}" class="text-decoration-none text-dark">
-                <strong>{{ c.nom }} {{ c.prenom or '' }}</strong>
-              </a>
-              <div class="text-muted small">{{ c.age or '?' }} ans · {{ c.sexe or '?' }}</div>
-            </td>
-            <td>
-              <a href="{{ url_for('patients.fiche', patient_id=c.patient_source.id) }}" class="text-decoration-none">
-                {{ c.patient_source.code_patient }}
-              </a>
-            </td>
-            <td><span class="badge bg-light text-dark border">{{ c.relation | capitalize }}</span></td>
-            <td class="small text-muted">{{ c.telephone or '—' }}</td>
-            <td><span class="badge bg-{{ c.statut_badge }}">{{ c.statut_label }}</span></td>
-            <td style="min-width:140px">
-              <div class="d-flex align-items-center gap-2">
-                <div class="progress flex-fill" style="height:8px">
-                  <div class="progress-bar bg-{{ c.statut_badge }}" style="width:{{ c.progression_suivi }}%"></div>
-                </div>
-                <small class="text-muted">{{ c.progression_suivi }}%</small>
-              </div>
-            </td>
-            <td class="small {% if c.date_prochaine_visite and c.date_prochaine_visite < today %}text-danger fw-bold{% endif %}">
-              {{ c.date_prochaine_visite.strftime('%d/%m/%Y') if c.date_prochaine_visite else '—' }}
-            </td>
-            <td class="small">
-              {% if c.jours_restants_suivi is not none %}
-                {% if c.jours_restants_suivi > 0 %}
-                  <span class="text-muted">{{ c.jours_restants_suivi }} j</span>
-                {% else %}
-                  <span class="badge bg-secondary">Suivi terminé</span>
-                {% endif %}
-              {% else %}—{% endif %}
-            </td>
-          </tr>
-          {% else %}
-          <tr><td colspan="8" class="text-center text-muted py-4">Aucun contact enregistré.</td></tr>
-          {% endfor %}
-        </tbody>
-      </table>
+
+<!-- TB-MR CONFIRMÉS — ALERTE CRITIQUE -->
+{% if tb_confirmes %}
+<div class="section-alerte-auto danger mb-4">
+  <div class="d-flex align-items-start gap-3">
+    <i class="fa fa-bacterium text-danger fa-lg mt-1 flex-shrink-0"></i>
+    <div class="flex-fill">
+      <div class="fw-semibold text-danger mb-2">
+        {{ tb_confirmes | length }} contact(s) avec TB-MR confirmée — Prise en charge immédiate requise
+      </div>
+      <div class="d-flex flex-column gap-2">
+        {% for c in tb_confirmes %}
+        <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap">
+          <span class="small">
+            <a href="{{ url_for('contacts.fiche', contact_id=c.id) }}" class="fw-semibold">{{ c.nom }} {{ c.prenom }}</a>
+            — contact de <a href="{{ url_for('patients.fiche', patient_id=c.patient_source.id) }}">{{ c.patient_source.code_patient }}</a>
+          </span>
+          <a href="{{ url_for('contacts.fiche', contact_id=c.id) }}" class="btn btn-sm btn-danger py-0">
+            <i class="fa fa-eye me-1"></i>Voir
+          </a>
+        </div>
+        {% endfor %}
+      </div>
     </div>
   </div>
-  <div class="panel-footer text-muted small">
-    {{ contacts | length }} contact(s) · Durée de suivi recommandée : 2 ans minimum
+</div>
+{% endif %}
+
+<!-- VISITES URGENTES (≤ 7 jours) -->
+{% if urgents %}
+<div class="section-alerte-auto mb-4">
+  <div class="d-flex align-items-start gap-3">
+    <i class="fa fa-calendar-exclamation text-warning fa-lg mt-1 flex-shrink-0"></i>
+    <div class="flex-fill">
+      <div class="fw-semibold mb-2" style="color:var(--warning)">
+        {{ urgents | length }} visite(s) à effectuer dans les 7 prochains jours
+      </div>
+      <div class="d-flex flex-column gap-2">
+        {% for c in urgents %}
+        <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap">
+          <span class="small">
+            <a href="{{ url_for('contacts.fiche', contact_id=c.id) }}" class="fw-semibold">{{ c.nom }} {{ c.prenom }}</a>
+            — Visite :
+            <strong class="{% if c.date_prochaine_visite <= today %}text-danger{% else %}text-warning{% endif %}">
+              {{ c.date_prochaine_visite.strftime('%d/%m/%Y') if c.date_prochaine_visite else '—' }}
+            </strong>
+            {% if c.date_prochaine_visite and c.date_prochaine_visite < today %}
+              <span class="badge bg-danger ms-1">EN RETARD</span>
+            {% endif %}
+          </span>
+          <a href="{{ url_for('contacts.modifier', contact_id=c.id) }}" class="btn btn-sm btn-outline-warning py-0">
+            <i class="fa fa-edit me-1"></i>Mettre à jour
+          </a>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
   </div>
 </div>
+{% else %}
+<div class="alert alert-success d-flex align-items-center gap-2 mb-4">
+  <i class="fa fa-circle-check fa-lg"></i>
+  <div><strong>Aucune visite urgente</strong> — Pas de visite à effectuer dans les 7 prochains jours.</div>
+</div>
+{% endif %}
+
+<!-- BARRE OUTILS + TOGGLE -->
+<div class="liste-toolbar">
+  <form method="GET" class="search-box" autocomplete="off">
+    <i class="fa fa-magnifying-glass"></i>
+    <input type="text" name="q" value="{{ q }}" placeholder="Nom, prénom, téléphone…">
+  </form>
+  <button class="btn-toggle-list" id="btnToggle" onclick="toggleListe()">
+    <i class="fa fa-list" id="iconToggle"></i>
+    <span id="labelToggle">Voir tous les contacts</span>
+    <span class="badge-count">{{ contacts | length }}</span>
+  </button>
+</div>
+
+<!-- LISTE COMPLÈTE (masquée par défaut) -->
+<div id="liste-complete" style="display:none">
+  <div class="card-panel">
+    <div class="panel-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-head">
+            <tr>
+              <th>Contact</th><th>Patient source</th><th>Relation</th>
+              <th>Téléphone</th><th>Statut</th><th>Progression</th>
+              <th>Prochaine visite</th><th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for c in contacts %}
+            <tr class="{% if c.statut == 'tb_mr_confirmee' %}table-danger{% endif %}">
+              <td>
+                <a href="{{ url_for('contacts.fiche', contact_id=c.id) }}" class="fw-semibold text-decoration-none">
+                  {{ c.nom }} {{ c.prenom or '' }}
+                </a>
+                <div class="text-muted small">{{ c.age or '?' }} ans · {{ c.sexe or '?' }}</div>
+              </td>
+              <td>
+                <a href="{{ url_for('patients.fiche', patient_id=c.patient_source.id) }}" class="text-decoration-none">
+                  {{ c.patient_source.code_patient }}
+                </a>
+              </td>
+              <td><span class="badge bg-secondary">{{ c.relation | capitalize }}</span></td>
+              <td class="small text-muted">{{ c.telephone or '—' }}</td>
+              <td><span class="badge bg-{{ c.statut_badge }}">{{ c.statut_label }}</span></td>
+              <td style="min-width:120px">
+                <div class="d-flex align-items-center gap-2">
+                  <div class="progress flex-fill" style="height:7px">
+                    <div class="progress-bar bg-{{ c.statut_badge }}" style="width:{{ c.progression_suivi }}%"></div>
+                  </div>
+                  <small class="text-muted">{{ c.progression_suivi }}%</small>
+                </div>
+              </td>
+              <td class="small {% if c.date_prochaine_visite and c.date_prochaine_visite < today %}text-danger fw-bold{% endif %}">
+                {{ c.date_prochaine_visite.strftime('%d/%m/%Y') if c.date_prochaine_visite else '—' }}
+              </td>
+              <td>
+                <a href="{{ url_for('contacts.modifier', contact_id=c.id) }}" class="btn btn-sm btn-outline-secondary">
+                  <i class="fa fa-edit"></i>
+                </a>
+              </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="8" class="text-center text-muted py-4">Aucun contact enregistré.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="panel-footer text-muted small">
+      {{ contacts | length }} contact(s) · Suivi obligatoire 2 ans
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+function toggleListe() {
+  var el   = document.getElementById('liste-complete');
+  var icon = document.getElementById('iconToggle');
+  var lbl  = document.getElementById('labelToggle');
+  var open = el.style.display !== 'none';
+  el.style.display = open ? 'none' : 'block';
+  lbl.textContent  = open ? 'Voir tous les contacts' : 'Masquer la liste';
+  icon.className   = open ? 'fa fa-list' : 'fa fa-eye-slash';
+}
+{% if filtre or q %}
+document.addEventListener('DOMContentLoaded', toggleListe);
+{% endif %}
+</script>
 {% endblock %}

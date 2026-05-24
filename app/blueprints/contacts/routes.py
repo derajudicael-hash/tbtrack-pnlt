@@ -3,7 +3,7 @@ from flask_login import login_required
 from ...models import Contact, Patient
 from ...extensions import db
 from .forms import ContactForm
-from datetime import date
+from datetime import date, timedelta
 
 contacts_bp = Blueprint('contacts', __name__, url_prefix='/contacts')
 
@@ -11,8 +11,26 @@ contacts_bp = Blueprint('contacts', __name__, url_prefix='/contacts')
 @contacts_bp.route('/')
 @login_required
 def liste():
-    contacts = Contact.query.order_by(Contact.date_prochaine_visite.asc()).all()
-    return render_template('contacts/liste.html', contacts=contacts, today=date.today())
+    q      = request.args.get('q', '').strip()
+    filtre = request.args.get('filtre', '')
+    today  = date.today()
+
+    query = Contact.query
+    if q:
+        query = query.filter(
+            Contact.nom.ilike(f'%{q}%') |
+            Contact.prenom.ilike(f'%{q}%') |
+            Contact.telephone.ilike(f'%{q}%')
+        )
+    contacts     = query.order_by(Contact.date_prochaine_visite.asc()).all()
+    urgents      = [c for c in contacts
+                    if c.date_prochaine_visite and c.date_prochaine_visite <= today + timedelta(days=7)
+                    and c.statut == 'en_suivi']
+    tb_confirmes = [c for c in contacts if c.statut == 'tb_mr_confirmee']
+
+    return render_template('contacts/liste.html',
+        contacts=contacts, urgents=urgents, tb_confirmes=tb_confirmes,
+        today=today, q=q, filtre=filtre)
 
 
 @contacts_bp.route('/ajouter', methods=['GET', 'POST'])

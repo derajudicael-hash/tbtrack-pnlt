@@ -1,0 +1,173 @@
+{% extends 'base.html' %}
+{% block title %}Tableau de bord — Infirmier(e){% endblock %}
+{% block breadcrumb %}<i class="fa fa-syringe me-1"></i> Tableau de bord Infirmier{% endblock %}
+{% block page_title %}Tableau de bord Infirmier(e){% endblock %}
+{% block page_subtitle %}DOT quotidien · Effets secondaires · Suivi pondéral{% endblock %}
+
+{% block content %}
+
+<!-- KPI CLIQUABLES -->
+<div class="row g-4 mb-4">
+  <div class="col-6 col-xl-3">
+    <a href="{{ url_for('patients.liste', statut='en_cours') }}" class="kpi-card-link">
+      <div class="kpi-card kpi-primary">
+        <div class="kpi-icon"><i class="fa fa-users"></i></div>
+        <div class="kpi-body">
+          <div class="kpi-value">{{ nb_actifs }}</div>
+          <div class="kpi-label">Patients actifs</div>
+          <div class="kpi-sub">En cours de traitement</div>
+        </div>
+      </div>
+    </a>
+  </div>
+  <div class="col-6 col-xl-3">
+    <a href="{{ url_for('traitement.liste', filtre='dot_manquants') }}" class="kpi-card-link">
+      <div class="kpi-card kpi-warning {% if nb_sans_dot_aujourd_hui > 0 %}kpi-pulse{% endif %}">
+        <div class="kpi-icon"><i class="fa fa-calendar-xmark"></i></div>
+        <div class="kpi-body">
+          <div class="kpi-value">{{ nb_sans_dot_aujourd_hui }}</div>
+          <div class="kpi-label">Sans DOT aujourd'hui</div>
+          <div class="kpi-sub">Prise non confirmée</div>
+        </div>
+      </div>
+    </a>
+  </div>
+  <div class="col-6 col-xl-3">
+    <a href="{{ url_for('traitement.liste', filtre='absences') }}" class="kpi-card-link">
+      <div class="kpi-card kpi-danger {% if nb_absents_consecutifs > 0 %}kpi-pulse{% endif %}">
+        <div class="kpi-icon"><i class="fa fa-person-circle-exclamation"></i></div>
+        <div class="kpi-body">
+          <div class="kpi-value">{{ nb_absents_consecutifs }}</div>
+          <div class="kpi-label">Absences ≥ 2 jours</div>
+          <div class="kpi-sub">URGENT — risque abandon</div>
+        </div>
+      </div>
+    </a>
+  </div>
+  <div class="col-6 col-xl-3">
+    <a href="{{ url_for('effets.liste', filtre='severe_actif') }}" class="kpi-card-link">
+      <div class="kpi-card {% if nb_alertes_effets > 0 %}kpi-danger{% else %}kpi-info{% endif %}">
+        <div class="kpi-icon"><i class="fa fa-triangle-exclamation"></i></div>
+        <div class="kpi-body">
+          <div class="kpi-value">{{ nb_alertes_effets }}</div>
+          <div class="kpi-label">Effets sévères actifs</div>
+          <div class="kpi-sub">Non notifiés CRPC</div>
+        </div>
+      </div>
+    </a>
+  </div>
+</div>
+
+<!-- ADHÉRENCE DOT -->
+<div class="card-panel mb-4">
+  <div class="panel-header">
+    <span><i class="fa fa-calendar-check me-2 text-info"></i>Adhérence DOT — 30 derniers jours</span>
+    <a href="{{ url_for('traitement.liste') }}" class="btn-panel-link">Gérer les traitements <i class="fa fa-arrow-right"></i></a>
+  </div>
+  <div class="panel-body text-center py-3">
+    {% if adherence_pct is not none %}
+      <div class="display-4 fw-bold mb-1 {% if adherence_pct >= 85 %}text-success{% elif adherence_pct >= 70 %}text-warning{% else %}text-danger{% endif %}">
+        {{ adherence_pct }}%
+      </div>
+      <div class="text-muted small mb-3">
+        {% if adherence_pct >= 85 %}Bonne adhérence — continuer le suivi
+        {% elif adherence_pct >= 70 %}Adhérence insuffisante — renforcer l'éducation thérapeutique
+        {% else %}Adhérence critique — intervention immédiate requise{% endif %}
+      </div>
+      <div class="progress mx-auto" style="height:8px; max-width:300px">
+        <div class="progress-bar {% if adherence_pct >= 85 %}bg-success{% elif adherence_pct >= 70 %}bg-warning{% else %}bg-danger{% endif %}"
+             style="width:{{ adherence_pct }}%"></div>
+      </div>
+    {% else %}
+      <div class="text-muted py-2">Aucune donnée DOT enregistrée</div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- ABSENCES CONSÉCUTIVES -->
+{% if patients_absents %}
+<div class="card-panel mb-4" style="border-left: 4px solid var(--danger)">
+  <div class="panel-header text-danger">
+    <span><i class="fa fa-person-circle-exclamation me-2"></i>ABSENCES CONSÉCUTIVES ≥ 2 JOURS ({{ patients_absents | length }}) — Contacter immédiatement</span>
+  </div>
+  <div class="panel-body p-0">
+    <table class="table table-hover mb-0">
+      <tbody>
+        {% for p in patients_absents %}
+        <tr class="table-danger">
+          <td><a href="{{ url_for('patients.fiche', patient_id=p.id) }}" class="fw-bold">{{ p.code_patient }}</a></td>
+          <td>{{ p.nom }} {{ p.prenom }}</td>
+          <td>{% if p.type_resistance %}<span class="badge-resistance badge-{{ p.type_resistance | lower | replace('-','') }}">{{ p.type_resistance }}</span>{% endif %}</td>
+          <td class="text-end">
+            <a href="{{ url_for('effets.declarer') }}?patient_id={{ p.id }}" class="btn btn-sm btn-outline-danger">
+              <i class="fa fa-bell me-1"></i>Signaler
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+<!-- EFFETS SECONDAIRES RÉCENTS -->
+{% if effets_recents %}
+<div class="card-panel mb-4">
+  <div class="panel-header">
+    <span><i class="fa fa-triangle-exclamation me-2 text-danger"></i>Effets secondaires récents</span>
+    <a href="{{ url_for('effets.liste') }}" class="btn-panel-link">Voir tout <i class="fa fa-arrow-right"></i></a>
+  </div>
+  <div class="panel-body p-0">
+    <table class="table table-hover mb-0">
+      <tbody>
+        {% for e in effets_recents %}
+        <tr>
+          <td>
+            <a href="{{ url_for('patients.fiche', patient_id=e.patient.id) }}" class="fw-semibold text-decoration-none">{{ e.patient.code_patient }}</a>
+            <div class="text-muted small">{{ e.patient.nom }}</div>
+          </td>
+          <td class="small">{{ e.symptome[:50] }}{% if e.symptome|length > 50 %}…{% endif %}</td>
+          <td class="text-end">
+            {% if e.severite == 'severe' %}<span class="badge bg-danger">Sévère</span>
+            {% elif e.severite == 'modere' %}<span class="badge bg-warning">Modéré</span>
+            {% else %}<span class="badge bg-success">Léger</span>{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+<!-- ACTIONS RAPIDES -->
+<div class="card-panel">
+  <div class="panel-header"><span><i class="fa fa-bolt me-2 text-warning"></i>Actions rapides</span></div>
+  <div class="panel-body">
+    <div class="row g-3">
+      <div class="col-6 col-md-3">
+        <a href="{{ url_for('traitement.liste') }}" class="action-shortcut">
+          <i class="fa fa-pills"></i><span>Saisir DOT</span>
+        </a>
+      </div>
+      <div class="col-6 col-md-3">
+        <a href="{{ url_for('effets.declarer') }}" class="action-shortcut">
+          <i class="fa fa-bell"></i><span>Signaler effet</span>
+        </a>
+      </div>
+      <div class="col-6 col-md-3">
+        <a href="{{ url_for('patients.liste') }}" class="action-shortcut">
+          <i class="fa fa-users"></i><span>Patients</span>
+        </a>
+      </div>
+      <div class="col-6 col-md-3">
+        <a href="{{ url_for('contacts.liste') }}" class="action-shortcut">
+          <i class="fa fa-people-arrows"></i><span>Contacts</span>
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

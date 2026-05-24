@@ -97,6 +97,14 @@ class Patient(db.Model):
         }.get(self.type_resistance, 'secondary')
 
     @property
+    def traitement_actif(self):
+        """Retourne le traitement actif le plus récent, ou None."""
+        actifs = [t for t in self.traitements if t.statut_traitement == 'actif']
+        if actifs:
+            return max(actifs, key=lambda t: t.date_debut or date.min)
+        return None
+
+    @property
     def nb_effets_non_notifies(self):
         return sum(1 for e in self.effets if e.severite == 'severe' and not e.notifie_crpc)
 

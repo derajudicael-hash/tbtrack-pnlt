@@ -1,62 +1,68 @@
 {% extends 'base.html' %}
 {% block title %}Tableau de bord{% endblock %}
 {% block breadcrumb %}<i class="fa fa-chart-pie me-1"></i> Tableau de bord{% endblock %}
-{% block page_title %}Tableau de bord{% endblock %}
-{% block page_subtitle %}Vue d'ensemble du programme TB-MR — CRPC Mahajanga{% endblock %}
+{% block page_title %}Tableau de bord Coordinateur{% endblock %}
+{% block page_subtitle %}Supervision globale du programme TB-MR — PNLT Madagascar{% endblock %}
 
 {% block content %}
 
-<!-- KPI CARDS -->
+<!-- KPI CARDS CLIQUABLES -->
 <div class="row g-4 mb-4">
   <div class="col-6 col-xl-3">
-    <div class="kpi-card kpi-primary">
-      <div class="kpi-icon"><i class="fa fa-users"></i></div>
-      <div class="kpi-body">
-        <div class="kpi-value">{{ total_patients }}</div>
-        <div class="kpi-label">Patients enregistrés</div>
-        <div class="kpi-sub">{{ nb_actifs }} en cours de traitement</div>
+    <a href="{{ url_for('patients.liste') }}" class="kpi-card-link">
+      <div class="kpi-card kpi-primary">
+        <div class="kpi-icon"><i class="fa fa-users"></i></div>
+        <div class="kpi-body">
+          <div class="kpi-value">{{ total_patients }}</div>
+          <div class="kpi-label">Patients enregistrés</div>
+          <div class="kpi-sub">{{ nb_actifs }} en cours de traitement</div>
+        </div>
       </div>
-    </div>
+    </a>
   </div>
   <div class="col-6 col-xl-3">
-    <div class="kpi-card kpi-danger {% if nb_alertes > 0 %}kpi-pulse{% endif %}">
-      <div class="kpi-icon"><i class="fa fa-triangle-exclamation"></i></div>
-      <div class="kpi-body">
-        <div class="kpi-value">{{ nb_alertes }}</div>
-        <div class="kpi-label">Alertes effets sévères</div>
-        <div class="kpi-sub">Non notifiés au CRPC</div>
+    <a href="{{ url_for('effets.liste', filtre='severe_actif') }}" class="kpi-card-link">
+      <div class="kpi-card kpi-danger {% if nb_alertes > 0 %}kpi-pulse{% endif %}">
+        <div class="kpi-icon"><i class="fa fa-triangle-exclamation"></i></div>
+        <div class="kpi-body">
+          <div class="kpi-value">{{ nb_alertes }}</div>
+          <div class="kpi-label">Alertes effets sévères</div>
+          <div class="kpi-sub">Non notifiés au CRPC</div>
+        </div>
       </div>
-    </div>
+    </a>
   </div>
   <div class="col-6 col-xl-3">
-    <div class="kpi-card kpi-warning">
-      <div class="kpi-icon"><i class="fa fa-boxes-stacked"></i></div>
-      <div class="kpi-body">
-        <div class="kpi-value">{{ nb_stocks_bas }}</div>
-        <div class="kpi-label">Médicaments en alerte</div>
-        <div class="kpi-sub">Stock faible ou rupture</div>
+    <a href="{{ url_for('stock.inventaire') }}" class="kpi-card-link">
+      <div class="kpi-card kpi-warning {% if nb_stocks_bas > 0 %}kpi-pulse{% endif %}">
+        <div class="kpi-icon"><i class="fa fa-boxes-stacked"></i></div>
+        <div class="kpi-body">
+          <div class="kpi-value">{{ nb_stocks_bas }}</div>
+          <div class="kpi-label">Médicaments en alerte</div>
+          <div class="kpi-sub">Stock faible ou rupture</div>
+        </div>
       </div>
-    </div>
+    </a>
   </div>
   <div class="col-6 col-xl-3">
-    <div class="kpi-card kpi-info">
-      <div class="kpi-icon"><i class="fa fa-people-arrows"></i></div>
-      <div class="kpi-body">
-        <div class="kpi-value">{{ nb_contacts_urgents }}</div>
-        <div class="kpi-label">Contacts à voir</div>
-        <div class="kpi-sub">Visite dans les 7 prochains jours</div>
+    <a href="{{ url_for('contacts.liste', filtre='urgents') }}" class="kpi-card-link">
+      <div class="kpi-card kpi-info">
+        <div class="kpi-icon"><i class="fa fa-people-arrows"></i></div>
+        <div class="kpi-body">
+          <div class="kpi-value">{{ nb_contacts_urgents }}</div>
+          <div class="kpi-label">Contacts à voir</div>
+          <div class="kpi-sub">Visite dans les 7 prochains jours</div>
+        </div>
       </div>
-    </div>
+    </a>
   </div>
 </div>
 
-<!-- CHARTS + RECENT ACTIVITY -->
+<!-- CHARTS -->
 <div class="row g-4 mb-4">
   <div class="col-12 col-lg-4">
     <div class="card-panel">
-      <div class="panel-header">
-        <span><i class="fa fa-chart-pie me-2"></i>Statuts patients</span>
-      </div>
+      <div class="panel-header"><span><i class="fa fa-chart-pie me-2"></i>Statuts patients</span></div>
       <div class="panel-body" style="height:260px; display:flex; align-items:center; justify-content:center;">
         <canvas id="chartStatuts"></canvas>
       </div>
@@ -64,9 +70,7 @@
   </div>
   <div class="col-12 col-lg-8">
     <div class="card-panel">
-      <div class="panel-header">
-        <span><i class="fa fa-chart-bar me-2"></i>Nouvelles admissions (6 derniers mois)</span>
-      </div>
+      <div class="panel-header"><span><i class="fa fa-chart-bar me-2"></i>Nouvelles admissions (6 derniers mois)</span></div>
       <div class="panel-body" style="height:260px;">
         <canvas id="chartAdmissions"></canvas>
       </div>
@@ -74,13 +78,10 @@
   </div>
 </div>
 
-<!-- CHARTS 2 : Cohorte + Conversions + Adhérence -->
 <div class="row g-4 mb-4">
   <div class="col-12 col-lg-4">
     <div class="card-panel">
-      <div class="panel-header">
-        <span><i class="fa fa-chart-pie me-2 text-warning"></i>Résultats cohorte</span>
-      </div>
+      <div class="panel-header"><span><i class="fa fa-chart-pie me-2 text-warning"></i>Résultats cohorte</span></div>
       <div class="panel-body" style="height:220px; display:flex; align-items:center; justify-content:center;">
         <canvas id="chartCohorte"></canvas>
       </div>
@@ -88,9 +89,7 @@
   </div>
   <div class="col-12 col-lg-5">
     <div class="card-panel">
-      <div class="panel-header">
-        <span><i class="fa fa-chart-line me-2 text-success"></i>Conversions bactériologiques M0–M6</span>
-      </div>
+      <div class="panel-header"><span><i class="fa fa-chart-line me-2 text-success"></i>Conversions bactériologiques M0–M6</span></div>
       <div class="panel-body" style="height:220px;">
         <canvas id="chartConversions"></canvas>
       </div>
@@ -116,12 +115,12 @@
   </div>
 </div>
 
-<!-- ALERTES CLINIQUES CRITIQUES V0.4 -->
+<!-- ALERTES CLINIQUES CRITIQUES -->
 {% if patients_ecg_urgents or patients_echec_potentiel %}
 <div class="row g-4 mb-4">
   {% if patients_ecg_urgents %}
   <div class="col-12 col-lg-6">
-    <div class="card-panel border-danger" style="border-left:4px solid #ef4444!important">
+    <div class="card-panel" style="border-left:4px solid var(--danger)">
       <div class="panel-header text-danger">
         <span><i class="fa fa-circle-stop me-2"></i>ECG CRITIQUE — QTc ≥ 500 ms ({{ patients_ecg_urgents | length }})</span>
         <span class="badge bg-danger">ARRÊT MÉDICAMENTS</span>
@@ -131,11 +130,11 @@
           <tbody>
             {% for p in patients_ecg_urgents %}
             <tr class="table-danger">
-              <td><a href="{{ url_for('patients.fiche', patient_id=p.id) }}" class="fw-bold text-decoration-none">{{ p.code_patient }}</a></td>
+              <td><a href="{{ url_for('patients.fiche', patient_id=p.id) }}" class="fw-bold">{{ p.code_patient }}</a></td>
               <td>{{ p.nom }} {{ p.prenom }}</td>
               <td class="text-end">
                 <a href="{{ url_for('patients.bilan', patient_id=p.id) }}" class="btn btn-sm btn-danger">
-                  <i class="fa fa-heart-pulse me-1"></i>Voir ECG
+                  <i class="fa fa-heart-pulse me-1"></i>ECG
                 </a>
               </td>
             </tr>
@@ -147,12 +146,11 @@
     </div>
   </div>
   {% endif %}
-
   {% if patients_echec_potentiel %}
   <div class="col-12 col-lg-6">
-    <div class="card-panel border-danger" style="border-left:4px solid #dc2626!important">
+    <div class="card-panel" style="border-left:4px solid #dc2626">
       <div class="panel-header text-danger">
-        <span><i class="fa fa-virus me-2"></i>ÉCHEC THÉRAPEUTIQUE POTENTIEL ({{ patients_echec_potentiel | length }})</span>
+        <span><i class="fa fa-virus me-2"></i>ÉCHEC THÉRAPEUTIQUE ({{ patients_echec_potentiel | length }})</span>
         <span class="badge bg-danger">Culture+ ≥ M6</span>
       </div>
       <div class="panel-body p-0">
@@ -160,18 +158,18 @@
           <tbody>
             {% for p in patients_echec_potentiel %}
             <tr class="table-danger">
-              <td><a href="{{ url_for('patients.fiche', patient_id=p.id) }}" class="fw-bold text-decoration-none">{{ p.code_patient }}</a></td>
+              <td><a href="{{ url_for('patients.fiche', patient_id=p.id) }}" class="fw-bold">{{ p.code_patient }}</a></td>
               <td>{{ p.nom }} {{ p.prenom }}</td>
               <td class="text-end">
                 <a href="{{ url_for('labo.suivi_patient', patient_id=p.id) }}" class="btn btn-sm btn-danger">
-                  <i class="fa fa-microscope me-1"></i>Voir labo
+                  <i class="fa fa-microscope me-1"></i>Labo
                 </a>
               </td>
             </tr>
             {% endfor %}
           </tbody>
         </table>
-        <div class="p-2 small text-muted"><i class="fa fa-book-open me-1"></i>Révision du schéma requise — Guide PNLT p.31</div>
+        <div class="p-2 small text-muted"><i class="fa fa-book-open me-1"></i>Révision du schéma — Guide PNLT p.31</div>
       </div>
     </div>
   </div>
@@ -179,186 +177,95 @@
 </div>
 {% endif %}
 
-<!-- ALERTES PATIENTS SANS SUIVI -->
-{% if patients_sans_examen %}
-<div class="card-panel mb-4">
-  <div class="panel-header">
-    <span><i class="fa fa-triangle-exclamation me-2 text-warning"></i>Patients actifs sans examen labo depuis > 30 jours</span>
-    <a href="{{ url_for('labo.index') }}" class="btn-panel-link">Voir laboratoire <i class="fa fa-arrow-right"></i></a>
-  </div>
-  <div class="panel-body p-0">
-    <table class="table table-hover mb-0">
-      <tbody>
-        {% for p in patients_sans_examen %}
-        <tr>
-          <td><a href="{{ url_for('patients.fiche', patient_id=p.id) }}" class="fw-semibold text-decoration-none">{{ p.code_patient }}</a></td>
-          <td>{{ p.nom }} {{ p.prenom }}</td>
-          <td>{% if p.type_resistance %}<span class="badge-resistance badge-{{ p.type_resistance | lower | replace('-','') }}">{{ p.type_resistance }}</span>{% endif %}</td>
-          <td class="text-end">
-            <a href="{{ url_for('labo.saisir') }}?patient_id={{ p.id }}" class="btn btn-sm btn-outline-warning">
-              <i class="fa fa-flask me-1"></i>Saisir examen
-            </a>
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-</div>
-{% endif %}
-
-<!-- TABLES -->
-<div class="row g-4">
-  <div class="col-12 col-lg-6">
-    <div class="card-panel">
-      <div class="panel-header">
-        <span><i class="fa fa-triangle-exclamation me-2 text-danger"></i>Derniers effets secondaires</span>
-        <a href="{{ url_for('effets.liste') }}" class="btn-panel-link">Voir tout <i class="fa fa-arrow-right"></i></a>
+<!-- ACTIONS RAPIDES COORDINATEUR -->
+<div class="card-panel">
+  <div class="panel-header"><span><i class="fa fa-bolt me-2 text-warning"></i>Actions rapides</span></div>
+  <div class="panel-body">
+    <div class="row g-3">
+      <div class="col-6 col-md-2">
+        <a href="{{ url_for('patients.liste') }}" class="action-shortcut">
+          <i class="fa fa-users"></i><span>Patients</span>
+        </a>
       </div>
-      <div class="panel-body p-0">
-        <table class="table table-hover mb-0">
-          <tbody>
-            {% for e in effets_recents %}
-            <tr>
-              <td>
-                <div class="fw-semibold small">{{ e.patient.nom }} {{ e.patient.prenom }}</div>
-                <div class="text-muted small">{{ e.symptome[:50] }}{% if e.symptome|length > 50 %}…{% endif %}</div>
-              </td>
-              <td class="text-end">
-                {% if e.severite == 'severe' %}
-                  <span class="badge-sev bg-danger">Sévère</span>
-                  {% if not e.notifie_crpc %}<span class="badge-sev bg-warning text-dark ms-1">Non notifié</span>{% endif %}
-                {% elif e.severite == 'modere' %}
-                  <span class="badge-sev bg-warning text-dark">Modéré</span>
-                {% else %}
-                  <span class="badge-sev bg-success">Léger</span>
-                {% endif %}
-              </td>
-            </tr>
-            {% else %}
-            <tr><td colspan="2" class="text-muted text-center py-3">Aucun effet récent.</td></tr>
-            {% endfor %}
-          </tbody>
-        </table>
+      <div class="col-6 col-md-2">
+        <a href="{{ url_for('rapports.index') }}" class="action-shortcut">
+          <i class="fa fa-chart-bar"></i><span>Rapports</span>
+        </a>
       </div>
-    </div>
-  </div>
-
-  <div class="col-12 col-lg-6">
-    <div class="card-panel">
-      <div class="panel-header">
-        <span><i class="fa fa-user-plus me-2 text-primary"></i>Patients récents</span>
-        <a href="{{ url_for('patients.liste') }}" class="btn-panel-link">Voir tout <i class="fa fa-arrow-right"></i></a>
+      <div class="col-6 col-md-2">
+        <a href="{{ url_for('stock.inventaire') }}" class="action-shortcut">
+          <i class="fa fa-boxes-stacked"></i><span>Stock</span>
+        </a>
       </div>
-      <div class="panel-body p-0">
-        <table class="table table-hover mb-0">
-          <tbody>
-            {% for p in patients_recents %}
-            <tr>
-              <td>
-                <div class="fw-semibold small">{{ p.code_patient }}</div>
-                <div class="text-muted small">{{ p.nom }} {{ p.prenom }}</div>
-              </td>
-              <td>
-                {% if p.type_resistance %}
-                <span class="badge-resistance badge-{{ p.type_resistance | lower | replace('-','') }}">{{ p.type_resistance }}</span>
-                {% else %}<span class="text-muted">—</span>{% endif %}
-              </td>
-              <td class="text-end">
-                <span class="badge bg-{{ p.statut_badge }}">{{ p.statut_label }}</span>
-              </td>
-            </tr>
-            {% else %}
-            <tr><td colspan="3" class="text-muted text-center py-3">Aucun patient.</td></tr>
-            {% endfor %}
-          </tbody>
-        </table>
+      <div class="col-6 col-md-2">
+        <a href="{{ url_for('effets.liste') }}" class="action-shortcut">
+          <i class="fa fa-triangle-exclamation"></i><span>Effets</span>
+        </a>
+      </div>
+      <div class="col-6 col-md-2">
+        <a href="{{ url_for('labo.index') }}" class="action-shortcut">
+          <i class="fa fa-microscope"></i><span>Laboratoire</span>
+        </a>
+      </div>
+      <div class="col-6 col-md-2">
+        <a href="{{ url_for('admin.utilisateurs') }}" class="action-shortcut">
+          <i class="fa fa-users-gear"></i><span>Admin</span>
+        </a>
       </div>
     </div>
   </div>
 </div>
+
 {% endblock %}
 
 {% block scripts %}
 <script>
-const statuts = {{ statuts_labels | tojson }};
+const statuts  = {{ statuts_labels | tojson }};
 const statData = {{ statuts_data | tojson }};
 const cohorteL = {{ cohorte_labels | tojson }};
 const cohorteD = {{ cohorte_data | tojson }};
-const convL = {{ conversions_labels | tojson }};
-const convD = {{ conversions_data | tojson }};
-const moisL = {{ mois_labels | tojson }};
-const moisD = {{ mois_data | tojson }};
+const convL    = {{ conversions_labels | tojson }};
+const convD    = {{ conversions_data | tojson }};
+const moisL    = {{ mois_labels | tojson }};
+const moisD    = {{ mois_data | tojson }};
+
+const legendColor = { labels: { color: '#B0C4D8', boxWidth: 12, font: { size: 11 } } };
 
 new Chart(document.getElementById('chartStatuts'), {
   type: 'doughnut',
-  data: {
-    labels: statuts,
-    datasets: [{
-      data: statData,
-      backgroundColor: ['#3b82f6','#10b981','#f59e0b','#ef4444','#374151','#6b7280'],
-      borderWidth: 2, borderColor: '#fff',
-    }]
-  },
-  options: {
-    responsive: true, maintainAspectRatio: false,
-    plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } } }
-  }
+  data: { labels: statuts, datasets: [{ data: statData,
+    backgroundColor: ['#3b82f6','#10b981','#f59e0b','#ef4444','#374151','#6b7280'],
+    borderWidth: 2, borderColor: 'rgba(255,255,255,.08)' }] },
+  options: { responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { position: 'bottom', ...legendColor } } }
 });
 
 new Chart(document.getElementById('chartCohorte'), {
   type: 'pie',
-  data: {
-    labels: cohorteL,
-    datasets: [{
-      data: cohorteD,
-      backgroundColor: ['#10b981','#ef4444','#f59e0b','#374151','#6b7280'],
-      borderWidth: 2, borderColor: '#fff',
-    }]
-  },
-  options: {
-    responsive: true, maintainAspectRatio: false,
-    plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } } }
-  }
+  data: { labels: cohorteL, datasets: [{ data: cohorteD,
+    backgroundColor: ['#10b981','#ef4444','#f59e0b','#374151','#6b7280'],
+    borderWidth: 2, borderColor: 'rgba(255,255,255,.08)' }] },
+  options: { responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { position: 'bottom', ...legendColor } } }
 });
 
 new Chart(document.getElementById('chartConversions'), {
   type: 'line',
-  data: {
-    labels: convL,
-    datasets: [{
-      label: 'Cultures négatives (conversion)',
-      data: convD,
-      borderColor: '#10b981',
-      backgroundColor: 'rgba(16,185,129,.15)',
-      tension: 0.3,
-      fill: true,
-      pointRadius: 5,
-    }]
-  },
-  options: {
-    responsive: true, maintainAspectRatio: false,
+  data: { labels: convL, datasets: [{ label: 'Cultures négatives',
+    data: convD, borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,.15)',
+    tension: 0.3, fill: true, pointRadius: 5 }] },
+  options: { responsive: true, maintainAspectRatio: false,
     plugins: { legend: { display: false } },
-    scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
-  }
+    scales: { y: { beginAtZero: true, ticks: { stepSize: 1, color: '#6B839A' } }, x: { ticks: { color: '#6B839A' } } } }
 });
 
 new Chart(document.getElementById('chartAdmissions'), {
   type: 'bar',
-  data: {
-    labels: moisL,
-    datasets: [{
-      label: 'Nouvelles admissions',
-      data: moisD,
-      backgroundColor: 'rgba(13, 148, 136, 0.8)',
-      borderRadius: 6,
-    }]
-  },
-  options: {
-    responsive: true, maintainAspectRatio: false,
+  data: { labels: moisL, datasets: [{ label: 'Nouvelles admissions', data: moisD,
+    backgroundColor: 'rgba(59,130,246,.75)', borderRadius: 5 }] },
+  options: { responsive: true, maintainAspectRatio: false,
     plugins: { legend: { display: false } },
-    scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
-  }
+    scales: { y: { beginAtZero: true, ticks: { stepSize: 1, color: '#6B839A' } }, x: { ticks: { color: '#6B839A' } } } }
 });
 </script>
 {% endblock %}

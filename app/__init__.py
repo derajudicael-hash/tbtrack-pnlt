@@ -70,6 +70,7 @@ def create_app():
         return user
 
     # Blueprints
+    from .blueprints.public import public_bp
     from .blueprints.auth import auth_bp
     from .blueprints.dashboard import dashboard_bp
     from .blueprints.patients import patients_bp
@@ -83,6 +84,7 @@ def create_app():
     from .blueprints.admin import admin_bp
     from .blueprints.search import search_bp
 
+    app.register_blueprint(public_bp)
     app.register_blueprint(auth_bp)
     app.register_blueprint(dashboard_bp)
     app.register_blueprint(patients_bp)

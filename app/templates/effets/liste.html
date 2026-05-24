@@ -2,90 +2,190 @@
 {% block title %}Effets secondaires{% endblock %}
 {% block breadcrumb %}<a href="{{ url_for('dashboard.index') }}">Accueil</a> / Effets secondaires{% endblock %}
 {% block page_title %}Effets secondaires{% endblock %}
-{% block page_subtitle %}Surveillance et notification des effets indésirables — Obligation de notification sous 24h pour les effets sévères{% endblock %}
+{% block page_subtitle %}Surveillance · Notification CRPC obligatoire &lt;24h pour les effets sévères{% endblock %}
 {% block page_actions %}
+  {% if current_user.role in ['coordinateur', 'medecin', 'infirmier'] %}
   <a href="{{ url_for('effets.declarer') }}" class="btn btn-danger">
     <i class="fa fa-plus me-2"></i>Déclarer un effet
   </a>
+  {% endif %}
 {% endblock %}
 
 {% block content %}
+
+<!-- ALERTES SÉVÈRES NON NOTIFIÉES -->
 {% if alertes %}
-<div class="alert alert-danger mb-4 d-flex align-items-center gap-3">
-  <i class="fa fa-triangle-exclamation fa-2x"></i>
-  <div>
-    <strong>{{ alertes | length }} alerte(s) active(s)</strong> — Effets sévères non notifiés au CRPC.<br>
-    <small>Obligation réglementaire : notification dans les 24 heures (Guide TBMR-PNLT 2021, §IV.1.1)</small>
+<div class="section-alerte-auto danger mb-4">
+  <div class="d-flex align-items-start gap-3">
+    <i class="fa fa-triangle-exclamation text-danger fa-lg mt-1 flex-shrink-0"></i>
+    <div class="flex-fill">
+      <div class="fw-semibold text-danger mb-1">
+        {{ alertes | length }} effet(s) sévère(s) non notifié(s) au CRPC
+      </div>
+      <div class="text-muted small mb-3">Obligation réglementaire : notification dans les 24h — Guide PNLT §IV.1.1</div>
+      <div class="d-flex flex-column gap-2">
+        {% for e in alertes %}
+        <div class="d-flex align-items-center justify-content-between gap-3 flex-wrap">
+          <div class="small">
+            <a href="{{ url_for('patients.fiche', patient_id=e.patient.id) }}" class="fw-semibold">{{ e.patient.code_patient }}</a>
+            — {{ e.patient.nom }} · <em>{{ e.symptome[:60] }}{% if e.symptome|length > 60 %}…{% endif %}</em>
+            <span class="text-muted ms-1">
+              {% set h = e.heures_depuis_declaration | int %}
+              ({% if h < 24 %}{{ h }}h{% elif h < 48 %}{{ h }}h — DÉLAI DÉPASSÉ{% else %}{{ (h/24)|int }}j — TRÈS EN RETARD{% endif %})
+            </span>
+          </div>
+          {% if current_user.role in ['coordinateur', 'medecin', 'infirmier'] %}
+          <form method="POST" action="{{ url_for('effets.marquer_notifie', effet_id=e.id) }}" class="d-inline">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="btn btn-sm btn-danger py-0"><i class="fa fa-bell me-1"></i>Notifier CRPC</button>
+          </form>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+    </div>
   </div>
 </div>
 {% endif %}
 
-<div class="card-panel">
+<!-- EFFETS SÉVÈRES (SECTION TOUJOURS VISIBLE) -->
+{% if severes %}
+<div class="card-panel mb-4">
+  <div class="panel-header">
+    <span><i class="fa fa-triangle-exclamation me-2 text-danger"></i>Effets sévères ({{ severes | length }})</span>
+  </div>
   <div class="panel-body p-0">
-    <div class="table-responsive">
-      <table class="table table-hover align-middle mb-0">
-        <thead class="table-head">
-          <tr>
-            <th>Patient</th>
-            <th>Médicament incriminé</th>
-            <th>Symptôme / Effet</th>
-            <th>Sévérité</th>
-            <th>Date déclaration</th>
-            <th>Délai</th>
-            <th>Statut CRPC</th>
-            <th>Déclaré par</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for e in effets %}
-          <tr class="{% if e.alerte_active %}row-alerte{% endif %}">
-            <td>
-              <a href="{{ url_for('patients.fiche', patient_id=e.patient.id) }}" class="fw-semibold text-decoration-none">
-                {{ e.patient.code_patient }}
-              </a>
-              <div class="text-muted small">{{ e.patient.nom }}</div>
-            </td>
-            <td><strong>{{ e.medicament_incrimine or '—' }}</strong></td>
-            <td>{{ e.symptome }}</td>
-            <td>
-              {% if e.severite == 'severe' %}<span class="badge bg-danger">⚠ Sévère</span>
-              {% elif e.severite == 'modere' %}<span class="badge bg-warning text-dark">Modéré</span>
-              {% else %}<span class="badge bg-success">Léger</span>{% endif %}
-            </td>
-            <td class="small text-muted">{{ e.date_declaration.strftime('%d/%m/%Y %H:%M') }}</td>
-            <td class="small">
-              {% set h = e.heures_depuis_declaration | int %}
-              {% if h < 24 %}
-                <span class="text-success">{{ h }}h</span>
-              {% elif h < 48 %}
-                <span class="text-warning fw-bold">{{ h }}h</span>
-              {% else %}
-                <span class="text-danger fw-bold">{{ (h / 24) | int }}j</span>
-              {% endif %}
-            </td>
-            <td>
-              {% if e.notifie_crpc %}
-                <span class="text-success"><i class="fa fa-check-circle me-1"></i>Notifié</span>
-                <div class="text-muted small">{{ e.date_notification.strftime('%d/%m %H:%M') if e.date_notification else '' }}</div>
-              {% elif e.severite == 'severe' %}
-                <form method="POST" action="{{ url_for('effets.marquer_notifie', effet_id=e.id) }}">
-                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                  <button class="btn btn-sm btn-danger">
-                    <i class="fa fa-bell me-1"></i>Notifier
-                  </button>
-                </form>
-              {% else %}
-                <span class="text-muted small">N/A</span>
-              {% endif %}
-            </td>
-            <td class="small text-muted">{{ e.declare_par or '—' }}</td>
-          </tr>
-          {% else %}
-          <tr><td colspan="8" class="text-center text-muted py-4">Aucun effet secondaire déclaré.</td></tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-head">
+        <tr><th>Patient</th><th>Médicament</th><th>Symptôme</th><th>Déclaré</th><th>Délai</th><th>CRPC</th></tr>
+      </thead>
+      <tbody>
+        {% for e in severes %}
+        <tr class="{% if e.alerte_active %}table-danger{% endif %}">
+          <td>
+            <a href="{{ url_for('patients.fiche', patient_id=e.patient.id) }}" class="fw-semibold text-decoration-none">
+              {{ e.patient.code_patient }}
+            </a>
+            <div class="text-muted small">{{ e.patient.nom }}</div>
+          </td>
+          <td><strong>{{ e.medicament_incrimine or '—' }}</strong></td>
+          <td class="small">{{ e.symptome[:55] }}{% if e.symptome|length > 55 %}…{% endif %}</td>
+          <td class="small text-muted">{{ e.date_declaration.strftime('%d/%m/%Y %H:%M') }}</td>
+          <td class="small">
+            {% set h = e.heures_depuis_declaration | int %}
+            {% if h < 24 %}<span class="text-success">{{ h }}h</span>
+            {% elif h < 48 %}<span class="text-warning fw-bold">{{ h }}h</span>
+            {% else %}<span class="text-danger fw-bold">{{ (h/24)|int }}j</span>{% endif %}
+          </td>
+          <td>
+            {% if e.notifie_crpc %}
+              <span class="text-success small"><i class="fa fa-check me-1"></i>Notifié</span>
+            {% elif current_user.role in ['coordinateur', 'medecin', 'infirmier'] %}
+              <form method="POST" action="{{ url_for('effets.marquer_notifie', effet_id=e.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button class="btn btn-sm btn-danger py-0"><i class="fa fa-bell me-1"></i>Notifier</button>
+              </form>
+            {% else %}
+              <span class="text-muted small">—</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
   </div>
 </div>
+{% endif %}
+
+<!-- BARRE OUTILS + TOGGLE -->
+<div class="liste-toolbar">
+  <form method="GET" class="search-box" autocomplete="off">
+    <i class="fa fa-magnifying-glass"></i>
+    <input type="text" name="q" value="{{ q }}" placeholder="Patient, symptôme, médicament…">
+  </form>
+  <button class="btn-toggle-list" id="btnToggle" onclick="toggleListe()">
+    <i class="fa fa-list" id="iconToggle"></i>
+    <span id="labelToggle">Voir tous les effets</span>
+    <span class="badge-count">{{ effets | length }}</span>
+  </button>
+</div>
+
+<!-- LISTE COMPLÈTE (masquée par défaut) -->
+<div id="liste-complete" style="display:none">
+  <div class="card-panel">
+    <div class="panel-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-head">
+            <tr>
+              <th>Patient</th><th>Médicament incriminé</th><th>Symptôme</th>
+              <th>Sévérité</th><th>Date</th><th>Délai</th><th>CRPC</th><th>Déclaré par</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for e in effets %}
+            <tr class="{% if e.alerte_active %}table-danger{% endif %}">
+              <td>
+                <a href="{{ url_for('patients.fiche', patient_id=e.patient.id) }}" class="fw-semibold text-decoration-none">
+                  {{ e.patient.code_patient }}
+                </a>
+                <div class="text-muted small">{{ e.patient.nom }}</div>
+              </td>
+              <td><strong>{{ e.medicament_incrimine or '—' }}</strong></td>
+              <td class="small">{{ e.symptome[:55] }}{% if e.symptome|length > 55 %}…{% endif %}</td>
+              <td>
+                {% if e.severite == 'severe' %}<span class="badge bg-danger">⚠ Sévère</span>
+                {% elif e.severite == 'modere' %}<span class="badge bg-warning">Modéré</span>
+                {% else %}<span class="badge bg-success">Léger</span>{% endif %}
+              </td>
+              <td class="small text-muted">{{ e.date_declaration.strftime('%d/%m/%Y %H:%M') }}</td>
+              <td class="small">
+                {% set h = e.heures_depuis_declaration | int %}
+                {% if h < 24 %}<span class="text-success">{{ h }}h</span>
+                {% elif h < 48 %}<span class="text-warning fw-bold">{{ h }}h</span>
+                {% else %}<span class="text-danger fw-bold">{{ (h/24)|int }}j</span>{% endif %}
+              </td>
+              <td>
+                {% if e.notifie_crpc %}
+                  <span class="text-success small"><i class="fa fa-check me-1"></i>Notifié</span>
+                  <div class="text-muted small">{{ e.date_notification.strftime('%d/%m %H:%M') if e.date_notification else '' }}</div>
+                {% elif e.severite == 'severe' and current_user.role in ['coordinateur', 'medecin', 'infirmier'] %}
+                  <form method="POST" action="{{ url_for('effets.marquer_notifie', effet_id=e.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button class="btn btn-sm btn-danger py-0"><i class="fa fa-bell me-1"></i>Notifier</button>
+                  </form>
+                {% else %}
+                  <span class="text-muted small">N/A</span>
+                {% endif %}
+              </td>
+              <td class="small text-muted">{{ e.declare_par or '—' }}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="8" class="text-center text-muted py-4">Aucun effet secondaire déclaré.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="panel-footer text-muted small">{{ effets | length }} effet(s) enregistré(s)</div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+function toggleListe() {
+  var el   = document.getElementById('liste-complete');
+  var icon = document.getElementById('iconToggle');
+  var lbl  = document.getElementById('labelToggle');
+  var open = el.style.display !== 'none';
+  el.style.display = open ? 'none' : 'block';
+  lbl.textContent  = open ? 'Voir tous les effets' : 'Masquer la liste';
+  icon.className   = open ? 'fa fa-list' : 'fa fa-eye-slash';
+}
+{% if filtre or q %}
+document.addEventListener('DOMContentLoaded', toggleListe);
+{% endif %}
+</script>
 {% endblock %}
