@@ -14,7 +14,7 @@ class User(UserMixin, db.Model):
     prenom = db.Column(db.String(100))
     role = db.Column(db.String(50), default='medecin')  # medecin | infirmier | coordinateur | laborantin
     centre = db.Column(db.String(150))
-    actif = db.Column(db.Boolean, default=True, nullable=False, server_default='1')
+    actif = db.Column(db.Boolean, default=False, nullable=False, server_default='0')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     patients = db.relationship('Patient', backref='medecin', lazy=True)

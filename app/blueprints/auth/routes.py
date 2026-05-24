@@ -20,8 +20,11 @@ def login():
         return redirect(url_for('dashboard.index'))
     form = LoginForm()
     if form.validate_on_submit():
-        user = User.query.filter_by(email=form.email.data).first()
+        user = User.query.filter_by(email=form.email.data.lower()).first()
         if user and user.check_password(form.password.data):
+            if not user.actif:
+                flash('Votre compte n\'est pas encore activé. Contactez votre coordinateur PNLT.', 'warning')
+                return render_template('auth/login.html', form=form)
             login_user(user, remember=form.remember.data)
             session.pop('role_selectionne', None)
             next_page = request.args.get('next')
@@ -38,15 +41,16 @@ def register():
         return redirect(url_for('dashboard.index'))
     form = RegisterForm()
     if form.validate_on_submit():
-        if User.query.filter_by(email=form.email.data).first():
+        if User.query.filter_by(email=form.email.data.lower()).first():
             flash('Cet email est déjà utilisé.', 'danger')
             return redirect(url_for('auth.register'))
-        user = User(email=form.email.data, nom=form.nom.data.upper(),
-                    prenom=form.prenom.data, role=form.role.data, centre=form.centre.data)
+        user = User(email=form.email.data.lower(), nom=form.nom.data.upper(),
+                    prenom=form.prenom.data, role=form.role.data, centre=form.centre.data,
+                    actif=False)
         user.set_password(form.password.data)
         db.session.add(user)
         db.session.commit()
-        flash('Compte créé avec succès. Vous pouvez vous connecter.', 'success')
+        flash('Compte créé. Il sera activé par votre coordinateur PNLT avant que vous puissiez vous connecter.', 'info')
         return redirect(url_for('auth.login'))
     return render_template('auth/register.html', form=form)
 

@@ -3,6 +3,7 @@ from flask_login import login_required
 from ...models import Contact, Patient
 from ...extensions import db
 from .forms import ContactForm
+from ...utils.decorators import role_required
 from datetime import date, timedelta
 
 contacts_bp = Blueprint('contacts', __name__, url_prefix='/contacts')
@@ -35,6 +36,7 @@ def liste():
 
 @contacts_bp.route('/ajouter', methods=['GET', 'POST'])
 @login_required
+@role_required('coordinateur', 'medecin', 'infirmier')
 def ajouter():
     form = ContactForm()
     # Tous les patients — un contact peut être lié à n'importe quel cas index
@@ -88,6 +90,7 @@ def fiche(contact_id):
 
 @contacts_bp.route('/<int:contact_id>/modifier', methods=['GET', 'POST'])
 @login_required
+@role_required('coordinateur', 'medecin', 'infirmier')
 def modifier(contact_id):
     contact = Contact.query.get_or_404(contact_id)
     form = ContactForm(obj=contact)
@@ -113,12 +116,13 @@ def modifier(contact_id):
         contact.date_prochain_controle = form.date_prochain_controle.data
         db.session.commit()
         flash('Contact mis à jour.', 'success')
-        return redirect(url_for('contacts.liste'))
+        return redirect(url_for('contacts.fiche', contact_id=contact_id))
     return render_template('contacts/modifier.html', form=form, contact=contact)
 
 
 @contacts_bp.route('/<int:contact_id>/supprimer', methods=['POST'])
 @login_required
+@role_required('coordinateur', 'medecin')
 def supprimer(contact_id):
     contact = Contact.query.get_or_404(contact_id)
     db.session.delete(contact)

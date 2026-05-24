@@ -41,8 +41,13 @@
                    placeholder="ex: 58.5">
             {% if resultat %}
             <div class="text-muted small mt-1">
+              {% if resultat.tranche %}
               <i class="fa fa-check-circle text-success me-1"></i>
               Tranche : <strong>{{ resultat.tranche }}</strong>
+              {% else %}
+              <i class="fa fa-circle-exclamation text-danger me-1"></i>
+              <span class="text-danger">Poids hors table</span>
+              {% endif %}
             </div>
             {% endif %}
           </div>
@@ -76,6 +81,16 @@
   <!-- Résultats -->
   <div class="col-12 col-lg-8">
     {% if resultat %}
+
+    {% if resultat.erreur_poids %}
+    <div class="alert alert-danger d-flex align-items-start gap-3 mb-4">
+      <i class="fa fa-triangle-exclamation fa-lg mt-1 flex-shrink-0"></i>
+      <div>
+        <strong>Poids hors table de dosage</strong><br>
+        {{ resultat.erreur_poids }}
+      </div>
+    </div>
+    {% else %}
 
     <!-- Schéma -->
     <div class="card-panel mb-4">
@@ -157,6 +172,8 @@
         </small>
       </div>
     </div>
+
+    {% endif %}{# fin if erreur_poids #}
 
     {% else %}
     <!-- État vide -->

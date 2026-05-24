@@ -181,6 +181,14 @@ def parametres(patient_id):
     patient = Patient.query.get_or_404(patient_id)
     form = SuiviPonderalForm()
     if form.validate_on_submit():
+        existant = SuiviPonderal.query.filter_by(
+            patient_id=patient_id, mois_suivi=form.mois_suivi.data
+        ).first()
+        if existant:
+            flash(f'Une mesure existe déjà pour M{form.mois_suivi.data}. Supprimez-la avant d\'en créer une nouvelle.', 'warning')
+            historique = patient.suivi_ponderal.all()
+            return render_template('patients/parametres.html',
+                                   patient=patient, form=form, historique=historique)
         mesure = SuiviPonderal(
             patient_id=patient_id,
             mois_suivi=form.mois_suivi.data,

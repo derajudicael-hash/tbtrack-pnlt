@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aide — TBTrack PNLT Madagascar</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:          #101C30;
+      --bg-surface:  rgba(255,255,255,0.05);
+      --bg-raised:   rgba(255,255,255,0.08);
+      --border:      rgba(255,255,255,0.07);
+      --border-hi:   rgba(255,255,255,0.12);
+      --text-1:      #F0F6FF;
+      --text-2:      #B0C4D8;
+      --text-3:      #6B839A;
+      --accent:      #3B82F6;
+      --accent-dark: #2563EB;
+      --accent-glow: rgba(59,130,246,0.24);
+      --font-serif:  'Instrument Serif', Georgia, serif;
+      --font-sans:   'Inter', system-ui, sans-serif;
+      --radius:      8px;
+      --radius-lg:   14px;
+    }
+
+    html { font-size: 16px; scroll-behavior: smooth; }
+
+    body {
+      background-color: var(--bg);
+      background-image:
+        radial-gradient(ellipse 110% 55% at 55% -8%, rgba(59,130,246,0.28) 0%, rgba(99,102,241,0.10) 40%, transparent 68%),
+        radial-gradient(ellipse 65% 45% at -5% 100%, rgba(37,99,235,0.18) 0%, transparent 55%),
+        radial-gradient(ellipse 40% 30% at 105% 60%, rgba(99,102,241,0.10) 0%, transparent 50%);
+      background-attachment: fixed;
+      color: var(--text-1);
+      font-family: var(--font-sans);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    a { color: inherit; text-decoration: none; }
+
+    /* ── Navbar ── */
+    .navbar {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+      height: 58px;
+      background: rgba(16,28,48,0.78);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-inner {
+      display: flex; align-items: center; height: 100%;
+      max-width: 1160px; margin: 0 auto; padding: 0 28px; gap: 16px;
+    }
+    .nav-logo {
+      display: flex; align-items: center; gap: 9px;
+      font-size: 14.5px; font-weight: 600; color: var(--text-1);
+      flex-shrink: 0; margin-right: auto;
+    }
+    .nav-logo-mark {
+      width: 26px; height: 26px; border-radius: 7px;
+      background: linear-gradient(135deg,#3B82F6 0%,#6366F1 100%);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .btn-outline {
+      display: inline-flex; align-items: center; padding: 6px 15px;
+      font-size: 13.5px; font-weight: 500; color: var(--text-1);
+      border: 1px solid var(--border-hi); border-radius: var(--radius);
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .btn-outline:hover { border-color: rgba(255,255,255,0.22); background: rgba(255,255,255,0.04); }
+    .btn-filled {
+      display: inline-flex; align-items: center; padding: 6px 15px;
+      font-size: 13.5px; font-weight: 500; color: #fff;
+      background: var(--accent); border: 1px solid transparent; border-radius: var(--radius);
+      transition: background 0.15s, box-shadow 0.2s;
+    }
+    .btn-filled:hover { background: var(--accent-dark); box-shadow: 0 0 28px var(--accent-glow); }
+
+    /* ── Hero ── */
+    .help-hero {
+      padding: 120px 28px 72px;
+      max-width: 780px; margin: 0 auto; text-align: center;
+    }
+    .help-kicker {
+      font-size: 11px; font-weight: 600; letter-spacing: 0.12em;
+      text-transform: uppercase; color: var(--accent); margin-bottom: 16px;
+    }
+    .help-title {
+      font-family: var(--font-serif); font-size: clamp(30px,4vw,50px);
+      font-weight: 400; line-height: 1.12; letter-spacing: -0.022em;
+      color: var(--text-1); margin-bottom: 16px;
+    }
+    .help-sub {
+      font-size: 16px; color: var(--text-2); line-height: 1.7; max-width: 520px; margin: 0 auto;
+    }
+
+    /* ── FAQ ── */
+    .faq-wrap {
+      max-width: 780px; margin: 0 auto; padding: 0 28px 100px;
+    }
+    .faq-cat {
+      font-size: 11px; font-weight: 600; letter-spacing: 0.12em;
+      text-transform: uppercase; color: var(--accent);
+      margin: 56px 0 20px; padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .faq-item {
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      margin-bottom: 8px;
+      overflow: hidden;
+      background: var(--bg-surface);
+      transition: border-color 0.15s;
+    }
+    .faq-item:hover { border-color: var(--border-hi); }
+    .faq-item.open   { border-color: rgba(59,130,246,0.25); }
+
+    .faq-q {
+      width: 100%; display: flex; align-items: center; justify-content: space-between;
+      gap: 12px; padding: 18px 22px;
+      font-size: 14.5px; font-weight: 500; color: var(--text-1);
+      background: none; border: none; cursor: pointer;
+      text-align: left; transition: color 0.14s;
+    }
+    .faq-q:hover { color: var(--text-1); }
+    .faq-q svg {
+      width: 16px; height: 16px; flex-shrink: 0;
+      stroke: var(--text-3); transition: transform 0.22s ease, stroke 0.14s;
+    }
+    .faq-item.open .faq-q svg { transform: rotate(45deg); stroke: var(--accent); }
+
+    .faq-a {
+      max-height: 0; overflow: hidden;
+      transition: max-height 0.32s ease, padding 0.22s ease;
+    }
+    .faq-item.open .faq-a { max-height: 800px; }
+    .faq-a-inner {
+      padding: 0 22px 20px;
+      font-size: 13.5px; color: var(--text-2); line-height: 1.75;
+    }
+    .faq-a-inner strong { color: var(--text-1); }
+    .faq-a-inner a { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
+    .faq-a-inner a:hover { color: #93C5FD; }
+    .faq-a-inner ul { padding-left: 18px; margin-top: 8px; }
+    .faq-a-inner ul li { margin-bottom: 4px; }
+
+    /* ── Contact ── */
+    .contact-strip {
+      border-top: 1px solid var(--border);
+      background: rgba(255,255,255,0.025);
+      padding: 56px 28px;
+      text-align: center;
+    }
+    .contact-strip h2 {
+      font-family: var(--font-serif); font-size: 28px; font-weight: 400;
+      color: var(--text-1); margin-bottom: 10px;
+    }
+    .contact-strip p { font-size: 14.5px; color: var(--text-2); margin-bottom: 28px; }
+    .contact-cards {
+      display: flex; justify-content: center; gap: 16px; flex-wrap: wrap;
+    }
+    .contact-card {
+      background: var(--bg-surface); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); padding: 24px 28px;
+      min-width: 200px; text-align: left;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .contact-card:hover { border-color: var(--border-hi); background: var(--bg-raised); }
+    .contact-card-icon { font-size: 22px; margin-bottom: 12px; }
+    .contact-card-label { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-3); margin-bottom: 4px; }
+    .contact-card-value { font-size: 14px; font-weight: 500; color: var(--text-1); }
+
+    /* ── Footer ── */
+    footer { border-top: 1px solid var(--border); padding: 28px 0; }
+    .footer-inner {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 16px; flex-wrap: wrap;
+      max-width: 1160px; margin: 0 auto; padding: 0 28px;
+    }
+    .footer-copy { font-size: 12.5px; color: var(--text-3); }
+    .footer-links { display: flex; align-items: center; gap: 18px; }
+    .footer-link { font-size: 12.5px; color: var(--text-3); transition: color 0.14s; }
+    .footer-link:hover { color: var(--text-2); }
+
+    @media (max-width: 600px) {
+      .contact-cards { flex-direction: column; }
+      .contact-card { min-width: 0; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="navbar">
+    <div class="nav-inner">
+      <a href="/" class="nav-logo">
+        <div class="nav-logo-mark">
+          <svg width="16" height="16" viewBox="0 0 100 100" fill="white" xmlns="http://www.w3.org/2000/svg">
+            <path fill-rule="evenodd" d="M50 8 L86 21 L86 52 C86 76 68 88 50 94 C32 88 14 76 14 52 L14 21 Z M43 30 L43 43 L30 43 L30 57 L43 57 L43 70 L57 70 L57 57 L70 57 L70 43 L57 43 L57 30 Z"/>
+          </svg>
+        </div>
+        TBTrack
+      </a>
+      <a href="/documentation" class="btn-outline">Documentation</a>
+      <a href="/auth/login" class="btn-filled">Se connecter</a>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <div class="help-hero">
+    <p class="help-kicker">Centre d'aide</p>
+    <h1 class="help-title">Comment pouvons-nous vous aider ?</h1>
+    <p class="help-sub">
+      Retrouvez ici les réponses aux questions fréquentes sur TBTrack.
+      Pour tout problème non couvert, contactez votre coordinateur PNLT ou l'équipe technique.
+    </p>
+  </div>
+
+  <!-- FAQ -->
+  <div class="faq-wrap">
+
+    <p class="faq-cat">Compte & Connexion</p>
+
+    <div class="faq-item">
+      <button class="faq-q" aria-expanded="false">
+        Je viens de créer un compte mais je ne peux pas me connecter. Pourquoi ?
+        <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M8 3v10M3 8h10" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </button>
+      <div class="faq-a">
+        <div class="faq-a-inner">
+          Votre compte doit être <strong>activé par le coordinateur PNLT</strong> de votre centre avant que vous puissiez accéder à l'application.
+          Après votre inscription, contactez votre coordinateur et demandez-lui d'activer votre compte via le panneau <em>Administration → Utilisateurs</em>.
+          Une fois activé, vous pouvez vous connecter normalement.
+        </div>
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-q" aria-expanded="false">
+        J'ai oublié mon mot de passe. Comment le récupérer ?
+        <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M8 3v10M3 8h10" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </button>
+      <div class="faq-a">
+        <div class="faq-a-inner">
+          Contactez le coordinateur PNLT de votre centre. Il peut réinitialiser votre mot de passe via le panneau Administration.
+          Choisissez un nouveau mot de passe d'au moins 8 caractères, incluant majuscules, chiffres et caractères spéciaux.
+        </div>
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-q" aria-expanded="false">
+        Puis-je changer mon rôle après l'inscription ?
+        <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M8 3v10M3 8h10" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </button>
+      <div class="faq-a">
+        <div class="faq-a-inner">
+          Non, le rôle ne peut pas être modifié par l'utilisateur. Seul le coordinateur PNLT peut changer le rôle d'un compte
+          via le panneau Administration. Si vous avez sélectionné le mauvais rôle lors de l'inscription, signalez-le à votre coordinateur.
+        </div>
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-q" aria-expanded="false">
+        Que signifie le choix de rôle sur la page d'accueil ?
+        <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M8 3v10M3 8h10" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </button>
+      <div class="faq-a">
+        <div class="faq-a-inner">
+          Le choix de rôle sur la page d'accueil est <strong>uniquement indicatif</strong> — il affiche les identifiants de démonstration correspondants.
+          L'accès réel à l'application est déterminé par le rôle associé à votre compte lors de l'inscription, pas par ce choix.
+        </div>
+      </div>
+    </div>
+
+    <p class="faq-cat">Utilisation de l'application</p>
+
+    <div class="faq-item">
+      <button class="faq-q" aria-expanded="false">
+        Je ne vois pas certains menus dans la barre latérale. Est-ce normal ?
+        <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M8 3v10M3 8h10" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </button>
+      <div class="faq-a">
+        <div class="faq-a-inner">
+          Oui, c'est intentionnel. TBTrack applique un <strong>contrôle d'accès par rôle (RBAC)</strong>.
+          Les menus affichés dépendent de votre rôle :
+          <ul>
+            <li><strong>Laborantin :</strong> accès limité aux examens bactériologiques et au registre (lecture seule)</li>
+            <li><strong>Infirmier :</strong> pas d'accès au module Rapports PNLT ni à l'Administration</li>
+            <li><strong>Médecin :</strong> pas d'accès au panneau Administration</li>
+            <li><strong>Coordinateur :</strong> accès complet à tous les modules</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-q" aria-expanded="false">
+        Comment fonctionne la recherche rapide de patients ?
+        <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M8 3v10M3 8h10" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </button>
+      <div class="faq-a">
+        <div class="faq-a-inner">
+          La barre de recherche en haut à droite de l'interface (icône loupe) permet de rechercher un patient
+          par <strong>nom, prénom ou numéro de registre PNLT</strong>. La recherche démarre automatiquement
+          après 2 caractères saisis et affiche les résultats en temps réel dans un menu déroulant.
+          Appuyez sur Entrée ou cliquez sur un résultat pour accéder au dossier.
+        </div>
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-q" aria-expanded="false">
+        Comment enregistrer le DOT quotidien d'un patient ?
+        <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M8 3v10M3 8h10" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </button>
+      <div class="faq-a">
+        <div class="faq-a-inner">
+          Accédez à <strong>Suivi traitements</strong> dans le menu latéral, puis sélectionnez le patient.
+          Cochez la prise du jour et enregistrez. Le taux d'adhérence est recalculé instantanément.
+          En cas d'absence de prise pendant 2 jours consécutifs, une alerte est générée automatiquement.
+        </div>
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-q" aria-expanded="false">
+        Comment saisir un résultat d'examen bactériologique ?
+        <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M8 3v10M3 8h10" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </button>
+      <div class="faq-a">
+        <div class="faq-a-inner">
+          Accédez à <strong>Laboratoire → Saisir résultats</strong>. Sélectionnez le patient, le type d'examen
+          (frottis, culture ou DST) et le mois de suivi (M0 à M24). Saisissez le résultat et enregistrez.
+          Le système détecte automatiquement les situations d'échec (culture positive après M6).
+        </div>
+      </div>
+    </div>
+
+    <p class="faq-cat">Alertes & Sécurité</p>
+
+    <div class="faq-item">
+      <button class="faq-q" aria-expanded="false">
+        Qu'est-ce que l'alerte QTc ≥ 500 ms et que dois-je faire ?
+        <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M8 3v10M3 8h10" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </button>
+      <div class="faq-a">
+        <div class="faq-a-inner">
+          Une alerte QTc ≥ 500 ms indique un allongement significatif de l'intervalle QT à l'ECG,
+          un effet secondaire grave possible des fluoroquinolones (Moxifloxacine) ou de la Clofazimine.
+          <strong>À faire immédiatement :</strong>
+          <ul>
+            <li>Contacter le médecin responsable sans délai</li>
+            <li>Ne pas administrer la prochaine dose avant avis médical</li>
+            <li>Préparer un ECG de contrôle</li>
+            <li>Documenter l'alerte dans le dossier patient</li>
+          </ul>
+          L'alerte reste visible dans le tableau de bord jusqu'à ce qu'un médecin la prenne en charge.
+        </div>
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-q" aria-expanded="false">
+        Les données patients sont-elles sécurisées ?
+        <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M8 3v10M3 8h10" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </button>
+      <div class="faq-a">
+        <div class="faq-a-inner">
+          Oui. TBTrack est hébergé sur les serveurs dédiés du PNLT Madagascar.
+          Chaque accès est authentifié et journalisé. Les données sont accessibles uniquement
+          aux personnels de santé autorisés, dans le respect du secret médical.
+          Ne partagez jamais vos identifiants de connexion avec une autre personne.
+        </div>
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-q" aria-expanded="false">
+        Que faire si je détecte une erreur dans un dossier patient ?
+        <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M8 3v10M3 8h10" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </button>
+      <div class="faq-a">
+        <div class="faq-a-inner">
+          Si vous avez les droits de modification (rôle médecin ou coordinateur), corrigez directement
+          le dossier et notez la correction dans les remarques cliniques avec la date et votre nom.
+          Si vous n'avez pas les droits nécessaires, signalez immédiatement l'erreur au médecin responsable
+          ou au coordinateur PNLT de votre centre. <strong>Ne laissez jamais une erreur médicale sans signalement.</strong>
+        </div>
+      </div>
+    </div>
+
+    <p class="faq-cat">Problèmes techniques</p>
+
+    <div class="faq-item">
+      <button class="faq-q" aria-expanded="false">
+        L'application est lente ou ne charge pas. Que faire ?
+        <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M8 3v10M3 8h10" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </button>
+      <div class="faq-a">
+        <div class="faq-a-inner">
+          <ul>
+            <li>Vérifiez votre connexion internet</li>
+            <li>Actualisez la page (F5 ou Ctrl+R)</li>
+            <li>Videz le cache du navigateur (Ctrl+Shift+Suppr)</li>
+            <li>Essayez avec un autre navigateur (Chrome ou Firefox recommandés)</li>
+            <li>Si le problème persiste, contactez l'équipe technique PNLT</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-q" aria-expanded="false">
+        Sur mobile, certains éléments sont mal affichés. Est-ce supporté ?
+        <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M8 3v10M3 8h10" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </button>
+      <div class="faq-a">
+        <div class="faq-a-inner">
+          TBTrack est optimisé pour une utilisation sur ordinateur ou tablette.
+          L'interface est responsive et fonctionne sur mobile, mais pour une expérience optimale
+          (surtout pour la saisie de données cliniques), l'utilisation sur écran ≥ 10 pouces est recommandée.
+          Sur mobile, utilisez le menu hamburger (☰) pour accéder à la navigation.
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Contact -->
+  <div class="contact-strip">
+    <h2>Besoin d'aide supplémentaire ?</h2>
+    <p>Contactez votre coordinateur PNLT ou l'équipe technique.</p>
+    <div class="contact-cards">
+      <div class="contact-card">
+        <div class="contact-card-icon">📋</div>
+        <div class="contact-card-label">Documentation complète</div>
+        <div class="contact-card-value"><a href="/documentation" style="color:var(--accent);text-decoration:underline;text-underline-offset:2px;">Lire la documentation →</a></div>
+      </div>
+      <div class="contact-card">
+        <div class="contact-card-icon">🏥</div>
+        <div class="contact-card-label">Coordinateur PNLT</div>
+        <div class="contact-card-value">Contactez votre centre CRPC/CDT</div>
+      </div>
+      <div class="contact-card">
+        <div class="contact-card-icon">📧</div>
+        <div class="contact-card-label">Support technique</div>
+        <div class="contact-card-value">pnlt-support@sante.gov.mg</div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <div class="footer-inner">
+      <p class="footer-copy">© 2025 TBTrack — PNLT Madagascar.</p>
+      <nav class="footer-links">
+        <a href="/" class="footer-link">Accueil</a>
+        <a href="/documentation" class="footer-link">Documentation</a>
+        <a href="/auth/login" class="footer-link">Connexion</a>
+      </nav>
+    </div>
+  </footer>
+
+  <script>
+    /* ── Accordion FAQ ── */
+    document.querySelectorAll('.faq-q').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var item = this.closest('.faq-item');
+        var isOpen = item.classList.contains('open');
+        /* Fermer tous */
+        document.querySelectorAll('.faq-item').forEach(function(i) {
+          i.classList.remove('open');
+          i.querySelector('.faq-q').setAttribute('aria-expanded', 'false');
+        });
+        /* Ouvrir celui cliqué si était fermé */
+        if (!isOpen) {
+          item.classList.add('open');
+          this.setAttribute('aria-expanded', 'true');
+        }
+      });
+    });
+  </script>
+
+</body>
+</html>

@@ -18,3 +18,13 @@ def choisir_role(role):
     if role in ROLES_VALIDES:
         session['role_selectionne'] = role
     return redirect(url_for('auth.login'))
+
+
+@public_bp.route('/documentation')
+def documentation():
+    return render_template('public/documentation.html')
+
+
+@public_bp.route('/aide')
+def aide():
+    return render_template('public/aide.html')

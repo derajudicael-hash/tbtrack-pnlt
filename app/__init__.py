@@ -15,7 +15,7 @@ def _migrate_actif_column():
         return  # table pas encore créée, db.create_all() s'en charge
     if 'actif' not in cols:
         with db.engine.connect() as conn:
-            conn.execute(text("ALTER TABLE users ADD COLUMN actif INTEGER NOT NULL DEFAULT 1"))
+            conn.execute(text("ALTER TABLE users ADD COLUMN actif INTEGER NOT NULL DEFAULT 0"))
             conn.commit()
 
 

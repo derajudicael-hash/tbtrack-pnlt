@@ -151,8 +151,8 @@ def detail(traitement_id):
         traitement_id=traitement_id
     ).order_by(SuiviDOT.date_observation.desc()).limit(30).all()
 
-    # Construction de la timeline M0-M18 (ou M0-M6 pour schéma court)
-    nb_mois = 18 if patient.schema_therapeutique == 'long' else 6
+    # Construction de la timeline M0-M18 ou M0-M11 selon le schéma
+    nb_mois = 18 if patient.schema_therapeutique == 'long' else 11
     jalons = []
     for m in range(nb_mois + 1):
         if traitement.date_debut:
@@ -206,6 +206,17 @@ def dot_ajouter(traitement_id):
     # Paramètre pour revenir à la fiche patient après saisie
     depuis_fiche = request.args.get('depuis_fiche', '0')
     if form.validate_on_submit():
+        doublon = SuiviDOT.query.filter_by(
+            patient_id=patient.id,
+            traitement_id=traitement_id,
+            date_observation=form.date_observation.data,
+        ).first()
+        if doublon:
+            flash(f'Une prise DOT existe déjà pour le {form.date_observation.data.strftime("%d/%m/%Y")}. Modifier la date ou consulter l\'historique.', 'warning')
+            return render_template('traitement/dot_ajouter.html',
+                                   form=form, traitement=traitement,
+                                   patient=patient, depuis_fiche=depuis_fiche)
+
         medicaments_pris = traitement.medicaments if form.prise_confirmee.data else []
         medicaments_omis = [] if form.prise_confirmee.data else traitement.medicaments
 

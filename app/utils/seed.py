@@ -9,19 +9,19 @@ def seed_demo_data():
 
     # ── Utilisateurs ──────────────────────────────────────────────
     coord = User(email='coordinateur@pnlt.mg', nom='RAKOTONDRAMANANA', prenom='Jean-Baptiste',
-                 role='coordinateur', centre='PNLT Antananarivo')
+                 role='coordinateur', centre='PNLT Antananarivo', actif=True)
     coord.set_password('tbtrack2025')
 
     medecin = User(email='medecin@crpc.mg', nom='RAZAFIMAHAZO', prenom='Isabelle',
-                   role='medecin', centre='CRPC Mahajanga')
+                   role='medecin', centre='CRPC Mahajanga', actif=True)
     medecin.set_password('tbtrack2025')
 
     infirmier = User(email='infirmier@cdt.mg', nom='RASOLOFO', prenom='Patrick',
-                     role='infirmier', centre='CDT Toamasina')
+                     role='infirmier', centre='CDT Toamasina', actif=True)
     infirmier.set_password('tbtrack2025')
 
     laborantin = User(email='labo@crpc.mg', nom='RANDRIAMIARANA', prenom='Aina',
-                      role='laborantin', centre='CRPC Mahajanga')
+                      role='laborantin', centre='CRPC Mahajanga', actif=True)
     laborantin.set_password('tbtrack2025')
 
     db.session.add_all([coord, medecin, infirmier, laborantin])

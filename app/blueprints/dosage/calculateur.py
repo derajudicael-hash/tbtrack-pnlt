@@ -96,18 +96,36 @@ DOSES_ENFANT = {
 }
 
 
-def get_tranche_index(poids: float, adulte: bool) -> int:
+def get_tranche_index(poids: float, adulte: bool):
+    """Retourne l'index de tranche ou None si le poids est hors table."""
     limites = LIMITES_ADULTE if adulte else LIMITES_ENFANT
     for i, (low, high) in enumerate(limites):
         if low <= poids <= high:
             return i
-    return len(limites) - 1
+    return None
 
 
 def calculer_doses(poids: float, adulte: bool, schema: str) -> dict:
     idx = get_tranche_index(poids, adulte)
-    table = DOSES_ADULTE if adulte else DOSES_ENFANT
     tranches = TRANCHES_ADULTE if adulte else TRANCHES_ENFANT
+
+    if idx is None:
+        min_kg = LIMITES_ADULTE[0][0] if adulte else LIMITES_ENFANT[0][0]
+        max_kg = LIMITES_ADULTE[-1][0] if adulte else LIMITES_ENFANT[-1][1]
+        return {
+            'poids': poids,
+            'tranche': None,
+            'adulte': adulte,
+            'schema': SCHEMAS.get(schema, {}),
+            'medicaments': [],
+            'erreur_poids': (
+                f'Poids {poids} kg hors table de dosage '
+                f'({"adulte" if adulte else "enfant"} : {min_kg}–{max_kg} kg). '
+                'Consulter un médecin référent PNLT.'
+            ),
+        }
+
+    table = DOSES_ADULTE if adulte else DOSES_ENFANT
     tranche = tranches[idx]
 
     schema_info = SCHEMAS.get(schema, {})
@@ -142,4 +160,5 @@ def calculer_doses(poids: float, adulte: bool, schema: str) -> dict:
         'adulte': adulte,
         'schema': schema_info,
         'medicaments': resultats,
+        'erreur_poids': None,
     }

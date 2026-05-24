@@ -76,6 +76,7 @@ def declarer():
 
 @effets_bp.route('/<int:effet_id>/notifier', methods=['POST'])
 @login_required
+@role_required('coordinateur', 'medecin', 'infirmier')
 def marquer_notifie(effet_id):
     effet = EffetSecondaire.query.get_or_404(effet_id)
     effet.notifie_crpc = True
