@@ -1,9 +1,10 @@
 import json
-from datetime import date
+from datetime import date, timedelta
 from flask import Blueprint, render_template, redirect, url_for, flash, request, abort
 from flask_login import login_required, current_user
 from ...models import Traitement, Patient, SuiviDOT
 from ...utils.decorators import role_required
+from ...utils.notifier import notifier_roles
 from ...extensions import db
 from .forms import TraitementForm, SuiviDOTForm, BilanInitialForm, GROUPES_MEDICAMENTS
 
@@ -234,6 +235,24 @@ def dot_ajouter(traitement_id):
         dot.medicaments_omis = medicaments_omis
         db.session.add(dot)
         db.session.commit()
+        # Alerte DOT manqué 2 jours consécutifs
+        if not form.prise_confirmee.data:
+            date_obs = form.date_observation.data
+            jour_precedent = date_obs - timedelta(days=1)
+            dot_precedent = SuiviDOT.query.filter_by(
+                patient_id=patient.id,
+                traitement_id=traitement_id,
+                date_observation=jour_precedent,
+            ).first()
+            if dot_precedent and not dot_precedent.prise_confirmee:
+                notifier_roles(
+                    ['infirmier', 'medecin', 'coordinateur'],
+                    f'DOT manqué 2 jours consécutifs : {patient.code_patient} {patient.nom} {patient.prenom} — {jour_precedent.strftime("%d/%m")} et {date_obs.strftime("%d/%m/%Y")}.',
+                    type_notif='warning',
+                    url=url_for('traitement.detail', traitement_id=traitement_id),
+                    ref=f'dot_absent_{patient.id}_{date_obs}',
+                )
+                db.session.commit()
         statut = 'confirmée' if form.prise_confirmee.data else 'non confirmée'
         flash(f'Prise DOT du {form.date_observation.data.strftime("%d/%m/%Y")} ({statut}) enregistrée.', 'success')
         retour = request.form.get('depuis_fiche', '0')

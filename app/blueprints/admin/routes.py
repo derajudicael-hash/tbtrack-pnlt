@@ -3,6 +3,7 @@ from flask_login import login_required, current_user
 from ...models import User, Patient
 from ...extensions import db
 from .forms import UserCreateForm, UserEditForm
+from ...utils.notifier import notifier_user
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 
@@ -37,8 +38,16 @@ def toggle_actif(user_id):
         return redirect(url_for('admin.utilisateurs'))
     user.actif = not user.actif
     action = 'réactivé' if user.actif else 'désactivé'
-    flash(f'Compte de {user.full_name} {action}.', 'success' if user.actif else 'info')
     db.session.commit()
+    if user.actif:
+        notifier_user(
+            user.id,
+            f'Votre compte TBTrack a été activé par le coordinateur {current_user.full_name}. Vous pouvez maintenant vous connecter.',
+            type_notif='success',
+            ref=f'compte_active_{user.id}',
+        )
+        db.session.commit()
+    flash(f'Compte de {user.full_name} {action}.', 'success' if user.actif else 'info')
     return redirect(url_for('admin.utilisateurs'))
 
 

@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+{% block title %}Notifications{% endblock %}
+{% block breadcrumb %}<a href="{{ url_for('dashboard.index') }}">Accueil</a> / Notifications{% endblock %}
+{% block page_title %}Notifications{% endblock %}
+{% block page_subtitle %}
+  {% if nb_non_lues > 0 %}{{ nb_non_lues }} notification{{ 's' if nb_non_lues > 1 }} non lue{{ 's' if nb_non_lues > 1 }}{% else %}Toutes les notifications sont lues{% endif %}
+{% endblock %}
+
+{% block page_actions %}
+{% if nb_non_lues > 0 %}
+<form method="POST" action="{{ url_for('notifications.tout_lire') }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <button type="submit" class="btn btn-outline-secondary btn-sm">
+    <i class="fa fa-check-double me-1"></i>Tout marquer comme lu
+  </button>
+</form>
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-12 col-lg-8">
+
+    {% if not notifs %}
+    <div class="card-panel">
+      <div class="panel-body text-center py-5">
+        <div class="mb-4" style="font-size:3rem;opacity:.3"><i class="fa fa-bell-slash"></i></div>
+        <h5 class="text-muted">Aucune notification</h5>
+        <p class="text-muted small">Les alertes cliniques, mouvements de stock et événements importants apparaîtront ici.</p>
+      </div>
+    </div>
+    {% else %}
+
+    <div class="card-panel p-0">
+      {% for notif in notifs %}
+      <div class="notif-item {% if not notif.lue %}notif-unread{% endif %}" id="notif-{{ notif.id }}">
+        <div class="notif-icon notif-icon-{{ notif.type_notif }}">
+          {% if notif.type_notif == 'danger' %}<i class="fa fa-circle-exclamation"></i>
+          {% elif notif.type_notif == 'warning' %}<i class="fa fa-triangle-exclamation"></i>
+          {% elif notif.type_notif == 'success' %}<i class="fa fa-circle-check"></i>
+          {% else %}<i class="fa fa-circle-info"></i>{% endif %}
+        </div>
+        <div class="notif-body">
+          <div class="notif-message">{{ notif.message }}</div>
+          <div class="notif-meta">
+            <span class="notif-time">
+              <i class="fa fa-clock me-1"></i>{{ notif.created_at.strftime('%d/%m/%Y à %H:%M') }}
+            </span>
+            {% if not notif.lue %}<span class="badge bg-primary ms-2" style="font-size:.65rem;">Nouveau</span>{% endif %}
+          </div>
+        </div>
+        <div class="notif-actions">
+          {% if not notif.lue %}
+          <form method="POST" action="{{ url_for('notifications.marquer_lue', notif_id=notif.id) }}" class="d-inline">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-sm btn-outline-primary" title="Marquer comme lu {% if notif.url %}et ouvrir{% endif %}">
+              <i class="fa fa-check"></i>{% if notif.url %} Ouvrir{% endif %}
+            </button>
+          </form>
+          {% elif notif.url %}
+          <a href="{{ notif.url }}" class="btn btn-sm btn-outline-secondary">
+            <i class="fa fa-arrow-right"></i>
+          </a>
+          {% endif %}
+          <form method="POST" action="{{ url_for('notifications.supprimer', notif_id=notif.id) }}" class="d-inline ms-1">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-sm btn-outline-danger" title="Supprimer">
+              <i class="fa fa-trash"></i>
+            </button>
+          </form>
+        </div>
+      </div>
+      {% if not loop.last %}<hr class="m-0" style="border-color:var(--border-color);">{% endif %}
+      {% endfor %}
+    </div>
+
+    {% endif %}
+  </div>
+</div>
+
+<style>
+.notif-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 18px 20px;
+  transition: background 0.15s;
+}
+.notif-unread { background: rgba(59,130,246,.05); }
+.notif-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 15px;
+}
+.notif-icon-danger  { background: rgba(220,53,69,.15);  color: #dc3545; }
+.notif-icon-warning { background: rgba(255,193,7,.15);  color: #ffc107; }
+.notif-icon-success { background: rgba(25,135,84,.15);  color: #198754; }
+.notif-icon-info    { background: rgba(13,202,240,.15); color: #0dcaf0; }
+.notif-body { flex: 1; min-width: 0; }
+.notif-message { font-size: 14px; color: var(--text-color, #f0f6ff); line-height: 1.5; margin-bottom: 4px; }
+.notif-meta   { font-size: 12px; color: var(--text-muted, #6b839a); }
+.notif-time   { font-size: 12px; }
+.notif-actions { display: flex; align-items: center; flex-shrink: 0; gap: 4px; }
+</style>
+{% endblock %}

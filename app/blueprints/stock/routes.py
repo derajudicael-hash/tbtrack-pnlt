@@ -5,6 +5,7 @@ from ...models import Medicament, MouvementStock
 from ...extensions import db
 from .forms import MouvementForm, MedicamentForm
 from ...utils.decorators import role_required
+from ...utils.notifier import notifier_roles
 
 stock_bp = Blueprint('stock', __name__, url_prefix='/stock')
 
@@ -87,6 +88,26 @@ def mouvement(med_id):
         med.quantite_stock = qte_apres
         db.session.add(mv)
         db.session.commit()
+        # Alertes stock après mouvement de sortie/perte/expiration
+        if type_mv in ('sortie', 'perte', 'expiration', 'ajustement') and qte_apres < qte_avant:
+            if qte_apres == 0:
+                notifier_roles(
+                    ['coordinateur'],
+                    f'RUPTURE DE STOCK : {med.nom} ({med.dosage_unitaire or med.forme}) — Stock à 0 unité. Commande urgente requise.',
+                    type_notif='danger',
+                    url=url_for('stock.inventaire'),
+                    ref=f'rupture_{med.id}',
+                )
+                db.session.commit()
+            elif qte_apres <= med.seuil_alerte:
+                notifier_roles(
+                    ['coordinateur'],
+                    f'Stock faible : {med.nom} ({med.dosage_unitaire or med.forme}) — {qte_apres} {med.unite} restant(s), sous le seuil d\'alerte ({med.seuil_alerte}).',
+                    type_notif='warning',
+                    url=url_for('stock.inventaire'),
+                    ref=f'stock_bas_{med.id}_{qte_apres}',
+                )
+                db.session.commit()
         flash(f'Mouvement enregistré : {mv.type_label} de {qte} {med.unite}. '
               f'Stock : {qte_avant} → {qte_apres} {med.unite}.', 'success')
         return redirect(url_for('stock.historique', med_id=med_id))

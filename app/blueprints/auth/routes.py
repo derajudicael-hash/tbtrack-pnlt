@@ -3,6 +3,7 @@ from flask_login import login_user, logout_user, login_required, current_user
 from ...models import User
 from ...extensions import db
 from .forms import LoginForm, RegisterForm, ProfilForm
+from ...utils.notifier import notifier_roles
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
 
@@ -49,6 +50,14 @@ def register():
                     actif=False)
         user.set_password(form.password.data)
         db.session.add(user)
+        db.session.commit()
+        notifier_roles(
+            ['coordinateur'],
+            f'Nouveau compte en attente d\'activation : {user.full_name} ({user.role_label}) — Centre : {user.centre or "non précisé"}',
+            type_notif='info',
+            url=url_for('admin.utilisateurs'),
+            ref=f'nouveau_compte_{user.id}',
+        )
         db.session.commit()
         flash('Compte créé. Il sera activé par votre coordinateur PNLT avant que vous puissiez vous connecter.', 'info')
         return redirect(url_for('auth.login'))

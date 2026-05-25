@@ -4,6 +4,7 @@ from ...models import EffetSecondaire, Patient
 from ...extensions import db
 from .forms import EffetForm
 from ...utils.decorators import role_required
+from ...utils.notifier import notifier_roles
 from datetime import datetime
 
 effets_bp = Blueprint('effets', __name__, url_prefix='/effets')
@@ -63,7 +64,16 @@ def declarer():
         db.session.add(effet)
         db.session.commit()
         if effet.severite == 'severe':
-            flash('⚠ Effet sévère enregistré — notification CRPC requise dans les 24h.', 'danger')
+            patient_obj = Patient.query.get(form.patient_id.data)
+            notifier_roles(
+                ['medecin', 'coordinateur'],
+                f'URGENT — Effet sévère : {patient_obj.code_patient} {patient_obj.nom} {patient_obj.prenom} — {effet.symptome} (déclaré par {current_user.full_name})',
+                type_notif='danger',
+                url=url_for('effets.liste'),
+                ref=f'effet_severe_{effet.id}',
+            )
+            db.session.commit()
+            flash('Effet sévère enregistré — médecins et coordinateurs notifiés.', 'danger')
         else:
             flash('Effet secondaire déclaré avec succès.', 'success')
         pid = request.form.get('retour_patient_id', type=int)

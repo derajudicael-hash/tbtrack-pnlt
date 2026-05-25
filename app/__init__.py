@@ -2,7 +2,7 @@ import os
 from flask import Flask
 from .config import Config
 from .extensions import db, login_manager, migrate, csrf
-from .models import User
+from .models import User, Notification
 
 
 def _migrate_actif_column():
@@ -83,6 +83,7 @@ def create_app():
     from .blueprints.labo import labo_bp
     from .blueprints.admin import admin_bp
     from .blueprints.search import search_bp
+    from .blueprints.notifications import notifications_bp
 
     app.register_blueprint(public_bp)
     app.register_blueprint(auth_bp)
@@ -97,6 +98,20 @@ def create_app():
     app.register_blueprint(labo_bp)
     app.register_blueprint(admin_bp)
     app.register_blueprint(search_bp)
+    app.register_blueprint(notifications_bp)
+
+    # ── Context processor : injecte le compteur de notifs dans tous les templates ──
+    from flask_login import current_user as cu
+
+    @app.context_processor
+    def inject_notif_count():
+        try:
+            if cu.is_authenticated:
+                nb = Notification.query.filter_by(user_id=cu.id, lue=False).count()
+                return {'nb_notifs_non_lues': nb}
+        except Exception:
+            pass
+        return {'nb_notifs_non_lues': 0}
 
     @app.errorhandler(403)
     def forbidden(e):

@@ -1518,3 +1518,38 @@ a.kpi-card-link:hover .kpi-card {
   box-shadow: 0 0 0 3px var(--accent-glow), var(--shadow-sm);
   transform: translateY(-2px);
 }
+
+/* ── Cloche notifications ───────────────────────────────────────────────── */
+.notif-bell {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-md);
+  color: var(--text-2);
+  text-decoration: none;
+  transition: color var(--dur), background var(--dur);
+  font-size: 15px;
+}
+.notif-bell:hover {
+  color: var(--text-1);
+  background: var(--bg-raised);
+}
+.notif-badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  min-width: 16px;
+  height: 16px;
+  border-radius: var(--radius-pill);
+  background: var(--danger);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 16px;
+  text-align: center;
+  padding: 0 3px;
+  pointer-events: none;
+}

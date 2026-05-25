@@ -5,6 +5,7 @@ from ...extensions import db
 from .forms import PatientForm, SuiviPonderalForm
 from ..traitement.forms import BilanInitialForm
 from ...utils.decorators import role_required
+from ...utils.notifier import notifier_roles
 from datetime import date
 
 patients_bp = Blueprint('patients', __name__, url_prefix='/patients')
@@ -150,17 +151,30 @@ def bilan(patient_id):
 
     if form.validate_on_submit():
         if bilan_existant:
-            # Mise à jour du bilan existant
             form.populate_obj(bilan_existant)
             db.session.commit()
+            bilan_sauve = bilan_existant
             flash('Bilan M0 mis à jour.', 'success')
         else:
-            # Création d'un nouveau bilan
             nouveau_bilan = BilanInitial(patient_id=patient_id)
             form.populate_obj(nouveau_bilan)
             db.session.add(nouveau_bilan)
             db.session.commit()
+            bilan_sauve = nouveau_bilan
             flash('Bilan initial M0 enregistré.', 'success')
+        # Alerte QTc critique
+        if bilan_sauve.ecg_alerte == 'stop' or bilan_sauve.ecg_alerte_j7 == 'stop':
+            valeur = bilan_sauve.ecg_qt_ms if bilan_sauve.ecg_alerte == 'stop' else bilan_sauve.ecg_j7_qt_ms
+            moment = 'M0' if bilan_sauve.ecg_alerte == 'stop' else 'J7'
+            notifier_roles(
+                ['medecin', 'coordinateur'],
+                f'URGENCE ECG — QTc {valeur} ms ({moment}) ≥ 500 ms : {patient.code_patient} {patient.nom} {patient.prenom}. Arrêt immédiat des médicaments allongeant le QT.',
+                type_notif='danger',
+                url=url_for('patients.fiche', patient_id=patient_id, _anchor='tab-bilan'),
+                ref=f'qtc_critique_{patient_id}_{moment}',
+            )
+            db.session.commit()
+            flash('ALERTE QTc ≥ 500 ms — médecins et coordinateurs notifiés.', 'danger')
         return redirect(url_for('patients.fiche', patient_id=patient_id, _anchor='tab-bilan'))
 
     if not form.date_bilan.data:

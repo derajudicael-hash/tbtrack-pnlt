@@ -9,3 +9,4 @@ from .suivi_dot import SuiviDOT
 from .bilan_initial import BilanInitial
 from .suivi_ponderal import SuiviPonderal
 from .note_clinique import NoteClinique
+from .notification import Notification

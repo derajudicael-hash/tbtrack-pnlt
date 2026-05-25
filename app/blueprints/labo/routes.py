@@ -3,6 +3,7 @@ from flask_login import login_required, current_user
 from ...models import ExamenLabo, Patient
 from ...extensions import db
 from .forms import ExamenLaboForm
+from ...utils.notifier import notifier_roles
 from datetime import date
 
 labo_bp = Blueprint('labo', __name__, url_prefix='/labo')
@@ -101,6 +102,18 @@ def saisir():
 
         if examen.culture_resultat == 'negatif':
             flash(f'Conversion bactériologique confirmée à M{form.mois_suivi.data} !', 'info')
+
+        # Alerte échec thérapeutique : culture positive à M6 ou plus
+        if examen.mois_suivi >= 6 and examen.culture_resultat == 'positif':
+            notifier_roles(
+                ['medecin', 'coordinateur'],
+                f'Échec thérapeutique présumé — Culture positive à M{examen.mois_suivi} : {patient.code_patient} {patient.nom} {patient.prenom}. Révision du schéma requise.',
+                type_notif='danger',
+                url=url_for('patients.fiche', patient_id=patient.id, _anchor='tab-labo'),
+                ref=f'echec_culture_{patient.id}_{examen.mois_suivi}',
+            )
+            db.session.commit()
+            flash(f'ALERTE — Culture positive à M{examen.mois_suivi} : médecins et coordinateurs notifiés.', 'danger')
 
         # Retour à la fiche patient si on venait de là
         retour_patient_id = request.form.get('retour_patient_id', type=int)

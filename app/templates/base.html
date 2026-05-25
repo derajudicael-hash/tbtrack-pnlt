@@ -129,6 +129,14 @@
       <button class="mobile-search-btn" onclick="toggleMobileSearch()" title="Rechercher">
         <i class="fa fa-magnifying-glass"></i>
       </button>
+      <!-- Cloche notifications -->
+      <a href="{{ url_for('notifications.centre') }}" class="notif-bell ms-2" title="Notifications"
+         aria-label="Notifications{% if nb_notifs_non_lues > 0 %} ({{ nb_notifs_non_lues }} non lues){% endif %}">
+        <i class="fa fa-bell"></i>
+        {% if nb_notifs_non_lues > 0 %}
+        <span class="notif-badge">{{ nb_notifs_non_lues if nb_notifs_non_lues < 100 else '99+' }}</span>
+        {% endif %}
+      </a>
       <span class="badge-version ms-2">v1.0</span>
       <a href="{{ url_for('auth.logout') }}" class="topbar-logout-btn" title="Déconnexion">
         <i class="fa fa-right-from-bracket"></i>
