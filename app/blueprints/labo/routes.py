@@ -1,23 +1,19 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request, abort
+from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_required, current_user
 from ...models import ExamenLabo, Patient
 from ...extensions import db
 from .forms import ExamenLaboForm
 from ...utils.notifier import notifier_roles
+from ...utils.decorators import role_required
 from datetime import date
 
 labo_bp = Blueprint('labo', __name__, url_prefix='/labo')
 
 
-def _labo_required():
-    if current_user.role not in ('laborantin', 'coordinateur', 'medecin'):
-        abort(403)
-
-
 @labo_bp.route('/')
 @login_required
+@role_required('laborantin', 'coordinateur', 'medecin')
 def index():
-    _labo_required()
     q = request.args.get('q', '').strip()
     mois = request.args.get('mois', '')
 
@@ -56,8 +52,8 @@ def index():
 
 @labo_bp.route('/saisir', methods=['GET', 'POST'])
 @login_required
+@role_required('laborantin', 'coordinateur', 'medecin')
 def saisir():
-    _labo_required()
     form = ExamenLaboForm()
     tous = Patient.query.order_by(Patient.nom, Patient.prenom).all()
     form.patient_id.choices = [(p.id, f'{p.code_patient} — {p.nom} {p.prenom} ({p.statut_label})')
@@ -94,16 +90,9 @@ def saisir():
             dst_ofloxacine=form.dst_ofloxacine.data or None,
             notes=form.notes.data,
         )
+        patient = db.session.get(Patient, form.patient_id.data)
         db.session.add(examen)
-        db.session.commit()
-
-        patient = Patient.query.get(form.patient_id.data)
-        flash(f'Résultats M{form.mois_suivi.data} enregistrés pour {patient.nom} {patient.prenom}.', 'success')
-
-        if examen.culture_resultat == 'negatif':
-            flash(f'Conversion bactériologique confirmée à M{form.mois_suivi.data} !', 'info')
-
-        # Alerte échec thérapeutique : culture positive à M6 ou plus
+        # Alerte échec thérapeutique — dans la même transaction
         if examen.mois_suivi >= 6 and examen.culture_resultat == 'positif':
             notifier_roles(
                 ['medecin', 'coordinateur'],
@@ -112,7 +101,12 @@ def saisir():
                 url=url_for('patients.fiche', patient_id=patient.id, _anchor='tab-labo'),
                 ref=f'echec_culture_{patient.id}_{examen.mois_suivi}',
             )
-            db.session.commit()
+        db.session.commit()
+
+        flash(f'Résultats M{form.mois_suivi.data} enregistrés pour {patient.nom} {patient.prenom}.', 'success')
+        if examen.culture_resultat == 'negatif':
+            flash(f'Conversion bactériologique confirmée à M{form.mois_suivi.data} !', 'info')
+        if examen.mois_suivi >= 6 and examen.culture_resultat == 'positif':
             flash(f'ALERTE — Culture positive à M{examen.mois_suivi} : médecins et coordinateurs notifiés.', 'danger')
 
         # Retour à la fiche patient si on venait de là
@@ -133,18 +127,17 @@ def saisir():
 
 @labo_bp.route('/<int:examen_id>')
 @login_required
+@role_required('laborantin', 'coordinateur', 'medecin')
 def detail(examen_id):
-    _labo_required()
-    examen = ExamenLabo.query.get_or_404(examen_id)
+    examen = db.get_or_404(ExamenLabo, examen_id)
     return render_template('labo/detail.html', examen=examen)
 
 
 @labo_bp.route('/<int:examen_id>/supprimer', methods=['POST'])
 @login_required
+@role_required('laborantin', 'coordinateur')
 def supprimer(examen_id):
-    if current_user.role not in ('laborantin', 'coordinateur'):
-        abort(403)
-    examen = ExamenLabo.query.get_or_404(examen_id)
+    examen = db.get_or_404(ExamenLabo, examen_id)
     db.session.delete(examen)
     db.session.commit()
     flash('Examen supprimé.', 'info')
@@ -153,9 +146,9 @@ def supprimer(examen_id):
 
 @labo_bp.route('/patient/<int:patient_id>')
 @login_required
+@role_required('laborantin', 'coordinateur', 'medecin')
 def suivi_patient(patient_id):
-    _labo_required()
-    patient = Patient.query.get_or_404(patient_id)
+    patient = db.get_or_404(Patient, patient_id)
     examens = (ExamenLabo.query
                .filter_by(patient_id=patient_id)
                .order_by(ExamenLabo.mois_suivi)

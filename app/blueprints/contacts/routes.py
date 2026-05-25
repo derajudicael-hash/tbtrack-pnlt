@@ -84,7 +84,7 @@ def ajouter():
 @contacts_bp.route('/<int:contact_id>')
 @login_required
 def fiche(contact_id):
-    contact = Contact.query.get_or_404(contact_id)
+    contact = db.get_or_404(Contact, contact_id)
     return render_template('contacts/fiche.html', contact=contact, today=date.today())
 
 
@@ -92,28 +92,14 @@ def fiche(contact_id):
 @login_required
 @role_required('coordinateur', 'medecin', 'infirmier')
 def modifier(contact_id):
-    contact = Contact.query.get_or_404(contact_id)
+    contact = db.get_or_404(Contact, contact_id)
     form = ContactForm(obj=contact)
     patients = Patient.query.order_by(Patient.nom, Patient.prenom).all()
     form.patient_source_id.choices = [(p.id, f'{p.code_patient} — {p.nom} {p.prenom} ({p.statut_label})')
                                       for p in patients]
     if form.validate_on_submit():
-        contact.patient_source_id = form.patient_source_id.data
-        contact.nom = form.nom.data.upper()
-        contact.prenom = form.prenom.data
-        contact.age = form.age.data
-        contact.sexe = form.sexe.data
-        contact.relation = form.relation.data
-        contact.telephone = form.telephone.data
-        contact.date_prochaine_visite = form.date_prochaine_visite.data
-        contact.statut = form.statut.data
-        contact.notes = form.notes.data
-        contact.date_depistage = form.date_depistage.data
-        contact.resultat_genexpert = form.resultat_genexpert.data
-        contact.radiographie_thorax = form.radiographie_thorax.data
-        contact.ipt_propose = form.ipt_propose.data
-        contact.ipt_accepte = form.ipt_accepte.data
-        contact.date_prochain_controle = form.date_prochain_controle.data
+        form.populate_obj(contact)
+        contact.nom = contact.nom.upper()
         db.session.commit()
         flash('Contact mis à jour.', 'success')
         return redirect(url_for('contacts.fiche', contact_id=contact_id))
@@ -124,7 +110,7 @@ def modifier(contact_id):
 @login_required
 @role_required('coordinateur', 'medecin')
 def supprimer(contact_id):
-    contact = Contact.query.get_or_404(contact_id)
+    contact = db.get_or_404(Contact, contact_id)
     db.session.delete(contact)
     db.session.commit()
     flash('Contact supprimé.', 'info')

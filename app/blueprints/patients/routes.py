@@ -87,7 +87,7 @@ def ajouter():
 @patients_bp.route('/<int:patient_id>')
 @login_required
 def fiche(patient_id):
-    patient = Patient.query.get_or_404(patient_id)
+    patient = db.get_or_404(Patient, patient_id)
     traitement = Traitement.query.filter_by(patient_id=patient_id).order_by(Traitement.created_at.desc()).first()
     effets = EffetSecondaire.query.filter_by(patient_id=patient_id).order_by(EffetSecondaire.date_declaration.desc()).all()
     contacts = Contact.query.filter_by(patient_source_id=patient_id).all()
@@ -119,7 +119,7 @@ def fiche(patient_id):
 @login_required
 @role_required('coordinateur', 'medecin')
 def modifier(patient_id):
-    patient = Patient.query.get_or_404(patient_id)
+    patient = db.get_or_404(Patient, patient_id)
     form = PatientForm(obj=patient)
     if form.validate_on_submit():
         form.populate_obj(patient)
@@ -134,7 +134,7 @@ def modifier(patient_id):
 @login_required
 @role_required('coordinateur')
 def supprimer(patient_id):
-    patient = Patient.query.get_or_404(patient_id)
+    patient = db.get_or_404(Patient, patient_id)
     db.session.delete(patient)
     db.session.commit()
     flash('Patient supprimé.', 'info')
@@ -145,7 +145,7 @@ def supprimer(patient_id):
 @login_required
 @role_required('coordinateur', 'medecin')
 def bilan(patient_id):
-    patient = Patient.query.get_or_404(patient_id)
+    patient = db.get_or_404(Patient, patient_id)
     bilan_existant = BilanInitial.query.filter_by(patient_id=patient_id).first()
     form = BilanInitialForm(obj=bilan_existant)
 
@@ -162,7 +162,7 @@ def bilan(patient_id):
             db.session.commit()
             bilan_sauve = nouveau_bilan
             flash('Bilan initial M0 enregistré.', 'success')
-        # Alerte QTc critique
+        # Alerte QTc critique — dans la même transaction que le bilan
         if bilan_sauve.ecg_alerte == 'stop' or bilan_sauve.ecg_alerte_j7 == 'stop':
             valeur = bilan_sauve.ecg_qt_ms if bilan_sauve.ecg_alerte == 'stop' else bilan_sauve.ecg_j7_qt_ms
             moment = 'M0' if bilan_sauve.ecg_alerte == 'stop' else 'J7'
@@ -173,8 +173,8 @@ def bilan(patient_id):
                 url=url_for('patients.fiche', patient_id=patient_id, _anchor='tab-bilan'),
                 ref=f'qtc_critique_{patient_id}_{moment}',
             )
-            db.session.commit()
             flash('ALERTE QTc ≥ 500 ms — médecins et coordinateurs notifiés.', 'danger')
+        db.session.commit()
         return redirect(url_for('patients.fiche', patient_id=patient_id, _anchor='tab-bilan'))
 
     if not form.date_bilan.data:
@@ -192,7 +192,7 @@ def bilan(patient_id):
 @login_required
 @role_required('coordinateur', 'medecin', 'infirmier')
 def parametres(patient_id):
-    patient = Patient.query.get_or_404(patient_id)
+    patient = db.get_or_404(Patient, patient_id)
     form = SuiviPonderalForm()
     if form.validate_on_submit():
         existant = SuiviPonderal.query.filter_by(
@@ -234,7 +234,7 @@ def parametres(patient_id):
 @login_required
 @role_required('coordinateur', 'medecin')
 def parametres_supprimer(patient_id, mesure_id):
-    mesure = SuiviPonderal.query.get_or_404(mesure_id)
+    mesure = db.get_or_404(SuiviPonderal, mesure_id)
     db.session.delete(mesure)
     db.session.commit()
     flash('Mesure supprimée.', 'info')
@@ -247,7 +247,7 @@ def parametres_supprimer(patient_id, mesure_id):
 @login_required
 @role_required('coordinateur', 'medecin', 'infirmier')
 def note_ajouter(patient_id):
-    Patient.query.get_or_404(patient_id)
+    db.get_or_404(Patient, patient_id)
     contenu = request.form.get('contenu', '').strip()
     if not contenu:
         flash('La note ne peut pas être vide.', 'warning')
@@ -263,7 +263,7 @@ def note_ajouter(patient_id):
 @login_required
 @role_required('coordinateur', 'medecin')
 def note_supprimer(patient_id, note_id):
-    note = NoteClinique.query.get_or_404(note_id)
+    note = db.get_or_404(NoteClinique, note_id)
     db.session.delete(note)
     db.session.commit()
     flash('Note supprimée.', 'info')

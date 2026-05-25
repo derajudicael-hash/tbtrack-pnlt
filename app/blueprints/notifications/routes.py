@@ -13,7 +13,7 @@ def centre():
               .filter_by(user_id=current_user.id)
               .order_by(Notification.lue.asc(), Notification.created_at.desc())
               .all())
-    nb_non_lues = sum(1 for n in notifs if not n.lue)
+    nb_non_lues = Notification.query.filter_by(user_id=current_user.id, lue=False).count()
     return render_template('notifications/centre.html',
                            notifs=notifs,
                            nb_non_lues=nb_non_lues)
@@ -22,7 +22,7 @@ def centre():
 @notifications_bp.route('/<int:notif_id>/lire', methods=['POST'])
 @login_required
 def marquer_lue(notif_id):
-    notif = Notification.query.get_or_404(notif_id)
+    notif = db.get_or_404(Notification, notif_id)
     if notif.user_id != current_user.id:
         return '', 403
     notif.lue = True
@@ -45,7 +45,7 @@ def tout_lire():
 @notifications_bp.route('/<int:notif_id>/supprimer', methods=['POST'])
 @login_required
 def supprimer(notif_id):
-    notif = Notification.query.get_or_404(notif_id)
+    notif = db.get_or_404(Notification, notif_id)
     if notif.user_id != current_user.id:
         return '', 403
     db.session.delete(notif)

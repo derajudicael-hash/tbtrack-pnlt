@@ -72,8 +72,8 @@ class Traitement(db.Model):
 
     @property
     def mois_ecoules(self):
-        """Nombre de mois depuis le début du traitement."""
+        """Nombre de mois calendaires depuis le début du traitement."""
         if self.date_debut:
-            delta = date.today() - self.date_debut
-            return delta.days // 30
+            today = date.today()
+            return (today.year - self.date_debut.year) * 12 + (today.month - self.date_debut.month)
         return 0

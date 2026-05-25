@@ -1,23 +1,18 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, abort, request
+from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_required, current_user
 from ...models import User, Patient
 from ...extensions import db
 from .forms import UserCreateForm, UserEditForm
 from ...utils.notifier import notifier_user
+from ...utils.decorators import role_required
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 
 
-def require_coordinateur():
-    """Vérifie que l'utilisateur connecté est coordinateur, sinon retourne 403."""
-    if not current_user.is_authenticated or current_user.role != 'coordinateur':
-        abort(403)
-
-
 @admin_bp.route('/utilisateurs')
 @login_required
+@role_required('coordinateur')
 def utilisateurs():
-    require_coordinateur()
     users = User.query.order_by(User.nom.asc()).all()
     # Calcul du nombre de patients par utilisateur (médecins)
     nb_patients_par_user = {}
@@ -30,15 +25,14 @@ def utilisateurs():
 
 @admin_bp.route('/utilisateurs/<int:user_id>/toggle-actif', methods=['POST'])
 @login_required
+@role_required('coordinateur')
 def toggle_actif(user_id):
-    require_coordinateur()
-    user = User.query.get_or_404(user_id)
+    user = db.get_or_404(User, user_id)
     if user.id == current_user.id:
         flash('Vous ne pouvez pas désactiver votre propre compte.', 'warning')
         return redirect(url_for('admin.utilisateurs'))
     user.actif = not user.actif
     action = 'réactivé' if user.actif else 'désactivé'
-    db.session.commit()
     if user.actif:
         notifier_user(
             user.id,
@@ -46,15 +40,15 @@ def toggle_actif(user_id):
             type_notif='success',
             ref=f'compte_active_{user.id}',
         )
-        db.session.commit()
+    db.session.commit()
     flash(f'Compte de {user.full_name} {action}.', 'success' if user.actif else 'info')
     return redirect(url_for('admin.utilisateurs'))
 
 
 @admin_bp.route('/utilisateurs/creer', methods=['GET', 'POST'])
 @login_required
+@role_required('coordinateur')
 def creer_utilisateur():
-    require_coordinateur()
     form = UserCreateForm()
     if form.validate_on_submit():
         # Vérifier que l'email n'est pas déjà utilisé
@@ -68,20 +62,21 @@ def creer_utilisateur():
             email=form.email.data.lower(),
             role=form.role.data,
             centre=form.centre.data,
+            actif=True,  # Créé par coordinateur → directement actif
         )
         user.set_password(form.password.data)
         db.session.add(user)
         db.session.commit()
-        flash(f'Compte créé pour {user.full_name} ({user.role_label}).', 'success')
+        flash(f'Compte créé et activé pour {user.full_name} ({user.role_label}). Il peut se connecter immédiatement.', 'success')
         return redirect(url_for('admin.utilisateurs'))
     return render_template('admin/creer_user.html', form=form)
 
 
 @admin_bp.route('/utilisateurs/<int:user_id>/modifier', methods=['GET', 'POST'])
 @login_required
+@role_required('coordinateur')
 def modifier_utilisateur(user_id):
-    require_coordinateur()
-    user = User.query.get_or_404(user_id)
+    user = db.get_or_404(User, user_id)
     form = UserEditForm(obj=user)
     if form.validate_on_submit():
         user.nom = form.nom.data.upper()

@@ -1,6 +1,8 @@
 from flask import Blueprint, render_template
 from flask_login import login_required, current_user
-from ...models import Patient, EffetSecondaire, Medicament, Contact, ExamenLabo, SuiviDOT
+from sqlalchemy.orm import joinedload
+from ...models import Patient, EffetSecondaire, Medicament, Contact, ExamenLabo, SuiviDOT, Traitement
+from ...models import BilanInitial
 from datetime import date, timedelta
 
 dashboard_bp = Blueprint('dashboard', __name__, url_prefix='/dashboard')
@@ -11,8 +13,16 @@ dashboard_bp = Blueprint('dashboard', __name__, url_prefix='/dashboard')
 def index():
     role = current_user.role
 
-    patients = Patient.query.all()
-    actifs   = [p for p in patients if p.statut == 'en_cours']
+    # Chargement en une seule requête avec joinedload pour éviter les N+1
+    patients = (Patient.query
+                .options(
+                    joinedload(Patient.bilan_initial),
+                    joinedload(Patient.examens_labo),
+                    joinedload(Patient.effets),
+                    joinedload(Patient.traitements),
+                )
+                .all())
+    actifs = [p for p in patients if p.statut == 'en_cours']
 
     if role == 'medecin':
         return _dashboard_medecin(actifs, patients)
@@ -27,7 +37,7 @@ def index():
 # ── Médecin ──────────────────────────────────────────────────────────────────
 
 def _dashboard_medecin(actifs, patients):
-    alertes_effets = [e for e in EffetSecondaire.query.all() if e.alerte_active]
+    alertes_effets = EffetSecondaire.query.filter_by(severite='severe', notifie_crpc=False).all()
     patients_ecg   = [p for p in actifs if p.alerte_ecg_critique]
     patients_echec = [p for p in actifs if p.alerte_echec_therapeutique]
 
@@ -116,7 +126,7 @@ def _dashboard_infirmier(actifs):
     effets_recents = EffetSecondaire.query.order_by(
         EffetSecondaire.date_declaration.desc()
     ).limit(5).all()
-    alertes_effets = [e for e in EffetSecondaire.query.all() if e.alerte_active]
+    alertes_effets = EffetSecondaire.query.filter_by(severite='severe', notifie_crpc=False).all()
 
     return render_template('dashboard/infirmier.html',
         nb_actifs=len(actifs),
@@ -181,7 +191,7 @@ def _dashboard_coordinateur(actifs, patients):
     perdus  = [p for p in patients if p.statut == 'perdu_de_vue']
     echecs  = [p for p in patients if p.statut == 'echec']
 
-    alertes       = [e for e in EffetSecondaire.query.all() if e.alerte_active]
+    alertes       = EffetSecondaire.query.filter_by(severite='severe', notifie_crpc=False).all()
     stocks        = Medicament.query.all()
     stocks_bas    = [m for m in stocks if m.stock_bas]
     contacts      = Contact.query.filter_by(statut='en_suivi').all()
@@ -202,11 +212,15 @@ def _dashboard_coordinateur(actifs, patients):
     mois_labels = []
     mois_data   = []
     for i in range(5, -1, -1):
-        mois_date  = date(today.year, today.month, 1) - timedelta(days=30 * i)
-        m_next     = mois_date.month % 12 + 1
-        y_next     = mois_date.year + (1 if mois_date.month == 12 else 0)
-        mois_fin   = date(y_next, m_next, 1)
-        count      = Patient.query.filter(
+        # Soustraction correcte de i mois calendaires (pas 30j fixes)
+        m = today.month - i
+        y = today.year + (m - 1) // 12
+        m = ((m - 1) % 12) + 1
+        mois_date = date(y, m, 1)
+        m_next = mois_date.month % 12 + 1
+        y_next = mois_date.year + (1 if mois_date.month == 12 else 0)
+        mois_fin = date(y_next, m_next, 1)
+        count = Patient.query.filter(
             Patient.date_debut_traitement >= mois_date,
             Patient.date_debut_traitement < mois_fin,
         ).count()

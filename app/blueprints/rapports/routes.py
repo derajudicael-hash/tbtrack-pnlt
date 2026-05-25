@@ -37,8 +37,8 @@ def _build_stats():
     succes      = gueris + termines
     taux_succes = round(succes / total * 100) if total else 0
 
-    contacts_tb_mr = sum(1 for c in Contact.query.all() if c.statut == 'tb_mr_confirmee')
-    effets_severe  = sum(1 for e in EffetSecondaire.query.all() if e.severite == 'severe')
+    contacts_tb_mr = Contact.query.filter_by(statut='tb_mr_confirmee').count()
+    effets_severe  = EffetSecondaire.query.filter_by(severite='severe').count()
 
     trimestre = f'T{_current_q()} {date.today().year}'
     return dict(
@@ -169,13 +169,12 @@ def _build_annuel(year):
     debut = date(year, 1, 1)
     fin   = date(year, 12, 31)
 
-    # Patients diagnostiqués dans l'année (ou tous si aucun diagnostic daté)
-    par_date = Patient.query.filter(
+    # Patients diagnostiqués dans l'année sélectionnée uniquement
+    patients = Patient.query.filter(
         Patient.date_diagnostic >= debut,
         Patient.date_diagnostic <= fin,
     ).all()
-    patients = par_date if par_date else Patient.query.all()
-    total    = len(patients)
+    total = len(patients)
 
     # Résultats de traitement
     par_statut = {

@@ -45,7 +45,7 @@ def ajouter():
 @login_required
 @role_required('coordinateur')
 def modifier(med_id):
-    med = Medicament.query.get_or_404(med_id)
+    med = db.get_or_404(Medicament, med_id)
     form = MedicamentForm(obj=med)
     if form.validate_on_submit():
         form.populate_obj(med)
@@ -59,7 +59,7 @@ def modifier(med_id):
 @login_required
 @role_required('coordinateur')
 def mouvement(med_id):
-    med = Medicament.query.get_or_404(med_id)
+    med = db.get_or_404(Medicament, med_id)
     form = MouvementForm()
     if form.validate_on_submit():
         qte = form.quantite.data
@@ -87,8 +87,7 @@ def mouvement(med_id):
         )
         med.quantite_stock = qte_apres
         db.session.add(mv)
-        db.session.commit()
-        # Alertes stock après mouvement de sortie/perte/expiration
+        # Alertes stock — dans la même transaction
         if type_mv in ('sortie', 'perte', 'expiration', 'ajustement') and qte_apres < qte_avant:
             if qte_apres == 0:
                 notifier_roles(
@@ -98,7 +97,6 @@ def mouvement(med_id):
                     url=url_for('stock.inventaire'),
                     ref=f'rupture_{med.id}',
                 )
-                db.session.commit()
             elif qte_apres <= med.seuil_alerte:
                 notifier_roles(
                     ['coordinateur'],
@@ -107,7 +105,7 @@ def mouvement(med_id):
                     url=url_for('stock.inventaire'),
                     ref=f'stock_bas_{med.id}_{qte_apres}',
                 )
-                db.session.commit()
+        db.session.commit()
         flash(f'Mouvement enregistré : {mv.type_label} de {qte} {med.unite}. '
               f'Stock : {qte_avant} → {qte_apres} {med.unite}.', 'success')
         return redirect(url_for('stock.historique', med_id=med_id))
@@ -122,7 +120,7 @@ def mouvement(med_id):
 @stock_bp.route('/<int:med_id>/historique')
 @login_required
 def historique(med_id):
-    med = Medicament.query.get_or_404(med_id)
+    med = db.get_or_404(Medicament, med_id)
     mouvements = MouvementStock.query.filter_by(
         medicament_id=med_id
     ).order_by(MouvementStock.date_mouvement.desc()).all()
@@ -133,7 +131,7 @@ def historique(med_id):
 @login_required
 @role_required('coordinateur')
 def supprimer(med_id):
-    med = Medicament.query.get_or_404(med_id)
+    med = db.get_or_404(Medicament, med_id)
     if med.mouvements:
         flash(f'Impossible de supprimer "{med.nom}" : il a un historique de mouvements.', 'danger')
         return redirect(url_for('stock.inventaire'))
@@ -146,8 +144,9 @@ def supprimer(med_id):
 # Route rétro-compatible avec l'ancien système delta +/-
 @stock_bp.route('/<int:med_id>/ajuster', methods=['POST'])
 @login_required
+@role_required('coordinateur')
 def ajuster_stock(med_id):
-    med = Medicament.query.get_or_404(med_id)
+    med = db.get_or_404(Medicament, med_id)
     try:
         delta = int(request.form.get('delta', 0))
         if delta == 0:

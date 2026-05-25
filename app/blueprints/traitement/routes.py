@@ -91,7 +91,7 @@ def ajouter(patient_id):
 @login_required
 @role_required('coordinateur', 'medecin')
 def modifier(traitement_id):
-    traitement = Traitement.query.get_or_404(traitement_id)
+    traitement = db.get_or_404(Traitement, traitement_id)
     patient = traitement.patient
     form = TraitementForm(obj=traitement)
     if request.method == 'GET':
@@ -130,7 +130,7 @@ def modifier(traitement_id):
 @login_required
 @role_required('coordinateur', 'medecin')
 def supprimer(traitement_id):
-    traitement = Traitement.query.get_or_404(traitement_id)
+    traitement = db.get_or_404(Traitement, traitement_id)
     patient_id = traitement.patient_id
     db.session.delete(traitement)
     db.session.commit()
@@ -141,7 +141,7 @@ def supprimer(traitement_id):
 @traitement_bp.route('/<int:traitement_id>')
 @login_required
 def detail(traitement_id):
-    traitement = Traitement.query.get_or_404(traitement_id)
+    traitement = db.get_or_404(Traitement, traitement_id)
     patient = traitement.patient
 
     # Calcul du taux d'adhérence DOT sur 30 jours
@@ -199,7 +199,7 @@ def detail(traitement_id):
 @login_required
 @role_required('coordinateur', 'medecin', 'infirmier')
 def dot_ajouter(traitement_id):
-    traitement = Traitement.query.get_or_404(traitement_id)
+    traitement = db.get_or_404(Traitement, traitement_id)
     patient = traitement.patient
     form = SuiviDOTForm()
     if not form.date_observation.data:
@@ -234,8 +234,7 @@ def dot_ajouter(traitement_id):
         dot.medicaments_pris = medicaments_pris
         dot.medicaments_omis = medicaments_omis
         db.session.add(dot)
-        db.session.commit()
-        # Alerte DOT manqué 2 jours consécutifs
+        # Alerte DOT manqué 2 jours consécutifs — dans la même transaction
         if not form.prise_confirmee.data:
             date_obs = form.date_observation.data
             jour_precedent = date_obs - timedelta(days=1)
@@ -252,7 +251,7 @@ def dot_ajouter(traitement_id):
                     url=url_for('traitement.detail', traitement_id=traitement_id),
                     ref=f'dot_absent_{patient.id}_{date_obs}',
                 )
-                db.session.commit()
+        db.session.commit()
         statut = 'confirmée' if form.prise_confirmee.data else 'non confirmée'
         flash(f'Prise DOT du {form.date_observation.data.strftime("%d/%m/%Y")} ({statut}) enregistrée.', 'success')
         retour = request.form.get('depuis_fiche', '0')
@@ -270,7 +269,7 @@ def dot_ajouter(traitement_id):
 @traitement_bp.route('/<int:traitement_id>/dot/historique')
 @login_required
 def dot_historique(traitement_id):
-    traitement = Traitement.query.get_or_404(traitement_id)
+    traitement = db.get_or_404(Traitement, traitement_id)
     patient = traitement.patient
     dots = SuiviDOT.query.filter_by(
         traitement_id=traitement_id

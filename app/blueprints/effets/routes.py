@@ -53,6 +53,7 @@ def declarer():
         form.patient_id.data = retour_patient_id
 
     if form.validate_on_submit():
+        patient_obj = db.session.get(Patient, form.patient_id.data)
         effet = EffetSecondaire(
             patient_id=form.patient_id.data,
             medicament_incrimine=form.medicament_incrimine.data,
@@ -62,9 +63,7 @@ def declarer():
             declare_par=current_user.full_name,
         )
         db.session.add(effet)
-        db.session.commit()
         if effet.severite == 'severe':
-            patient_obj = Patient.query.get(form.patient_id.data)
             notifier_roles(
                 ['medecin', 'coordinateur'],
                 f'URGENT — Effet sévère : {patient_obj.code_patient} {patient_obj.nom} {patient_obj.prenom} — {effet.symptome} (déclaré par {current_user.full_name})',
@@ -72,7 +71,8 @@ def declarer():
                 url=url_for('effets.liste'),
                 ref=f'effet_severe_{effet.id}',
             )
-            db.session.commit()
+        db.session.commit()
+        if effet.severite == 'severe':
             flash('Effet sévère enregistré — médecins et coordinateurs notifiés.', 'danger')
         else:
             flash('Effet secondaire déclaré avec succès.', 'success')
@@ -88,7 +88,7 @@ def declarer():
 @login_required
 @role_required('coordinateur', 'medecin', 'infirmier')
 def marquer_notifie(effet_id):
-    effet = EffetSecondaire.query.get_or_404(effet_id)
+    effet = db.get_or_404(EffetSecondaire, effet_id)
     effet.notifie_crpc = True
     effet.date_notification = datetime.utcnow()
     db.session.commit()
